@@ -1,4 +1,4 @@
-# TradRack
+# Trad Rack
 
 Introducing the ANNEX Engineering Trad Rack, a MMU system designed to perform just like our printers. Fast, Amazing and Reliable.
 
