@@ -1,16 +1,19 @@
 # Trad Rack
 
-Trad Rack is a multimaterial system for FFF printers with a focus on scalability at low cost.
+Trad Rack is a multimaterial system for FFF printers with a focus on scalability at low cost, developed by Ryan G and the team at Annex Engineering.
 
-This is currently in Internal Alpha, with no tenative public release date. 
-
-A video of it in action can be found here: https://youtu.be/hxGiJGAnO-A
+Videos of it in action can be found here: 
+- [Toolchange and print timelapse (closed beta announcement)](https://youtu.be/wKoVyXH0DT4)
+- [Standalone demo (MRRF 2022 preview)](https://youtu.be/hxGiJGAnO-A)
 
 Our discord server can be found here: 
 
 [![Join me on Discord](https://discord.com/api/guilds/641407187004030997/widget.png?style=banner2)](https://discord.gg/MzTR3zE)
 
 ![Image of TradRack](Images/render1.png?raw=true)
+
+## Beta Signup
+- Please sign up for our "closed beta" here: https://forms.gle/6mjbbGU7nZ2DkA7z6
 
 ## Stats
 
