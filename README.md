@@ -10,7 +10,7 @@ Our discord server can be found here:
 
 [![Join me on Discord](https://discord.com/api/guilds/641407187004030997/widget.png?style=banner2)](https://discord.gg/MzTR3zE)
 
-![Image of TradRack](Images/render1.png?raw=true)
+![Image of TradRack](Images/render2.png?raw=true)
 
 ## Beta Signup
 - Please sign up for our "closed beta" here: https://forms.gle/6mjbbGU7nZ2DkA7z6
