@@ -1,5 +1,13 @@
 # Overview
 
+## Printing and assembly
+- [Print Settings and File Key](/Print_Settings_and_File_Key.txt):
+  Print settings to use and info on reading the STL filenames.
+- The STL folder in the main directory contains all STL files.
+- [eDrawing](/eDrawings/Trad%20Rack%20Beta%202023-02-15.EASM):
+  3D model for understanding how the parts
+  fit together and helping with assembly.
+
 ## Quick Start
 - [Quick Start](quick_start/Quick_Start.md): Information on how to get
   Trad Rack running.
