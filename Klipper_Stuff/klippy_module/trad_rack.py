@@ -5,7 +5,7 @@
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math
-from homing import Homing, HomingMove
+from extras.homing import Homing, HomingMove
 import stepper, chelper, toolhead, kinematics.extruder
 
 SERVO_NAME = 'servo tr_servo'
@@ -730,7 +730,8 @@ class TradRackToolHead(toolhead.ToolHead, object):
         # Kinematic step generation scan window time tracking
         self.kin_flush_delay = SDS_CHECK_TIME
         self.kin_flush_times = []
-        self.last_kin_flush_time = self.last_kin_move_time = 0.
+        self.force_flush_time = self.last_kin_flush_time \
+                              = self.last_kin_move_time = 0.
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
