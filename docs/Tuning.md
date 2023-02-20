@@ -54,7 +54,7 @@ that are used when moving filament through the bowden tube:
   loading from a lane whose buffer is assumed to be full (because
   the lane's filament has been unloaded from the toolhead previously).
 
-# Tuning lengths
+## Tuning lengths
 
 The following lengths must be tuned to match your bowden tube,
 extruder, toolhead, and toolhead sensor setup. The values in the
