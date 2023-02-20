@@ -7,7 +7,8 @@ document but only contains items pertaining to Trad Rack.
 
 ### [trad_rack]
 
-Main configuration section for Trad Rack.
+Main configuration section for Trad Rack. Some config option reference
+[Tuning.md](/docs/Tuning.md) for more details.
 ```
 [trad_rack]
 selector_max_velocity:
@@ -60,7 +61,7 @@ extruder_load_length:
 #   toolhead. See Tuning.md for details.
 #   This parameter must be specified.
 hotend_load_length:
-#   Length (im mm) to move filament into the hotend when loading the
+#   Length (in mm) to move filament into the hotend when loading the
 #   toolhead. See Tuning.md for details.
 #   This parameter must be specified.
 toolhead_unload_length:
