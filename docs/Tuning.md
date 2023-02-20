@@ -11,29 +11,29 @@ table to the bottom, as well as some details about each action:
 distance of each move, speed of the move, whether Trad Rack's filament
 driver motor is involved, and whether the main extruder is involved.
 
-| Description               | Distance              | Speed                                 | Trad Rack filament driver | Main extruder |
-| ---                       | ---                   | ---                                   | ---                       | ---           |
-| move through bowden tube  | `bowden_length`       | see [bowden speeds](#bowden-speeds)   | y                         | n             |
-| toolhead sensor homing*   | until sensor triggers | `toolhead_sense_speed`                | y                         | y             |
-| load extruder             | `extruder_load_length`| `extruder_load_speed`                 | y                         | y             |
-| load hotend               | `hotend_load_length`  | `hotend_load_speed`                   | y                         | y**           |
+| Description               | Distance              | Speed                               | Trad Rack filament driver | Main extruder |
+| ---                       | ---                   | ---                                 | ---                       | ---           |
+| move through bowden tube  | `bowden_length`       | see [bowden speeds](#bowden-speeds) | y                         | n             |
+| toolhead sensor homing*   | until sensor triggers | `toolhead_sense_speed`              | y                         | y             |
+| load extruder             | `extruder_load_length`| `extruder_load_speed`               | y                         | y             |
+| load hotend               | `hotend_load_length`  | `hotend_load_speed`                 | y                         | y**           |
 
 \* this move only occurs if `toolhead_fil_sensor_pin` is specified
 and `load_with_toolhead_sensor` is True.
 
 \** the servo will start disengaging Trad Rack's drive gear 
-`servo_wait_ms` before the move ends
+`servo_wait_ms` before the move ends.
 
 ## Unloading process
 
 The following table shows which actions are taken when unloading
 filament from the toolhead back into Trad Rack.
 
-| Description               | Distance                                  | Speed                                 | Trad Rack filament driver | Main extruder |
-| ---                       | ---                                       | ---                                   | ---                       | ---           |
-| toolhead sensor homing*** | until sensor is untriggered               | `toolhead_sense_speed`                | y                         | y             |
-| unload toolhead           | `toolhead_unload_length`                  | `toolhead_unload_speed`               | y                         | y             |
-| move through bowden tube  | `bowden_length` + `bowden_unload_modifier`| `buffer_pull_speed`                   | y                         | n             |
+| Description               | Distance                                  | Speed                   | Trad Rack filament driver | Main extruder |
+| ---                       | ---                                       | ---                     | ---                       | ---           |
+| toolhead sensor homing*** | until sensor is untriggered               | `toolhead_sense_speed`  | y                         | y             |
+| unload toolhead           | `toolhead_unload_length`                  | `toolhead_unload_speed` | y                         | y             |
+| move through bowden tube  | `bowden_length` + `bowden_unload_modifier`| `buffer_pull_speed`     | y                         | n             |
 
 \*** this move only occurs if `toolhead_fil_sensor_pin` is specified
 and `unload_with_toolhead_sensor` is True.
