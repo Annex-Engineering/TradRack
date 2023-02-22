@@ -16,7 +16,7 @@ driver motor is involved, and whether the main extruder is involved.
 | move through bowden tube  | `bowden_length`       | see [bowden speeds](#bowden-speeds) | y                         | n             |
 | toolhead sensor homing*   | until sensor triggers | `toolhead_sense_speed`              | y                         | y             |
 | load extruder             | `extruder_load_length`| `extruder_load_speed`               | y                         | y             |
-| load hotend               | `hotend_load_length`  | `hotend_load_speed`                 | y                         | y**           |
+| load hotend               | `hotend_load_length`  | `hotend_load_speed`                 | y**                       | y             |
 
 \* this move only occurs if `toolhead_fil_sensor_pin` is specified
 and `load_with_toolhead_sensor` is True.
