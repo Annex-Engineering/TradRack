@@ -3,7 +3,7 @@
 ## Printing and assembly
 - [Print Settings and File Key](/Print_Settings_and_File_Key.txt):
   print settings to use and info on reading the STL filenames.
-- [STL folder](/STL): contains all STL files.
+- [STL folder](/STLs): contains all STL files.
 - [eDrawing](/eDrawings/Trad%20Rack%20Beta%202023-02-15.EASM):
   3D model for understanding how the parts
   fit together and helping with assembly. You will need [eDrawings
