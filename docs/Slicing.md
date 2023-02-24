@@ -56,6 +56,7 @@ Printer Settings tab.
     ```
     Save_Pressure_Advance
     ```
+    
     Explanation:
     - `TR_CHECK_READY`: see the 
       [G-Codes](/docs/klipper/G-Codes.md/#tr_check_ready)
