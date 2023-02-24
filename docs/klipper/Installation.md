@@ -29,10 +29,9 @@ in your main printer config file:
     - Change `toolhead_fil_sensor_pin` to match the pin your are using
     for your toolhead filament sensor.
     - Change `lane_count` to match your Trad Rack.
-    - Change `bowden_length` to a value slightly smaller than the
-      length of the bowden tube between Trad Rack and your toolhead.
-    - Change the following values to suit your toolhead. See the 
+    - Change the following values to suit your setup. See the 
       [tuning document](/docs/Tuning.md) for more details:
+        - `bowden_length`
         - `extruder_load_length`
         - `hotend_load_length`
         - `toolhead_unload_length`
