@@ -20,17 +20,17 @@ in your main printer config file:
 - [trad_rack_skr_pico.cfg](/Klipper_Stuff/klipper_config/trad_rack_skr_pico.cfg):
   base config file, meant for use with
   the BIGTREETECH SKR Pico board. This file is required.
-  Make sure to make the following changes:
+  Make sure to complete the following changes:
   - [mcu tr] section
     - Replace `serial` with the serial for your board.
       See Klipper's [Installation](https://www.klipper3d.org/Installation.html)
       document if you need helping finding this value.
   - [trad_rack] section
-    - Change `toolhead_fil_sensor_pin` to match the pin your are using
+    - Change `toolhead_fil_sensor_pin` to match the pin you are using
     for your toolhead filament sensor.
     - Change `lane_count` to match your Trad Rack.
     - Change the following values to suit your setup. See the 
-      [tuning document](/docs/Tuning.md) for more details:
+      [Tuning](/docs/Tuning.md) document for more details:
         - `bowden_length`
         - `extruder_load_length`
         - `hotend_load_length`
@@ -48,5 +48,5 @@ in your main printer config file:
 
 ### Building a config from scratch
 
-See [Config Reference](Config_Reference.md) for the required
+See the [Config Reference](Config_Reference.md) document for the required
 configuration sections and parameters for Trad Rack.
