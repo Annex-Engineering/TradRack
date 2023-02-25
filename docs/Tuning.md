@@ -38,22 +38,6 @@ filament from the toolhead back into Trad Rack.
 \*** this move only occurs if `toolhead_fil_sensor_pin` is specified
 and `unload_with_toolhead_sensor` is True.
 
-## Bowden speeds
-
-There is more force required and more inertia when loading filament
-when the buffer is empty than when the buffer is full: in the former
-case the drive gears must rotate the spool, but in the latter case the
-spool can stay stationary since all the loaded filament comes out of
-the buffer. To take advantage of this, we have two separate speeds
-that are used when moving filament through the bowden tube:
-
-- `spool_pull_speed` (mm/s): this speed is used when loading from a lane
-  whose buffer is assumed to be empty (usually because the lane's
-  filament has not been unloaded from the toolhead previously).
-- `buffer_pull_speed` (mm/s): this speed is used when unloading or when
-  loading from a lane whose buffer is assumed to be full (because
-  the lane's filament has been unloaded from the toolhead previously).
-
 ## Tuning lengths
 
 The following lengths must be tuned to match your bowden tube,
@@ -92,3 +76,19 @@ movement) and a Mosquito Magnum hotend.
   (and increase `toolhead_unload_length` by the same absolute value)
   in order to pull the filament farther out of the toolhead before the
   main extruder disengages for extra safety.
+
+## Bowden speeds
+
+There is more force required and more inertia when loading filament
+when the buffer is empty than when the buffer is full: in the former
+case the drive gears must rotate the spool, but in the latter case the
+spool can stay stationary since all the loaded filament comes out of
+the buffer. To take advantage of this, we have two separate speeds
+that are used when moving filament through the bowden tube:
+
+- `spool_pull_speed` (mm/s): this speed is used when loading from a lane
+  whose buffer is assumed to be empty (usually because the lane's
+  filament has not been unloaded from the toolhead previously).
+- `buffer_pull_speed` (mm/s): this speed is used when unloading or when
+  loading from a lane whose buffer is assumed to be full (because
+  the lane's filament has been unloaded from the toolhead previously).
