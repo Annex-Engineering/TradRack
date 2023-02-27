@@ -9,7 +9,7 @@ def main():
     belt_safety = 30.
     chain_pitch = 15
     chain_base_len = 120
-    m3x8_base_count = 14
+    m3x8_base_count = 13
     m3x8_safety = 10
     m3x8_rail_pitch = 40.
     m3x8_rail_end = 4.5
