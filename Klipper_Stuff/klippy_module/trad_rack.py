@@ -54,10 +54,18 @@ class TradRack:
                                              .get_steppers():
                 mcu_endstop.add_stepper(stepper)
         
-        # read other values
+        # read lane count and get lane positions
         self.lane_count = config.getint('lane_count', minval=2)
         self.lane_spacing = config.getfloat('lane_spacing', above=0.)
-        self.lane_offsets = config.getfloatlist('lane_offsets', None)
+        self.lane_positions = []
+        curr_pos = 0
+        for i in range(self.lane_count):
+            curr_pos += config.getfloat('lane_spacing_mod_' + str(i), default=0.)
+            offset = config.getfloat('lane_offset_' + str(i), default=0.)
+            self.lane_positions.append(curr_pos + offset)
+            curr_pos += self.lane_spacing
+
+        # read other values
         self.servo_down_angle = config.getfloat('servo_down_angle')
         self.servo_up_angle = config.getfloat('servo_up_angle')
         self.servo_wait = config.getfloat(
@@ -230,7 +238,7 @@ class TradRack:
         # set selector position
         print_time = self.tr_toolhead.get_last_move_time()
         pos = self.tr_toolhead.get_position()
-        pos[0] = self._get_lane_position(lane)
+        pos[0] = self.lane_positions[lane]
         self.tr_toolhead.set_position(pos, homing_axes=(0,))
         stepper_enable = self.printer.lookup_object('stepper_enable')
         enable = stepper_enable.lookup_enable(SELECTOR_STEPPER_NAME)
@@ -349,14 +357,6 @@ class TradRack:
         if lane is None or lane > self.lane_count - 1 or lane < 0:
             raise self.gcode.error("Invalid LANE")
     
-    def _get_lane_offset(self, lane):
-        if self.lane_offsets is None or lane > len(self.lane_offsets) - 1:
-            return 0.
-        return self.lane_offsets[lane]
-    
-    def _get_lane_position(self, lane):
-        return lane * self.lane_spacing + self._get_lane_offset(lane)
-    
     def _reset_fil_driver(self):
         self.tr_toolhead.get_last_move_time()
         pos = self.tr_toolhead.get_position()
@@ -387,7 +387,7 @@ class TradRack:
         # move to lane
         self.tr_toolhead.get_last_move_time()
         pos = self.tr_toolhead.get_position()
-        pos[0] = self._get_lane_position(lane)
+        pos[0] = self.lane_positions[lane]
         self.tr_toolhead.move(pos, self.sel_max_velocity)
 
         # set current lane

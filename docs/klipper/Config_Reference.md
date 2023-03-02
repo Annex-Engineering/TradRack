@@ -32,13 +32,25 @@ lane_count:
 lane_spacing:
 #   Spacing (in mm) between filament lanes. 
 #   This parameter must be specified.
-#lane_offsets:
-#   Comma-separated list of offsets (in mm) to apply to each 
-#   lane position. After a lane position is calculated from the
-#   lane's index and lane_spacing, the offset for that lane is added.
-#   For example, if lane_spacing is 17.0 and the 2nd number in
-#   lane_offsets is 0.1, the position of the selector at lane 1 will
-#   be 1 * 17.0 + 0.1 = 17.1. The default is 0.0 for each lane.
+#lane_offset_<lane index>:
+#   Options with a "lane_offset_" prefix may be specified for any of
+#   the lanes (from 0 to lane_count - 1). The option will apply an
+#   offset (in mm) to the corresponding lane's position. Lane offsets
+#   do not affect the position of any lanes besides the one specified
+#   in the option name. This option is intended for fine adjustment
+#   of each lane's position to ensure that the filament paths in the
+#   lane module and selector line up with each other.
+#   The default is 0.0 for each lane.
+#lane_spacing_mod_<lane index>:
+#   Options with a "lane_spacing_mod_" prefix may be specified for any
+#   of the lanes (from 0 to lane_count - 1). The option will apply an
+#   offset (in mm) to the corresponding lane's position, as well as
+#   any lane with a higher index. For example, if lane_spacing_mod_2
+#   is 4.0, any lane with an index of 2 or above will have its
+#   position increased by 4.0. This option is intended to account for
+#   variations in a lane module that will affect its position as well
+#   as the positions of any subsequent modules with a higher index.
+#   The default is 0.0 for each lane.
 servo_down_angle:
 #   The angle (in degrees) for the servo's down position.
 #   This parameter must be specified.
