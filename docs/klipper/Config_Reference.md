@@ -82,7 +82,7 @@ toolhead_unload_length:
 #   specified, this parameter must be specified.
 #   If toolhead_fil_sensor_pin is not specified, the default is
 #   extruder_load_length + hotend_load_length.
-#bowden_unload_modifier: 0.0
+#bowden_unload_length_mod: 0.0
 #   Length modifier (in mm) for moving filament through the bowden
 #   tube between Trad Rack and the toolhead during unloads.
 #   See Tuning.md for details. The default is 0.0.
@@ -125,7 +125,7 @@ toolhead_unload_length:
 #pre_unload_gcode:
 #   Gcode command template that is run before the toolhead is
 #   unloaded. The default is to run no extra commands.
-#post_toolchange_gcode:
+#post_load_gcode:
 #   Gcode command template that is run after the toolhead is
 #   loaded. The default is to run no extra commands.
 #pause_gcode:

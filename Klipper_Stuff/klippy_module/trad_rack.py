@@ -86,8 +86,8 @@ class TradRack:
                 'toolhead_unload_length',
                 default=self.extruder_load_length + self.hotend_load_length,
                 above=0.)
-        self.bowden_unload_modifier = config.getfloat(
-            'bowden_unload_modifier', default=0.)
+        self.bowden_unload_length_mod = config.getfloat(
+            'bowden_unload_length_mod', default=0.)
         self.selector_sense_speed = config.getfloat(
             'selector_sense_speed', default=40., above=0.)
         self.selector_unload_speed = config.getfloat(
@@ -120,8 +120,8 @@ class TradRack:
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
         self.pre_unload_macro = gcode_macro.load_template(
             config, 'pre_unload_gcode', '')
-        self.post_toolchange_macro = gcode_macro.load_template(
-            config, 'post_toolchange_gcode', '')
+        self.post_load_macro = gcode_macro.load_template(
+            config, 'post_load_gcode', '')
         self.pause_macro = gcode_macro.load_template(
             config, 'pause_gcode', 'PAUSE')
         self.resume_macro = gcode_macro.load_template(
@@ -515,8 +515,8 @@ class TradRack:
         # set active lane
         self.active_lane = lane
 
-        # run post-toolchange custom gcode
-        self.post_toolchange_macro.run_gcode_from_command()
+        # run post-load custom gcode
+        self.post_load_macro.run_gcode_from_command()
         self.toolhead.wait_moves()
         self.tr_toolhead.wait_moves()
 
@@ -629,7 +629,7 @@ class TradRack:
         # move filament through the bowden tube
         self.tr_toolhead.get_last_move_time()
         pos = self.tr_toolhead.get_position()
-        pos[1] -= (self.bowden_length + self.bowden_unload_modifier)
+        pos[1] -= (self.bowden_length + self.bowden_unload_length_mod)
         self.tr_toolhead.move(pos, self.buffer_pull_speed)
 
         # unload selector

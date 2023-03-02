@@ -29,11 +29,11 @@ and `load_with_toolhead_sensor` is True.
 The following table shows which actions are taken when unloading
 filament from the toolhead back into Trad Rack.
 
-| Description               | Distance (mm)                             | Speed (mm/s)            | Trad Rack filament driver | Main extruder |
-| ---                       | ---                                       | ---                     | ---                       | ---           |
-| toolhead sensor homing*** | until sensor is untriggered               | `toolhead_sense_speed`  | y                         | y             |
-| unload toolhead           | `toolhead_unload_length`                  | `toolhead_unload_speed` | y                         | y             |
-| move through bowden tube  | `bowden_length` + `bowden_unload_modifier`| `buffer_pull_speed`     | y                         | n             |
+| Description               | Distance (mm)                               | Speed (mm/s)            | Trad Rack filament driver | Main extruder |
+| ---                       | ---                                         | ---                     | ---                       | ---           |
+| toolhead sensor homing*** | until sensor is untriggered                 | `toolhead_sense_speed`  | y                         | y             |
+| unload toolhead           | `toolhead_unload_length`                    | `toolhead_unload_speed` | y                         | y             |
+| move through bowden tube  | `bowden_length` + `bowden_unload_length_mod`| `buffer_pull_speed`     | y                         | n             |
 
 \*** this move only occurs if `toolhead_fil_sensor_pin` is specified
 and `unload_with_toolhead_sensor` is True.
@@ -66,10 +66,10 @@ movement) and a Mosquito Magnum hotend.
 - `toolhead_unload_length` (mm): this length is meant to retract the
   filament tip from the toolhead so the extruder gears are not
   touching it, starting from the point where the toolhead sensor is
-  untriggered. If you have `bowden_unload_modifier` set to zero, the
+  untriggered. If you have `bowden_unload_length_mod` set to zero, the
   filament tip should end up roughly at the same place after this move
   as it does during loading before the toolhead sensor homing starts.
-- `bowden_unload_modifier` (mm): this length is added to `bowden_length`
+- `bowden_unload_length_mod` (mm): this length is added to `bowden_length`
   when moving the filament through the bowden tube during unloads.
   Its purpose is to let you use different bowden tube lengths during
   loading and unloading. For example, you can use a negative number
