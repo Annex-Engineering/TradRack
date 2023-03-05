@@ -60,7 +60,8 @@ class TradRack:
         self.lane_positions = []
         curr_pos = 0
         for i in range(self.lane_count):
-            curr_pos += config.getfloat('lane_spacing_mod_' + str(i), default=0.)
+            curr_pos += config.getfloat('lane_spacing_mod_' + str(i), 
+                                        default=0.)
             offset = config.getfloat('lane_offset_' + str(i), default=0.)
             self.lane_positions.append(curr_pos + offset)
             curr_pos += self.lane_spacing
@@ -202,9 +203,13 @@ class TradRack:
 
     cmd_TR_LOAD_TOOLHEAD_help = "Load filament from Trad Rack into the toolhead"
     def cmd_TR_LOAD_TOOLHEAD(self, gcmd):
+        start_lane = self.active_lane
+        lane = gcmd.get_int('LANE', None)
         try:
-            self._load_toolhead(gcmd.get_int('LANE', None), gcmd)
+            self._load_toolhead(lane, gcmd)
         except:
+            logging.warning("trad_rack: Toolchange from lane {} to {} failed"
+                            .format(start_lane, lane), exc_info=True)
             self._send_pause()
     
     cmd_TR_UNLOAD_TOOLHEAD_help = "Unload filament from the toolhead"
@@ -447,6 +452,8 @@ class TradRack:
                                   .format(lane=str(self.curr_lane)))
                 self.retry_lane = self.curr_lane
                 self.lanes_unloaded[self.curr_lane] = False
+                logging.warning("trad_rack: Failed to unload toolhead",
+                                exc_info=True)
                 raise self.gcode.error("Failed to load toolhead")
 
         # load filament into the selector
@@ -458,6 +465,8 @@ class TradRack:
                               "Use TR_RESUME to reload lane {lane} and retry."
                               .format(lane=str(lane)))
             self.retry_lane = lane
+            logging.warning("trad_rack: Failed to load selector", 
+                            exc_info=True)
             raise self.gcode.error("Failed to load toolhead")
 
         # move filament through the bowden tube
@@ -490,6 +499,8 @@ class TradRack:
                                   "Use TR_RESUME to reload lane {lane} and "
                                   "retry.".format(lane=str(lane)))
                 self.retry_lane = lane
+                logging.warning("trad_rack: Toolhead sensor homing move failed", 
+                              exc_info=True)
                 raise self.gcode.error("Failed to load toolhead. No trigger on "
                                        "toolhead sensor after full movement")
 
@@ -536,6 +547,8 @@ class TradRack:
             hmove.homing_move(pos, self.selector_sense_speed)
         except:
             self._raise_servo()
+            logging.warning("trad_rack: Selector homing move failed", 
+                            exc_info=True)
             raise self.gcode.error("Failed to load filament into selector. "
                                    "No trigger on selector sensor after full "
                                    "movement")
@@ -563,6 +576,8 @@ class TradRack:
                                   triggered=False)
             except:
                 self._raise_servo()
+                logging.warning("trad_rack: Selector homing move failed", 
+                                exc_info=True)
                 raise self.gcode.error("Failed to unload filament from "
                                        "selector. Selector sensor still "
                                        "triggered after full movement")
@@ -612,6 +627,8 @@ class TradRack:
             except:
                 self._raise_servo()
                 self._unsync_extruder_from_fil_driver(prev_sk, prev_trapq)
+                logging.warning("trad_rack: Toolhead sensor homing move failed",
+                              exc_info=True)
                 raise self.gcode.error("Failed to unload toolhead. Toolhead "
                                        "sensor still triggered after full "
                                        "movement")          
