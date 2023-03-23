@@ -10,7 +10,7 @@ The parts in this folder replace the following parts:
   - Selector:
     - `carriage_left_x1`
   - Tilting Filament Driver:
-    - `motor_plate_x1_rev3`
+    - `motor_plate_x1`
 
 ## eDrawing/Instructions
 
