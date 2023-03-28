@@ -3,6 +3,8 @@ Accent Color: [a]_ at start of file name
 Quantity Required: _x# near end of file name
 File Revision: _Rev# at end of file name
 
+Do not use XY compensation, hole shrinking compensation, or any similar slicer setting that modifies the geometry to try to account for shrinkage. Elephant foot compensation (also known as XY first layer compensation) is okay.
+
 Nozzle Size: 0.5mm 
 Recommended FDM Materials: ASA, Polymaker or 3DXTech Recommended
 Alternate Approved FDM Materials: PC, 3DXTech Recommended
