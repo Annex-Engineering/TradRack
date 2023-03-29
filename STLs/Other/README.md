@@ -1,0 +1,2 @@
+Parts with "5mm_collet" in the filename are meant to be used with push-fit collets with a 5mm outer diameter, such as those used by E3D on the V6 hotend and by Bondtech on the LGX and LGX Lite.
+Similarly, parts with "6mm_collet" in the filename are meant to be used with collets with a 6mm outer diameter, such as those available from TriangleLab.
