@@ -206,7 +206,13 @@ class TradRack:
         start_lane = self.active_lane
         lane = gcmd.get_int('LANE', None)
         try:
-            self._load_toolhead(lane, gcmd)
+            self._load_toolhead(lane, gcmd, 
+                                gcmd.get_float('BOWDEN_LENGTH', None, 
+                                               minval=0.),
+                                gcmd.get_float('EXTRUDER_LOAD_LENGTH', None, 
+                                               minval=0.),
+                                gcmd.get_float('HOTEND_LOAD_LENGTH', None, 
+                                               minval=0.))
         except:
             logging.warning("trad_rack: Toolchange from lane {} to {} failed"
                             .format(start_lane, lane), exc_info=True)
@@ -321,8 +327,10 @@ class TradRack:
                             "with T<index> commands")
     def cmd_SELECT_TOOL(self, gcmd):
         lane = int(gcmd.get_command().partition('T')[2])
+        params = gcmd.get_command_parameters()
+        params["LANE"] = lane
         self.cmd_TR_LOAD_TOOLHEAD(self.gcode.create_gcode_command(
-            "TR_LOAD_TOOLHEAD", "TR_LOAD_TOOLHEAD", {"LANE": lane}))
+            "TR_LOAD_TOOLHEAD", "TR_LOAD_TOOLHEAD", params))
 
     # helper functions
     def _lower_servo(self, toolhead_dwell=False):
@@ -429,7 +437,8 @@ class TradRack:
 
         gcmd.respond_info("Load complete")
 
-    def _load_toolhead(self, lane, gcmd):
+    def _load_toolhead(self, lane, gcmd, bowden_length=None,
+                       extruder_load_length=None, hotend_load_length=None):
         # keep track of lane in case of an error
         self.next_lane = lane
 
@@ -437,6 +446,14 @@ class TradRack:
         self._check_lane_valid(lane)
         if lane == self.active_lane:
             return
+
+        # check and set lengths
+        if bowden_length is None:
+            bowden_length = self.bowden_length
+        if extruder_load_length is None:
+            extruder_load_length = self.extruder_load_length
+        if hotend_load_length is None:
+            hotend_load_length = self.hotend_load_length
 
         # unload current lane if there is filament in the selector
         self.toolhead.wait_moves()
@@ -473,7 +490,7 @@ class TradRack:
         self._reset_fil_driver()
         self.tr_toolhead.get_last_move_time()
         pos = self.tr_toolhead.get_position()
-        pos[1] += self.bowden_length
+        pos[1] += bowden_length
         if self.lanes_unloaded[self.curr_lane]:
             speed = self.buffer_pull_speed
         else:
@@ -507,17 +524,29 @@ class TradRack:
         # finish loading filament into extruder
         self._reset_fil_driver()
         pos = self.tr_toolhead.get_position()
-        pos[1] += self.extruder_load_length
+        pos[1] += extruder_load_length
         self.tr_toolhead.move(pos, self.extruder_load_speed)
 
         # load filament into hotend
-        pos[1] += self.hotend_load_length
+        pos[1] += hotend_load_length
         self.tr_toolhead.move(pos, self.hotend_load_speed)
 
+        # check whether servo move might overlap extruder loading move
+        if hotend_load_length:
+            hotend_load_time = self.tr_toolhead.move_queue.get_last().min_move_t
+        else:
+            hotend_load_time = 0.
+        servo_delay = max(0., self.servo_wait - hotend_load_time)
+
         # flush lookahead and raise servo before move ends
-        print_time = self.tr_toolhead.get_last_move_time() - self.servo_wait
+        print_time = self.tr_toolhead.get_last_move_time() - self.servo_wait \
+                     + servo_delay
         self._raise_servo(tr_toolhead_dwell=False, wait_moves=False, 
                           print_time=print_time)
+        
+        # wait for servo move if necessary
+        if servo_delay:
+            self.tr_toolhead.dwell(servo_delay)
         
         # unsync extruder from filament driver
         self.tr_toolhead.wait_moves()
