@@ -31,5 +31,5 @@
   processes and information on how to tune them.
 
 ## Slicing
-- [Slicing](Slicing.md): Information on slicing multimaterial
+- [Slicing](slicing/Slicing.md): Information on slicing multimaterial
   prints for use with Trad Rack.
