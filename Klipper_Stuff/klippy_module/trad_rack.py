@@ -155,9 +155,9 @@ class TradRack:
         self.gcode.register_command('TR_RESUME',
             self.cmd_TR_RESUME,
             desc=self.cmd_TR_RESUME_help)
-        self.gcode.register_command('TR_CHECK_READY',
-            self.cmd_TR_CHECK_READY,
-            desc=self.cmd_TR_CHECK_READY_help)
+        self.gcode.register_command('TR_LOCATE_SELECTOR',
+            self.cmd_TR_LOCATE_SELECTOR,
+            desc=self.cmd_TR_LOCATE_SELECTOR_help)
         for i in range(self.lane_count):
             self.gcode.register_command('T{}'.format(i),
                 self.cmd_SELECT_TOOL,
@@ -276,8 +276,10 @@ class TradRack:
         gcmd.respond_info("Toolhead loaded succesfully. Resuming print")
         self.resume_macro.run_gcode_from_command()
 
-    cmd_TR_CHECK_READY_help = ("Check that Trad Rack is ready for a print")
-    def cmd_TR_CHECK_READY(self, gcmd):
+    cmd_TR_LOCATE_SELECTOR_help = ("Ensures the position of Trad Rack's "
+                                   "selector is known so that it is ready for "
+                                   "a print")
+    def cmd_TR_LOCATE_SELECTOR(self, gcmd):
         if self._query_selector_sensor():
             if self._is_selector_homed():
                 if self.active_lane is None:
