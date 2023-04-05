@@ -30,7 +30,7 @@ settings in the
 ### T0, T1, T2, etc.
 `T<lane index>`: Equivalent to calling 
 `TR_LOAD_TOOLHEAD LANE=<lane index>`. All of the optional parameters
-accepted by the TR_LOAD_TOOLHEAD commmand can also be used with these
+accepted by the TR_LOAD_TOOLHEAD command can also be used with these
 commands.
 
 ### TR_UNLOAD_TOOLHEAD
