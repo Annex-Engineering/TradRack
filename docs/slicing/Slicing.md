@@ -124,9 +124,10 @@ Printer Settings tab.
    absolute value slightly less than that of `parking_pos_retract`.
    For example, if `parking_pos_retract` is `37`, set this to `-36.99`.
  - Advanced wipe tower purge volume calculs:
-   - One of the options for purge volume calculations is to have the
-     slicer calculate volumes based on each filament's pigment
-     percentage. See the tooltips for more details on these settings:
+   - In SuperSlicer, one of the options for purge volume calculations
+     is to have the slicer calculate volumes based on each filament's
+     pigment percentage. See the tooltips for more details on these
+     settings:
      - `wipe_advanced`
      - `wipe_advanced_nozzle_melted_volume`
      - `wipe_advanced_multiplier`
@@ -160,5 +161,4 @@ the Filament Settings tab.
 (this section is not done yet; everything you might need to change
 that is specific to multimaterial or Trad Rack should be located
 in Multimaterial > Toolchange parameters with single extruder MM
-printers. I recommend looking at the provided example
-filament config files.)
+printers. I recommend looking at the provided example config files.)
