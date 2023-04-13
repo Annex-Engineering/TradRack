@@ -13,10 +13,10 @@ driver motor is involved, and whether the main extruder is involved.
 
 | Description               | Distance (mm)         | Speed (mm\s)                        | Trad Rack filament driver | Main extruder |
 | ---                       | ---                   | ---                                 | ---                       | ---           |
-| move through bowden tube  | `bowden_length`       | see [bowden speeds](#bowden-speeds) | y                         | n             |
-| toolhead sensor homing*   | until sensor triggers | `toolhead_sense_speed`              | y                         | y             |
-| load extruder             | `extruder_load_length`| `extruder_load_speed`               | y                         | y             |
-| load hotend               | `hotend_load_length`  | `hotend_load_speed`                 | y**                       | y             |
+| move through bowden tube  | `bowden_length`       | see [bowden speeds](#bowden-speeds) | ✔                         | ✖             |
+| toolhead sensor homing*   | until sensor triggers | `toolhead_sense_speed`              | ✔                         | ✔             |
+| load extruder             | `extruder_load_length`| `extruder_load_speed`               | ✔                         | ✔             |
+| load hotend               | `hotend_load_length`  | `hotend_load_speed`                 | ✔**                       | ✔             |
 
 \* this move only occurs if `toolhead_fil_sensor_pin` is specified
 and `load_with_toolhead_sensor` is True.
@@ -31,9 +31,9 @@ filament from the toolhead back into Trad Rack.
 
 | Description               | Distance (mm)                               | Speed (mm/s)            | Trad Rack filament driver | Main extruder |
 | ---                       | ---                                         | ---                     | ---                       | ---           |
-| toolhead sensor homing*** | until sensor is untriggered                 | `toolhead_sense_speed`  | y                         | y             |
-| unload toolhead           | `toolhead_unload_length`                    | `toolhead_unload_speed` | y                         | y             |
-| move through bowden tube  | `bowden_length` + `bowden_unload_length_mod`| `buffer_pull_speed`     | y                         | n             |
+| toolhead sensor homing*** | until sensor is untriggered                 | `toolhead_sense_speed`  | ✔                         | ✔             |
+| unload toolhead           | `toolhead_unload_length`                    | `toolhead_unload_speed` | ✔                         | ✔             |
+| move through bowden tube  | `bowden_length` + `bowden_unload_length_mod`| `buffer_pull_speed`     | ✔                         | ✖             |
 
 \*** this move only occurs if `toolhead_fil_sensor_pin` is specified
 and `unload_with_toolhead_sensor` is True.
@@ -53,29 +53,30 @@ movement) and a Mosquito Magnum hotend.
   Trad Rack's selector filament sensor is triggered. Make sure there
   is some distance between the filament tip and the drive gears for
   safety.
-- `extruder_load_length` (mm): this length should be tuned to bring the
-  filament tip slightly above the start of the meltzone, starting from
-  the point where the toolhead sensor is triggered. You can base this
-  length off of measurements of your toolhead from CAD. If you are not
-  using a toolhead sensor, then the position of the filament tip after
-  moving through the bowden tube would be your starting point.
-- `hotend_load_length` (mm): this length is meant to bring the filament tip
-  into the meltzone so it is ready for printing. You may have to tune
-  this parameter through trial and error to avoid extra oozing during
-  loading or gaps in your prime tower.
+- `extruder_load_length` (mm): this length should be tuned to bring
+  the filament tip slightly above the start of the meltzone, starting
+  from the point where the toolhead sensor is triggered. You can base
+  this length off of measurements of your toolhead from CAD. If you
+  are not using a toolhead sensor, then the position of the filament
+  tip after moving through the bowden tube would be your starting
+  point.
+- `hotend_load_length` (mm): this length is meant to bring the
+  filament tip into the meltzone so it is ready for printing. You may
+  have to tune this parameter through trial and error to avoid extra
+  oozing during loading or gaps in your prime tower.
 - `toolhead_unload_length` (mm): this length is meant to retract the
   filament tip from the toolhead so the extruder gears are not
   touching it, starting from the point where the toolhead sensor is
   untriggered. If you have `bowden_unload_length_mod` set to zero, the
   filament tip should end up roughly at the same place after this move
   as it does during loading before the toolhead sensor homing starts.
-- `bowden_unload_length_mod` (mm): this length is added to `bowden_length`
-  when moving the filament through the bowden tube during unloads.
-  Its purpose is to let you use different bowden tube lengths during
-  loading and unloading. For example, you can use a negative number
-  (and increase `toolhead_unload_length` by the same absolute value)
-  in order to pull the filament farther out of the toolhead before the
-  main extruder disengages for extra safety.
+- `bowden_unload_length_mod` (mm): this length is added to
+  `bowden_length` when moving the filament through the bowden tube
+  during unloads. Its purpose is to let you use different bowden tube
+  lengths during loading and unloading. For example, you can use a
+  negative number (and increase `toolhead_unload_length` by the same
+  absolute value) in order to pull the filament farther out of the
+  toolhead before the main extruder disengages for extra safety.
 
 ## Bowden speeds
 
@@ -86,9 +87,9 @@ spool can stay stationary since all the loaded filament comes out of
 the buffer. To take advantage of this, we have two separate speeds
 that are used when moving filament through the bowden tube:
 
-- `spool_pull_speed` (mm/s): this speed is used when loading from a lane
-  whose buffer is assumed to be empty (usually because the lane's
+- `spool_pull_speed` (mm/s): this speed is used when loading from a
+  lane whose buffer is assumed to be empty (usually because the lane's
   filament has not been unloaded from the toolhead previously).
-- `buffer_pull_speed` (mm/s): this speed is used when unloading or when
-  loading from a lane whose buffer is assumed to be full (because
+- `buffer_pull_speed` (mm/s): this speed is used when unloading or
+  when loading from a lane whose buffer is assumed to be full (because
   the lane's filament has been unloaded from the toolhead previously).

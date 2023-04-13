@@ -12,10 +12,14 @@ document but only contains items pertaining to Trad Rack.
 lane.
 
 ### TR_LOAD_LANE
-`TR_LOAD_LANE LANE=<lane index>`: Ensures filament is loaded into
-the module for the specified lane by prompting the user to insert
-filament, loading filament from the module into the selector, and
-retracting the filament back into the module.
+`TR_LOAD_LANE LANE=<lane index> [RESET_SPEED=<0|1>`: Ensures filament
+is loaded into the module for the specified lane by prompting the user
+to insert filament, loading filament from the module into the
+selector, and retracting the filament back into the module.
+If RESET_SPEED is 1, the bowden move speed used for the
+specified LANE will be reset to `spool_pull_speed`
+(see [bowden speeds](/docs/Tuning.md#bowden-speeds) for details).
+If not specified, RESET_SPEED defaults to 1.
 
 ### TR_LOAD_TOOLHEAD
 `TR_LOAD_TOOLHEAD LANE=<lane index> [BOWDEN_LENGTH=<mm>]
@@ -38,8 +42,11 @@ commands.
 its module.
 
 ### TR_SERVO_DOWN
-`TR_SERVO_DOWN`: Moves the servo to bring the drive gear down. The
-selector must be moved to a valid lane before using this command.
+`TR_SERVO_DOWN [FORCE=<0|1>]`: Moves the servo to bring the drive gear down. The
+selector must be moved to a valid lane before using this command, unless FORCE
+is 1. If not specified, FORCE defaults to 0. The FORCE parameter is unsafe for
+normal use and should only be used when the servo is not attached to Trad Rack's
+carriage.
 
 ### TR_SERVO_UP
 `TR_SERVO_UP`: Moves the servo to bring the drive gear up.

@@ -1,12 +1,8 @@
 # Overview
 
-## Printing and assembly
-- [Print Settings and File Key](/Print_Settings_and_File_Key.txt):
-  print settings to use and info on reading the STL filenames.
-- [STL folder](/STLs): contains all STL files.
-- [eDrawing](/eDrawings): 3D model for understanding how the parts
-  fit together and helping with assembly. You will need [eDrawings
-  Viewer](https://www.edrawingsviewer.com/) to open this file.
+Welcome to the Trad Rack documentation. If you want to get running as
+quickly as possible with minimal reading, see the
+[Quick Start](Quick_Start.md) document.
 
 ## Quick Start
 - [Quick Start](Quick_Start.md): information on how to get

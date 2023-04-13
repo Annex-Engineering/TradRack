@@ -224,10 +224,11 @@ class TradRack:
 
     cmd_TR_SERVO_DOWN_help = "Lower the servo"
     def cmd_TR_SERVO_DOWN(self, gcmd):
-        # check that the selector is at a lane
-        if self.curr_lane is None or not self._is_selector_homed:
-            raise self.gcode.error("Selector must be moved to a lane before "
-                                   "lowering the servo")
+        if not gcmd.get_int('FORCE', 0):
+            # check that the selector is at a lane
+            if self.curr_lane is None or not self._is_selector_homed:
+                raise self.gcode.error("Selector must be moved to a lane "
+                                       "before lowering the servo")
 
         # lower servo
         self._lower_servo()
@@ -982,7 +983,7 @@ class TradRackServo:
         self.toolhead = toolhead
 
     def set_servo(self, width=None, angle=None, print_time=None):
-        if not print_time:
+        if print_time is None:
             print_time = self.toolhead.get_last_move_time()
         if width is not None:
             self.servo._set_pwm(print_time, 

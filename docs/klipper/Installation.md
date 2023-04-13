@@ -6,8 +6,8 @@ Klipper.
 ## Klippy module
 
 Place [trad_rack.py](/Klipper_Stuff/klippy_module/trad_rack.py)
-in `/klipper/klippy/extras` and restart the Klipper service to load the
-module.
+in `/klipper/klippy/extras` and restart the Klipper service to load
+the module.
 
 ## Config files
 
@@ -48,5 +48,5 @@ in your main printer config file:
 
 ### Building a config from scratch
 
-See the [Config Reference](Config_Reference.md) document for the required
-configuration sections and parameters for Trad Rack.
+See the [Config Reference](Config_Reference.md) document for the
+required configuration sections and parameters for Trad Rack.

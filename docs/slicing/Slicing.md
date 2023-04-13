@@ -103,7 +103,8 @@ Printer Settings tab.
 - `extruders_count`: Set this to the number of lanes.
 - `single_extruder_multi_material`: Set to `true` (`1` in the config).
 - `start_gcode`:
-  - Add the following lines to the beginning of the Start G-code section:
+  - Add the following lines to the beginning of the Start G-code
+    section:
     
     ```
     CLEAR_PAUSE
@@ -122,7 +123,8 @@ Printer Settings tab.
    `cooling_tube_retraction + cooling_tube_length / 2`.
  - `extra_loading_move`: Set this to a negative number with an
    absolute value slightly less than that of `parking_pos_retract`.
-   For example, if `parking_pos_retract` is `37`, set this to `-36.99`.
+   For example, if `parking_pos_retract` is `37`, set this to
+   `-36.99`.
  - Advanced wipe tower purge volume calculs:
    - In SuperSlicer, one of the options for purge volume calculations
      is to have the slicer calculate volumes based on each filament's
