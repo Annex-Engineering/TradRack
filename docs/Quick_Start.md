@@ -76,7 +76,7 @@ See the [Slicing](Slicing.md) document.
 ## Further reading
 
 This marks the end of the required steps to get Trad Rack running.
-See the [Overview](Overview.md) document to see the full list of
+See the [Overview](README.md) document to see the full list of
 documents available. Some of these were already linked in this guide,
 but there are additional ones that provide more information on what
 values can be changed for fine tuning, what gcode commands are
