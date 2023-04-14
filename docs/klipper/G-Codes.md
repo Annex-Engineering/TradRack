@@ -1,8 +1,8 @@
 # G-Codes
 
 This document is modeled after Klipper's
-[G-Codes](https://www.klipper3d.org/G-Codes.html)
-document but only contains items pertaining to Trad Rack.
+[G-Codes document](https://www.klipper3d.org/G-Codes.html) but only
+contains items pertaining to Trad Rack.
 
 ### TR_HOME
 `TR_HOME`: Homes the selector.

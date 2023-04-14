@@ -82,5 +82,5 @@ directly in a text editor if you prefer.
 
 ## Experimental options
 
-See the [Slicing](Slicing.md#experimental_options) document for more
+See the [Slicing document](Slicing.md#experimental_options) for more
 details.

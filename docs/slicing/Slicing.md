@@ -25,7 +25,7 @@ that takes the following parameters:
 ### Setup
 
 See the [PrusaSlicer_Setup](PrusaSlicer_Setup.md) or 
-[SuperSlicer_Setup](SuperSlicer_Setup.md) document for information on
+[SuperSlicer_Setup document](SuperSlicer_Setup.md) for information on
 adding the provided profiles to your slicer, as well as any setup tips
 that pertain to that slicer specifically. In addition, if you are
 using a different printer or toolhead setup, you may need to change
@@ -37,7 +37,7 @@ for more details on these settings.
 
 
 Example slicer profiles for SuperSlicer can be found in the
-[Slicer_Config](/Slicer_Config/) folder. To use these profiles, copy
+[Slicer_Config folder](/Slicer_Config/). To use these profiles, copy
 the files into the corresponding `filament`, `print`, and `printer`
 folders located in:
 
@@ -114,8 +114,8 @@ Printer Settings tab.
     
     Explanation:
     - `TR_LOCATE_SELECTOR`: See the 
-      [G-Codes](/docs/klipper/G-Codes.md/#tr_locate_selector)
-      document for more details
+      [G-Codes document](/docs/klipper/G-Codes.md/#tr_locate_selector)
+      for more details
     - `TR_Print_Start`: Loads the first filament into the toolhead
  - `cooling_tube_retraction`: See the tooltip for details.
  - `cooling_tube_length`: See the tooltip for details.

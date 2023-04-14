@@ -2,7 +2,7 @@
 
 Welcome to the Trad Rack documentation. If you want to get running as
 quickly as possible with minimal reading, see the
-[Quick Start](Quick_Start.md) document.
+[Quick Start document](Quick_Start.md).
 
 ## Quick Start
 - [Quick Start](Quick_Start.md): information on how to get

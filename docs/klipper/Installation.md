@@ -23,14 +23,15 @@ in your main printer config file:
   Make sure to complete the following changes:
   - [mcu tr] section
     - Replace `serial` with the serial for your board.
-      See Klipper's [Installation](https://www.klipper3d.org/Installation.html)
-      document if you need helping finding this value.
+      See Klipper's 
+      [Installation document](https://www.klipper3d.org/Installation.html)
+      if you need help finding this value.
   - [trad_rack] section
     - Change `toolhead_fil_sensor_pin` to match the pin you are using
     for your toolhead filament sensor.
     - Change `lane_count` to match your Trad Rack.
     - Change the following values to suit your setup. See the 
-      [Tuning](/docs/Tuning.md) document for more details:
+      [Tuning document](/docs/Tuning.md) for more details:
         - `bowden_length`
         - `extruder_load_length`
         - `hotend_load_length`
@@ -48,5 +49,5 @@ in your main printer config file:
 
 ### Building a config from scratch
 
-See the [Config Reference](Config_Reference.md) document for the
+See the [Config Reference document](Config_Reference.md) for the
 required configuration sections and parameters for Trad Rack.

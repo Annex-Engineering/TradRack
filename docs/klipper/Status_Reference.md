@@ -1,8 +1,8 @@
 # Status Reference
 
 This document is modeled after Klipper's
-[Status Reference](https://www.klipper3d.org/Status_Reference.html)
-document but only contains items pertaining to Trad Rack.
+[Status Reference document](https://www.klipper3d.org/Status_Reference.html)
+but only contains items pertaining to Trad Rack.
 
 ## trad_rack
 

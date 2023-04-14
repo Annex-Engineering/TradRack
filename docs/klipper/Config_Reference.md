@@ -1,14 +1,14 @@
 # Trad Rack Configuration reference
 
 This document is modeled after Klipper's
-[Config Reference](https://www.klipper3d.org/Config_Reference.html)
-document but only contains items pertaining to Trad Rack.
+[Config Reference document](https://www.klipper3d.org/Config_Reference.html)
+but only contains items pertaining to Trad Rack.
 ## Main configuration
 
 ### [trad_rack]
 
-Main configuration section for Trad Rack. Some config option reference
-[Tuning.md](/docs/Tuning.md) for more details.
+Main configuration section for Trad Rack. Some config options
+reference [Tuning.md](/docs/Tuning.md) for more details.
 ```
 [trad_rack]
 selector_max_velocity:
