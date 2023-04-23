@@ -36,9 +36,9 @@ Run the following gcode command:
 TR_SERVO_UP
 ```
 
-Run the following gcode command and observe the motion of the servo.
-When viewed from the front of the servo spline, the servo should
-rotate clockwise:
+Then run the following gcode command, and this time observe the motion
+of the servo. When viewed from the front of the servo spline, the 
+servo should rotate clockwise:
     
 ```
 TR_SERVO_DOWN FORCE=1
@@ -62,7 +62,8 @@ the clamp.
 
 Insert the servo into the servo jig. You may need to rotate the
 servo horn around the servo spline by hand so that it is at the
-correct angle for the bearing to fit into the jig.
+correct angle for the bearing to fit into the jig. The servo's wires
+should be exiting to the left to match the orientation in the image:
 
 ![Servo in jig](images/servo_in_jig.png?raw=true)
 
