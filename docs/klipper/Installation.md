@@ -47,6 +47,17 @@ in your main printer config file:
   optional config file. This file is recommended but may be more or
   less useful depending on your slicer setup.
 
+### Modifying provided config files for a different board
+
+Follow the instructions in
+[using provided config files](#using-provided-config-files). In
+addition, modify every "pin" or "uart_address" setting in
+[trad_rack_skr_pico.cfg](/Klipper_Stuff/klipper_config/trad_rack_skr_pico.cfg)
+to match your board: copy each of these settings from a corresponding
+section in the
+[example Klipper config for your board](https://github.com/Klipper3d/klipper/tree/master/config). Some settings such as `tx_pin` or `uart_address` might
+not be needed.
+
 ### Building a config from scratch
 
 See the [Config Reference document](Config_Reference.md) for the
