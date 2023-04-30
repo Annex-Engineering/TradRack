@@ -692,6 +692,7 @@ class TradRack:
 
     def _sync_extruder_to_fil_driver(self):
         self.toolhead.flush_step_generation()
+        self.tr_toolhead.flush_step_generation()
         e_stepper = self.toolhead.get_extruder().extruder_stepper.stepper
         tr_trapq = self.tr_toolhead.get_trapq()
         ffi_main, ffi_lib = chelper.get_ffi()
@@ -707,6 +708,8 @@ class TradRack:
         return prev_sk, prev_trapq
 
     def _unsync_extruder_from_fil_driver(self, prev_sk, prev_trapq):
+        self.toolhead.flush_step_generation()
+        self.tr_toolhead.flush_step_generation()
         e_stepper = self.toolhead.get_extruder().extruder_stepper.stepper
         handler = e_stepper.generate_steps
         self.tr_toolhead.step_generators.remove(handler)
