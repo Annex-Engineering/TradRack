@@ -72,7 +72,7 @@ and reattach the servo to Trad Rack.
 
 ## Slicing
 
-See the [Slicing document](Slicing.md).
+See the [Slicing document](slicing/Slicing.md).
 
 ## Further reading
 
