@@ -35,12 +35,6 @@ the slicer. See
 [changes to make to existing profiles](#changes-to-make-to-existing-profiles)
 for more details on these settings.
 
-Note: the purge volumes used in these profiles are for a mosquito
-magnum, but I have not done much experimentation or optimization.
-I would recommend doing your own tuning on purge volumes, try
-different wipe advanced algorithms (or use the purge volume tables),
-etc.
-
 ### Experimental Options
 
 Experimental profiles are included that eliminate the ramming and/or
