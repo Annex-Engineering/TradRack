@@ -35,17 +35,6 @@ the slicer. See
 [changes to make to existing profiles](#changes-to-make-to-existing-profiles)
 for more details on these settings.
 
-
-Example slicer profiles for SuperSlicer can be found in the
-[Slicer_Config folder](/Slicer_Config/). To use these profiles, copy
-the files into the corresponding `filament`, `print`, and `printer`
-folders located in:
-
-- Windows: `C:\users\<username>\AppData\Roaming\SuperSlicer`
-- Mac: `/Users/<username>/Library/Application Support/SuperSlicer`
-
-
-
 Note: the purge volumes used in these profiles are for a mosquito
 magnum, but I have not done much experimentation or optimization.
 I would recommend doing your own tuning on purge volumes, try
