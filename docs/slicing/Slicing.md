@@ -130,6 +130,7 @@ Printer Settings tab.
       shown above to force Trad Rack to set the selector's position
       without homing it again.
       
+ - `retract_length_toolchange`: Set to `0` for all extruders.
  - `cooling_tube_retraction`: See the tooltip for details.
  - `cooling_tube_length`: See the tooltip for details.
  - `parking_pos_retract`: Set this to 
