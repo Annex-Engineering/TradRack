@@ -108,6 +108,11 @@ Printer Settings tab.
     ```
     TR_SET_ACTIVE_LANE LANE={initial_tool}
     ```
+    Note: this includes commands that are called indirectly. For
+    example, if the Start G-code section contains `Print_Start` and
+    your `Print_Start` macro calls `G28`, and your config includes a
+    \[homing_override\] section that causes `G28` to call `M18` or
+    `M84`, this would still count.
 
     Explanation:
     - The `M18` or `M84` command disables all motors on the printer,
