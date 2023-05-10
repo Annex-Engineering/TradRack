@@ -1,3 +1,4 @@
 min_slic3r_version = 2.4.58
+0.1.2 Set retract_length_toolchange to 0 for all extruders
 0.1.1 Set temperatures from the initial tool in start g-code
 0.1.0 Initial
