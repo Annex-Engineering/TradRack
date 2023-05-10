@@ -11,6 +11,23 @@ the module.
 
 ## Config files
 
+### Preliminary changes
+
+It is recommended to modify the [idle_timeout] section to prevent
+the printer from disabling the heaters and motors if the printer is
+paused. Add the following to your config file or modify `gcode` if the
+[idle_timeout] section is already there:
+
+```ini
+[idle_timeout]
+# only turn off heaters and motors if the printer is not paused
+gcode:
+    {% if not printer.pause_resume.is_paused %}
+        TURN_OFF_HEATERS
+        M84
+    {% endif %}
+```
+
 ### Using provided config files
 
 Place the following files inside your Klipper config folder and
