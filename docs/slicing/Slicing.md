@@ -92,7 +92,7 @@ Printer Settings tab.
     ```
     CLEAR_PAUSE
     TR_LOCATE_SELECTOR
-    TR_Print_Start EXTRUDER=[first_layer_temperature] LANE=[initial_tool]
+    TR_Print_Start EXTRUDER={first_layer_temperature[initial_tool]} LANE=[initial_tool]
     ```
     
     Explanation:
