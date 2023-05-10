@@ -100,6 +100,30 @@ Printer Settings tab.
       [G-Codes document](/docs/klipper/G-Codes.md/#tr_locate_selector)
       for more details
     - `TR_Print_Start`: Loads the first filament into the toolhead
+  - Usually not required: if any g-code command or macro that gets
+    called within your Start G-code section contains the `M18` or
+    `M84` command, add the following to the end of
+    the Start G-code section:
+    
+    ```
+    TR_SET_ACTIVE_LANE LANE={initial_tool}
+    ```
+
+    Explanation:
+    - The `M18` or `M84` command disables all motors on the printer,
+      include Trad Rack's motors. This will cause problems the next
+      time Trad Rack tries to move its selector. Normally it is a bad
+      idea to disable the motors inside your start g-code. However,
+      it is sometimes used as a workaround in the \[homing_override\]
+      section in order to allow the printer to move an axis without
+      marking that axis as homed. For example, you may want to lift
+      the z axis before homing x and y to ensure the nozzle does not
+      scrape on the bed. If you do not want to remove `M18` or `M84`
+      from the command or macro that is being called in your Start
+      G-code section, the `TR_SET_ACTIVE_LANE` command can be used as
+      shown above to force Trad Rack to set the selector's position
+      without homing it again.
+      
  - `cooling_tube_retraction`: See the tooltip for details.
  - `cooling_tube_length`: See the tooltip for details.
  - `parking_pos_retract`: Set this to 
