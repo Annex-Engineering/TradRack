@@ -108,6 +108,7 @@ Printer Settings tab.
     ```
     TR_SET_ACTIVE_LANE LANE={initial_tool}
     ```
+
     Note: this includes commands that are called indirectly. For
     example, if the Start G-code section contains `Print_Start` and
     your `Print_Start` macro calls `G28`, and your config includes a
@@ -159,13 +160,36 @@ Print Settings tab.
   moves over the print.
 - `gcode_substitutions`:
   - PrusaSlicer:
-    ```ini
-    gcode_substitutions = "(SET_PRESSURE_ADVANCE ADVANCE=[0.]+)\\n";"Save_Pressure_Advance\\n${1}\\n";r;"Save PA before ramming"
-    ```
+    - in the config file:
+
+      ```ini
+      gcode_substitutions = "(SET_PRESSURE_ADVANCE ADVANCE=[0.]+)\\n";"Save_Pressure_Advance\\n${1}\\n";r;"Save PA before ramming"
+      ```
+
+    - or in the GUI:
+      
+      ![PrusaSlicer gcode_substitutions](images/ps_gcode_substitutions.png?raw=true)
+
+      - Find: `(SET_PRESSURE_ADVANCE ADVANCE=[0.]+)\n`
+      - Replace with: `Save_Pressure_Advance\n${1}\n`
+      - Notes: `Save PA before ramming`
+      - Make sure "Regular expression" is checked!    
+
   - SuperSlicer:
-    ```ini
-    gcode_substitutions = "(SET_PRESSURE_ADVANCE ADVANCE=[0.]+)(?: EXTRUDER=extruder[0-9]*)?\\n";"Save_Pressure_Advance\\n${1}\\n";r;"See: https://github.com/supermerill/SuperSlicer/issues/2934 (3073 too)"
-    ```
+    - in the config file:
+
+      ```ini
+      gcode_substitutions = "(SET_PRESSURE_ADVANCE ADVANCE=[0.]+)(?: EXTRUDER=extruder[0-9]*)?\\n";"Save_Pressure_Advance\\n${1}\\n";r;"See: https://github.com/supermerill/SuperSlicer/issues/2934 (3073 too)"
+      ```
+
+    - or in the GUI:
+
+      ![SuperSlicer gcode_substitutions](images/ss_gcode_substitutions.png?raw=true)
+
+      - Find: `(SET_PRESSURE_ADVANCE ADVANCE=[0.]+)(?: EXTRUDER=extruder[0-9]*)?\n`
+      - Replace with: `Save_Pressure_Advance\n${1}\n`
+      - Notes: `See: https://github.com/supermerill/SuperSlicer/issues/2934 (3073 too)`
+      - Make sure "Regular expression" is checked!
 
 ### Filament Settings
 
