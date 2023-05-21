@@ -73,7 +73,7 @@ class TradRack:
             'servo_wait_ms', default=500., above=0.) / 1000.
         self.selector_unload_length = config.getfloat(
             'selector_unload_length', above=0.)
-        self.bowden_length = config.getfloat('bowden_length', above=0.)
+        self.bowden_load_length = config.getfloat('bowden_length', above=0.)
         self.extruder_load_length = config.getfloat(
             'extruder_load_length', above=0.)
         self.hotend_load_length = config.getfloat(
@@ -87,8 +87,10 @@ class TradRack:
                 'toolhead_unload_length',
                 default=self.extruder_load_length + self.hotend_load_length,
                 above=0.)
-        self.bowden_unload_length_mod = config.getfloat(
+        bowden_unload_length_mod = config.getfloat(
             'bowden_unload_length_mod', default=0.)
+        self.bowden_unload_length = self.bowden_load_length \
+                                    + bowden_unload_length_mod
         self.selector_sense_speed = config.getfloat(
             'selector_sense_speed', default=40., above=0.)
         self.selector_unload_speed = config.getfloat(
@@ -105,6 +107,13 @@ class TradRack:
             'load_with_toolhead_sensor', True)
         self.unload_with_toolhead_sensor = config.getboolean(
             'unload_with_toolhead_sensor', True)
+        self.fil_homing_retract_dist = config.getfloat(
+            'fil_homing_retract_dist', 20., minval=0.)
+        self.target_toolhead_homing_dist = config.getfloat(
+            'target_toolhead_homing_dist', 
+            max(10., self.toolhead_unload_length), above=0.)
+        self.target_selector_homing_dist = config.getfloat(
+            'target_selector_homing_dist', 10., above=0.)
 
         # other variables
         self.toolhead = None
@@ -116,6 +125,8 @@ class TradRack:
         self.servo_raised = None
         self.extruder_synced = False
         self.lanes_unloaded = [False] * self.lane_count
+        self.bowden_load_calibrated = False
+        self.bowden_unload_calibrated = False
         
         # custom user macros
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
@@ -452,7 +463,7 @@ class TradRack:
 
         # check and set lengths
         if bowden_length is None:
-            bowden_length = self.bowden_length
+            bowden_length = self.bowden_load_length
         if extruder_load_length is None:
             extruder_load_length = self.extruder_load_length
         if hotend_load_length is None:
@@ -493,12 +504,26 @@ class TradRack:
         self._reset_fil_driver()
         self.tr_toolhead.get_last_move_time()
         pos = self.tr_toolhead.get_position()
+        move_start = pos[1]
         pos[1] += bowden_length
         if self.lanes_unloaded[self.curr_lane]:
             speed = self.buffer_pull_speed
         else:
             speed = self.spool_pull_speed
+        reached_sensor_early = True
+        if self.load_with_toolhead_sensor and self.toolhead_fil_endstops:
+            hmove = HomingMove(self.printer, self.toolhead_fil_endstops,
+                               self.tr_toolhead)
+            try:
+                # move and check for early sensor trigger
+                trigpos = hmove.homing_move(pos, speed, probe_pos=True)
+
+                # if sensor triggered early, retract before next homing move
+                pos[1] = trigpos[1] - self.fil_homing_retract_dist
+            except self.printer.command_error:
+                reached_sensor_early = False
         self.tr_toolhead.move(pos, speed)
+        base_length = pos[1] - move_start
 
         # sync extruder to filament driver
         self.tr_toolhead.wait_moves()
@@ -507,11 +532,13 @@ class TradRack:
         # move filament until toolhead sensor is triggered
         if self.load_with_toolhead_sensor and self.toolhead_fil_endstops:
             pos = self.tr_toolhead.get_position()
+            move_start = pos[1]
             pos[1] += self.load_length
             hmove = HomingMove(self.printer, self.toolhead_fil_endstops,
                                self.tr_toolhead)
             try:
-                hmove.homing_move(pos, self.toolhead_sense_speed)
+                trigpos = hmove.homing_move(pos, self.toolhead_sense_speed,
+                                            probe_pos=True)
             except:
                 self._raise_servo()
                 self._unsync_extruder_from_fil_driver(prev_sk, prev_trapq)
@@ -523,6 +550,14 @@ class TradRack:
                               exc_info=True)
                 raise self.gcode.error("Failed to load toolhead. No trigger on "
                                        "toolhead sensor after full movement")
+            
+            # update bowden_load_length
+            self.bowden_load_length = trigpos[1] - move_start + base_length \
+                                      - self.target_toolhead_homing_dist
+            if not (self.bowden_load_calibrated or reached_sensor_early):
+                self.bowden_load_calibrated = True
+                gcmd.respond_info("Calibrated bowden_load_length: {}"
+                                  .format(self.bowden_load_length))
 
         # finish loading filament into extruder
         self._reset_fil_driver()
@@ -585,7 +620,7 @@ class TradRack:
                                    "No trigger on selector sensor after full "
                                    "movement")
 
-    def _unload_selector(self, gcmd):
+    def _unload_selector(self, gcmd, base_length=None, mark_calibrated=False):
         # check for filament in selector
         if not self._query_selector_sensor():
             gcmd.respond_info("No filament detected. "
@@ -600,12 +635,13 @@ class TradRack:
             self._reset_fil_driver()
             self.tr_toolhead.get_last_move_time()
             pos = self.tr_toolhead.get_position()
+            move_start = pos[1]
             hmove = HomingMove(self.printer, self.fil_driver_endstops, 
                                self.tr_toolhead)
             pos[1] -= self.load_length
             try:
-                hmove.homing_move(pos, self.selector_sense_speed, 
-                                  triggered=False)
+                trigpos = hmove.homing_move(pos, self.selector_sense_speed, 
+                                            probe_pos = True, triggered=False)
             except:
                 self._raise_servo()
                 logging.warning("trad_rack: Selector homing move failed", 
@@ -613,6 +649,16 @@ class TradRack:
                 raise self.gcode.error("Failed to unload filament from "
                                        "selector. Selector sensor still "
                                        "triggered after full movement")
+            
+            # update bowden_unload_length
+            if not base_length is None:
+                self.bowden_unload_length = move_start - trigpos[1] \
+                                            + base_length \
+                                            - self.target_selector_homing_dist
+                if mark_calibrated:
+                    self.bowden_unload_calibrated = True
+                    gcmd.respond_info("Calibrated bowden_unload_length: {}"
+                                      .format(self.bowden_unload_length))
 
         # retract filament into the module
         self._reset_fil_driver()
@@ -678,11 +724,26 @@ class TradRack:
         # move filament through the bowden tube
         self.tr_toolhead.get_last_move_time()
         pos = self.tr_toolhead.get_position()
-        pos[1] -= (self.bowden_length + self.bowden_unload_length_mod)
+        move_start = pos[1]
+        pos[1] -= self.bowden_unload_length
+        hmove = HomingMove(self.printer, self.fil_driver_endstops, 
+                           self.tr_toolhead)
+        reached_sensor_early = True
+        try:
+            # move and check for early sensor trigger
+            trigpos = hmove.homing_move(pos, self.buffer_pull_speed, 
+                                        probe_pos=True, triggered=False)
+            
+            # if sensor triggered early, retract before next homing move
+            pos[1] = trigpos[1] + self.fil_homing_retract_dist
+        except self.printer.command_error:
+            reached_sensor_early = False
         self.tr_toolhead.move(pos, self.buffer_pull_speed)
 
         # unload selector
-        self._unload_selector(gcmd)
+        mark_calibrated = not (self.bowden_unload_calibrated \
+                               or reached_sensor_early)
+        self._unload_selector(gcmd, move_start - pos[1], mark_calibrated)
 
         # note that the current lane's buffer has been filled
         self.lanes_unloaded[self.curr_lane] = True
