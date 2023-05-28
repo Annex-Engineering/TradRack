@@ -96,10 +96,11 @@ Printer Settings tab.
     ```
     
     Explanation:
+    - `CLEAR_PAUSE`: Clears the paused state.
     - `TR_LOCATE_SELECTOR`: See the 
       [G-Codes document](/docs/klipper/G-Codes.md/#tr_locate_selector)
-      for more details
-    - `TR_Print_Start`: Loads the first filament into the toolhead
+      for more details.
+    - `TR_Print_Start`: Loads the first filament into the toolhead.
   - Usually not required: if any g-code command or macro that gets
     called within your Start G-code section contains the `M18` or
     `M84` command, add the following to the end of

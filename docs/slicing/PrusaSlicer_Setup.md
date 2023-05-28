@@ -4,7 +4,7 @@ This document explains how to add the provided PrusaSlicer profiles
 to your slicer, as well as setup tips pertaining to PrusaSlicer
 specifically. Setting names used here follow the "parameter names"
 that are used in the slicer config files; you can use the search
-function to see which settings these refer to in the GUI.
+function to see which settings these correspond to in the GUI.
 
 ## Adding provided profiles
 A vendor bundle for PrusaSlicer 2.6.0 can be found in the
