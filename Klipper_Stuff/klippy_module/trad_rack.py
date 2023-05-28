@@ -567,7 +567,7 @@ class TradRack:
                      - self.target_toolhead_homing_dist
             old_set_length = self.bowden_load_length
             self.bowden_load_length = self.bowden_load_length_filter \
-                                        .update(length)
+                                      .update(length)
             samples = self.bowden_load_length_filter.get_entry_count()
             self._write_bowden_length_data(
                 self.bowden_load_lengths_filename, length, old_set_length,
