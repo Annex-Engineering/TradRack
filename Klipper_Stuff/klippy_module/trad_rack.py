@@ -563,20 +563,19 @@ class TradRack:
                                        "toolhead sensor after full movement")
             
             # update bowden_load_length
-            if not reached_sensor_early or not self.bowden_load_calibrated:
-                length = trigpos[1] - move_start + base_length \
-                        - self.target_toolhead_homing_dist
-                old_set_length = self.bowden_load_length
-                self.bowden_load_length = self.bowden_load_length_filter \
-                                          .update(length)
-                samples = self.bowden_load_length_filter.get_entry_count()
-                self._write_bowden_length_data(
-                    self.bowden_load_lengths_filename, length, old_set_length,
-                    self.bowden_load_length, samples)
-                if not (self.bowden_load_calibrated or reached_sensor_early):
-                    self.bowden_load_calibrated = True
-                    gcmd.respond_info("Calibrated bowden_load_length: {}"
-                                      .format(self.bowden_load_length))
+            length = trigpos[1] - move_start + base_length \
+                     - self.target_toolhead_homing_dist
+            old_set_length = self.bowden_load_length
+            self.bowden_load_length = self.bowden_load_length_filter \
+                                        .update(length)
+            samples = self.bowden_load_length_filter.get_entry_count()
+            self._write_bowden_length_data(
+                self.bowden_load_lengths_filename, length, old_set_length,
+                self.bowden_load_length, samples)
+            if not (self.bowden_load_calibrated or reached_sensor_early):
+                self.bowden_load_calibrated = True
+                gcmd.respond_info("Calibrated bowden_load_length: {}"
+                                  .format(self.bowden_load_length))
 
         # finish loading filament into extruder
         self._reset_fil_driver()
@@ -766,13 +765,9 @@ class TradRack:
         self.tr_toolhead.move(pos, self.buffer_pull_speed)
 
         # unload selector
-        if not reached_sensor_early or not self.bowden_unload_calibrated:
-            base_length = move_start - pos[1]
-        else:
-            base_length = None
         mark_calibrated = not (self.bowden_unload_calibrated \
                                or reached_sensor_early)
-        self._unload_selector(gcmd, base_length, mark_calibrated)
+        self._unload_selector(gcmd, move_start - pos[1], mark_calibrated)
 
         # note that the current lane's buffer has been filled
         self.lanes_unloaded[self.curr_lane] = True
