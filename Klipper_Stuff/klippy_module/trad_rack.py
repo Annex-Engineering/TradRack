@@ -4,7 +4,8 @@
 # based on code by Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
-import logging, math
+import logging, math, os, time
+from collections import deque
 from extras.homing import Homing, HomingMove
 import stepper, chelper, toolhead, kinematics.extruder
 
@@ -65,6 +66,12 @@ class TradRack:
             offset = config.getfloat('lane_offset_' + str(i), default=0.)
             self.lane_positions.append(curr_pos + offset)
             curr_pos += self.lane_spacing
+
+        # create bowden length filters
+        bowden_samples = config.getint(
+            'bowden_length_samples', default=10, minval=1)
+        self.bowden_load_length_filter = MovingAverageFilter(bowden_samples)
+        self.bowden_unload_length_filter = MovingAverageFilter(bowden_samples)
 
         # read other values
         self.servo_down_angle = config.getfloat('servo_down_angle')
@@ -127,7 +134,11 @@ class TradRack:
         self.lanes_unloaded = [False] * self.lane_count
         self.bowden_load_calibrated = False
         self.bowden_unload_calibrated = False
-        
+        self.bowden_load_lengths_filename = os.path.expanduser(
+            "~/bowden_load_lengths.csv")
+        self.bowden_unload_lengths_filename = os.path.expanduser(
+            "~/bowden_unload_lengths.csv")
+
         # custom user macros
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
         self.pre_unload_macro = gcode_macro.load_template(
@@ -547,17 +558,25 @@ class TradRack:
                                   "retry.".format(lane=str(lane)))
                 self.retry_lane = lane
                 logging.warning("trad_rack: Toolhead sensor homing move failed", 
-                              exc_info=True)
+                                exc_info=True)
                 raise self.gcode.error("Failed to load toolhead. No trigger on "
                                        "toolhead sensor after full movement")
             
             # update bowden_load_length
-            self.bowden_load_length = trigpos[1] - move_start + base_length \
-                                      - self.target_toolhead_homing_dist
-            if not (self.bowden_load_calibrated or reached_sensor_early):
-                self.bowden_load_calibrated = True
-                gcmd.respond_info("Calibrated bowden_load_length: {}"
-                                  .format(self.bowden_load_length))
+            if not reached_sensor_early or not self.bowden_load_calibrated:
+                length = trigpos[1] - move_start + base_length \
+                        - self.target_toolhead_homing_dist
+                old_set_length = self.bowden_load_length
+                self.bowden_load_length = self.bowden_load_length_filter \
+                                          .update(length)
+                samples = self.bowden_load_length_filter.get_entry_count()
+                self._write_bowden_length_data(
+                    self.bowden_load_lengths_filename, length, old_set_length,
+                    self.bowden_load_length, samples)
+                if not (self.bowden_load_calibrated or reached_sensor_early):
+                    self.bowden_load_calibrated = True
+                    gcmd.respond_info("Calibrated bowden_load_length: {}"
+                                      .format(self.bowden_load_length))
 
         # finish loading filament into extruder
         self._reset_fil_driver()
@@ -652,9 +671,15 @@ class TradRack:
             
             # update bowden_unload_length
             if not base_length is None:
-                self.bowden_unload_length = move_start - trigpos[1] \
-                                            + base_length \
-                                            - self.target_selector_homing_dist
+                length = move_start - trigpos[1] + base_length \
+                         - self.target_selector_homing_dist
+                old_set_length = self.bowden_unload_length
+                self.bowden_unload_length = self.bowden_unload_length_filter \
+                                            .update(length)
+                samples = self.bowden_unload_length_filter.get_entry_count()
+                self._write_bowden_length_data(
+                    self.bowden_unload_lengths_filename, length, old_set_length,
+                    self.bowden_unload_length, samples)
                 if mark_calibrated:
                     self.bowden_unload_calibrated = True
                     gcmd.respond_info("Calibrated bowden_unload_length: {}"
@@ -706,7 +731,7 @@ class TradRack:
                 self._raise_servo()
                 self._unsync_extruder_from_fil_driver(prev_sk, prev_trapq)
                 logging.warning("trad_rack: Toolhead sensor homing move failed",
-                              exc_info=True)
+                                exc_info=True)
                 raise self.gcode.error("Failed to unload toolhead. Toolhead "
                                        "sensor still triggered after full "
                                        "movement")          
@@ -741,9 +766,13 @@ class TradRack:
         self.tr_toolhead.move(pos, self.buffer_pull_speed)
 
         # unload selector
+        if not reached_sensor_early or not self.bowden_unload_calibrated:
+            base_length = move_start - pos[1]
+        else:
+            base_length = None
         mark_calibrated = not (self.bowden_unload_calibrated \
                                or reached_sensor_early)
-        self._unload_selector(gcmd, move_start - pos[1], mark_calibrated)
+        self._unload_selector(gcmd, base_length, mark_calibrated)
 
         # note that the current lane's buffer has been filled
         self.lanes_unloaded[self.curr_lane] = True
@@ -777,6 +806,21 @@ class TradRack:
         e_stepper.set_trapq(prev_trapq)
         e_stepper.set_stepper_kinematics(prev_sk)
         self.extruder_synced = False
+
+    def _write_bowden_length_data(self, filename, length, old_set_length,
+                                  new_set_length, samples):
+        try:
+            with open(filename, 'a+') as f:
+                if os.stat(filename).st_size == 0:
+                    f.write(("time,length,diff_from_set_length,new_set_length,"
+                             "new_sample_count\n"))
+                f.write("{},{:.3f},{:.3f},{:.3f},{}\n"
+                        .format(time.strftime("%Y%m%d_%H%M%S"),
+                                length, length - old_set_length, new_set_length,
+                                samples))
+        except IOError as e:
+            raise self.printer.command_error("Error writing to file '%s': %s",
+                                             filename, str(e))
     
     # other functions
     def get_status(self, eventtime):
@@ -1055,6 +1099,22 @@ class TradRackServo:
         else:
             self.servo._set_pwm(print_time, 
                                 self.servo._get_pwm_from_angle(angle))
+            
+class MovingAverageFilter:
+    def __init__(self, max_entries):
+        self.max_entries = max_entries
+        self.queue = deque()
+        self.total = 0.
+
+    def update(self, value):
+        if len(self.queue) >= self.max_entries:
+            self.total -= self.queue.popleft()
+        self.total += value
+        self.queue.append(value)
+        return self.total / len(self.queue)
+    
+    def get_entry_count(self):
+        return len(self.queue)
 
 def load_config(config):
     return TradRack(config)
