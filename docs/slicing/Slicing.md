@@ -74,9 +74,9 @@ macro includes both ramming and unloading.
 ## Changes to make to existing profiles
 
 This section explains changes to make to an existing single-tool
-slicing profile. Setting names used here follow the "parameter names"
+slicer profile. Setting names used here follow the "parameter names"
 that are used in the slicer config files; you can use the search
-function to see which settings these refer to in the GUI.
+function to see which settings these correspond to in the GUI.
 
 ### Printer Settings
 
@@ -117,7 +117,7 @@ Printer Settings tab.
 
     Explanation:
     - The `M18` or `M84` command disables all motors on the printer,
-      include Trad Rack's motors. This will cause problems the next
+      including Trad Rack's motors. This will cause problems the next
       time Trad Rack tries to move its selector. Normally it is a bad
       idea to disable the motors inside your start g-code. However,
       it is sometimes used as a workaround in the \[homing_override\]
