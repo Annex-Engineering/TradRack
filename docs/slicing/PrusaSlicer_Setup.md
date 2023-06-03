@@ -18,10 +18,13 @@ the included profiles, first copy the contents of the folder to the
 - PrusaSlicer ***alpha***\* version:
   - Windows: `C:\Users\<username>\AppData\Roaming\PrusaSlicer-alpha`
   - Mac: `/Users/<username>/Library/Application Support/PrusaSlicer-alpha`
+- PrusaSlicer ***beta***\* version:
+  - Windows: `C:\Users\<username>\AppData\Roaming\PrusaSlicer-beta`
+  - Mac: `/Users/<username>/Library/Application Support/PrusaSlicer-beta`
 
 \* the vendor .ini file will have the slicer version it is meant for
-written at the top. Make sure you check whether it is a stable or
-alpha version so that you copy the items to the correct folder.
+written at the top. Make sure you check whether it is a stable, alpha,
+or beta version so that you copy the items to the correct folder.
 
 Next, launch PrusaSlicer and open the Configuration Wizard by clicking
 `Configuration > Configuration Wizard`. Click on "Other Vendors" on
