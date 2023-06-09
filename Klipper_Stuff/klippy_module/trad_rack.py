@@ -874,16 +874,32 @@ class TradRack:
 
     def _find_replacement_lane(self, runout_lane):
         tool = self.tool_map[runout_lane]
+        pre_dead_lanes = []
+
+        # 1st pass - check lanes not marked as dead
         lane = (runout_lane + 1) % self.lane_count
         while lane != runout_lane:
-            if self.tool_map[lane] == tool and not self.lanes_dead[lane]:
-                try:
-                    self._load_lane(lane, self.gcode)
-                    self.default_lanes[tool] = lane
-                    return lane
-                except:
-                    self.lanes_dead[lane] = True
+            if self.tool_map[lane] == tool:
+                if self.lanes_dead[lane]:
+                    pre_dead_lanes.append(lane)
+                else:
+                    try:
+                        self._load_lane(lane, self.gcode)
+                        self.default_lanes[tool] = lane
+                        return lane
+                    except:
+                        self.lanes_dead[lane] = True
             lane = (lane + 1) % self.lane_count
+
+        # 2nd pass - check lanes previously marked as dead
+        for lane in pre_dead_lanes:
+            try:
+                self._load_lane(lane, self.gcode)
+                self.lanes_dead[lane] = False
+                self.default_lanes[tool] = lane
+                return lane
+            except:
+                pass
         return None
 
     def _set_default_lane(self, tool, lane=None):
