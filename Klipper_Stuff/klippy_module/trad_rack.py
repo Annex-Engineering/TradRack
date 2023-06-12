@@ -638,7 +638,7 @@ class TradRack:
             self._write_bowden_length_data(
                 self.bowden_load_lengths_filename, length, old_set_length,
                 self.bowden_load_length, samples)
-            self._save_bowden_length("load",length,old_set_length,self.bowden_load_length,samples)
+            self._save_bowden_length("load", self.bowden_load_length, samples)
             if not (self.bowden_load_calibrated or reached_sensor_early):
                 self.bowden_load_calibrated = True
                 gcmd.respond_info("Calibrated bowden_load_length: {}"
@@ -754,7 +754,7 @@ class TradRack:
                 self._write_bowden_length_data(
                     self.bowden_unload_lengths_filename, length, old_set_length,
                     self.bowden_unload_length, samples)
-                self._save_bowden_length("unload", length, old_set_length, self.bowden_unload_length, samples)
+                self._save_bowden_length("unload", self.bowden_unload_length, samples)
                 if mark_calibrated:
                     self.bowden_unload_calibrated = True
                     gcmd.respond_info("Calibrated bowden_unload_length: {}"
@@ -892,11 +892,8 @@ class TradRack:
         except IOError as e:
             raise self.printer.command_error("Error writing to file '%s': %s",
                                              filename, str(e))
-    def _save_bowden_length(self, mode, length, old_set_length, new_set_length,
-                                samples):
+    def _save_bowden_length(self, mode, new_set_length, samples):
         length_stats = {
-            'length': length,
-            'diff_from_set_length': length - old_set_length,
             'new_set_length': new_set_length,
             'sample_count': samples
             }
