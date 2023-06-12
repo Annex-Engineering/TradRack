@@ -21,6 +21,14 @@ specified LANE will be reset to `spool_pull_speed`
 (see [bowden speeds](/docs/Tuning.md#bowden-speeds) for details).
 If not specified, RESET_SPEED defaults to 1.
 
+### TR_CHECK_LANES
+'TR_CHECK_LANES': Checks all lanes for filament loading. Saves lane status
+to variables file for persistent storage through firmware restarts.
+Essentially performs a TR_LOAD_LANE for each lane, but does not error out
+if lane is not loaded. Instead it marks it as not loaded and moves on to
+the next lane.
+Does not take any parameters.
+
 ### TR_LOAD_TOOLHEAD
 `TR_LOAD_TOOLHEAD LANE=<lane index> [BOWDEN_LENGTH=<mm>]
 [EXTRUDER_LOAD_LENGTH=<mm>] [HOTEND_LOAD_LENGTH=<mm]`: Loads filament
