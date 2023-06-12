@@ -235,18 +235,6 @@ class TradRack:
                     "Homing failed due to printer shutdown")
             self.printer.lookup_object('stepper_enable').motor_off()
             raise
-
-    cmd_TR_GO_TO_LANE_help = "Move Trad Rack's selector to a filament lane"
-    def cmd_TR_GO_TO_LANE(self, gcmd):
-        self._go_to_lane(gcmd.get_int('LANE', None))
-
-    cmd_TR_LOAD_LANE_help = ("Load filament from the spool into Trad Rack in "
-                             "the specified lane")
-    def cmd_TR_LOAD_LANE(self, gcmd):
-        lane = gcmd.get_int('LANE', None)
-        self._load_lane(lane, gcmd, gcmd.get_int('RESET_SPEED', 1))
-        self.lanes_alive[lane] = 1
-        self.gcode.run_script_from_command("SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\"" % (self.VARS_TOOL_STATUS, self.lanes_alive))
         # Good a place as any to check if config bowden length has changed
         if self.config_bowden_length != self.vars_bowden_length:
             gcmd.respond_info("Config bowden length has changed. " +
@@ -261,6 +249,18 @@ class TradRack:
             }
             self.gcode.run_script_from_command("SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\"" % (self.VARS_CALIB_BOWDEN_LOAD_LENGTH, length_stats))
             self.gcode.run_script_from_command("SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\"" % (self.VARS_CALIB_BOWDEN_UNLOAD_LENGTH, length_stats))
+
+    cmd_TR_GO_TO_LANE_help = "Move Trad Rack's selector to a filament lane"
+    def cmd_TR_GO_TO_LANE(self, gcmd):
+        self._go_to_lane(gcmd.get_int('LANE', None))
+
+    cmd_TR_LOAD_LANE_help = ("Load filament from the spool into Trad Rack in "
+                             "the specified lane")
+    def cmd_TR_LOAD_LANE(self, gcmd):
+        lane = gcmd.get_int('LANE', None)
+        self._load_lane(lane, gcmd, gcmd.get_int('RESET_SPEED', 1))
+        self.lanes_alive[lane] = 1
+        self.gcode.run_script_from_command("SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\"" % (self.VARS_TOOL_STATUS, self.lanes_alive))
 
     cmd_TR_CHECK_LANES_help = "Check if filament is loaded in all lanes"
     def cmd_TR_CHECK_LANES(self, gcmd):
