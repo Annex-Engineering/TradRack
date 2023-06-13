@@ -46,7 +46,7 @@ in your main printer config file:
     - Replace `serial` with the serial for your board.
       See Klipper's 
       [Installation document](https://www.klipper3d.org/Installation.html)
-      if you need help finding this value
+      if you need help finding this value.
   - [trad_rack] section
     - Change `toolhead_fil_sensor_pin` to match the pin you are using
     for your toolhead filament sensor.
