@@ -256,20 +256,6 @@ class TradRack:
                     "Homing failed due to printer shutdown")
             self.printer.lookup_object('stepper_enable').motor_off()
             raise
-        # Good a place as any to check if config bowden length has changed
-        if self.config_bowden_length != self.vars_bowden_length:
-            gcmd.respond_info("Config bowden length has changed. " +
-                              'Writing new bowden length to variables and flushing statistics.')
-            self.vars_bowden_length = self.config_bowden_length
-            self.gcode.run_script_from_command("SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\"" % (self.VARS_CONFIG_BOWDEN_LENGTH, self.vars_bowden_length))
-            length_stats = {
-                            'length': 0,
-                            'diff_from_set_length': 0,
-                            'new_set_length': 0,
-                            'sample_count': 0
-            }
-            self.gcode.run_script_from_command("SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\"" % (self.VARS_CALIB_BOWDEN_LOAD_LENGTH, length_stats))
-            self.gcode.run_script_from_command("SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\"" % (self.VARS_CALIB_BOWDEN_UNLOAD_LENGTH, length_stats))
 
     cmd_TR_GO_TO_LANE_help = "Move Trad Rack's selector to a filament lane"
     def cmd_TR_GO_TO_LANE(self, gcmd):
@@ -634,10 +620,6 @@ class TradRack:
             self.bowden_load_length = self.bowden_load_length_filter \
                                       .update(length)
             samples = self.bowden_load_length_filter.get_entry_count()
-            if samples < self.load_samples:
-                while samples < self.load_samples:
-                    self.bowden_load_length = self.bowden_load_length_filter.update(length)
-                    samples = self.bowden_load_length_filter.get_entry_count()
             self._write_bowden_length_data(
                 self.bowden_load_lengths_filename, length, old_set_length,
                 self.bowden_load_length, samples)
@@ -746,10 +728,6 @@ class TradRack:
                 self.bowden_unload_length = self.bowden_unload_length_filter \
                                             .update(length)
                 samples = self.bowden_unload_length_filter.get_entry_count()
-                if samples < self.unload_samples:
-                    while samples < self.unload_samples:
-                        self.bowden_unload_length = self.bowden_unload_length_filter.update(length)
-                        samples = self.bowden_unload_length_filter.get_entry_count()
                 self._write_bowden_length_data(
                     self.bowden_unload_lengths_filename, length, old_set_length,
                     self.bowden_unload_length, samples)
