@@ -196,9 +196,11 @@ class TradRack:
 
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
-        self.variables = self.printer.lookup_object('save_variables').allVariables
-        if self.variables == {}:
-            raise self.config.error("[save_variables] not found.  Did you include it in your klipper config directory?")
+        save_variables = self.printer.lookup_object('save_variables', None)
+        if save_variables is None:
+            raise self.config.error("[save_variables] not found. Did you "
+                                    "include it in your klipper config?")
+        self.variables = save_variables.allVariables
 
     def handle_ready(self):
         self._load_saved_state()
