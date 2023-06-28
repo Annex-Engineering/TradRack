@@ -198,8 +198,8 @@ class TradRack:
         self.toolhead = self.printer.lookup_object('toolhead')
         save_variables = self.printer.lookup_object('save_variables', None)
         if save_variables is None:
-            raise self.config.error("[save_variables] not found. Did you "
-                                    "include it in your klipper config?")
+            raise self.printer.config_error("[save_variables] is required for "
+                                            "trad_rack")
         self.variables = save_variables.allVariables
 
     def handle_ready(self):
