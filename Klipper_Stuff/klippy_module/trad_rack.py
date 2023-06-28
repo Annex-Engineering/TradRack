@@ -14,10 +14,18 @@ SELECTOR_STEPPER_NAME = 'stepper_tr_selector'
 FIL_DRIVER_STEPPER_NAME = 'stepper_tr_fil_driver'
 
 class TradRack:
+
+    VARS_CALIB_BOWDEN_LOAD_LENGTH   = "calib_bowden_load_length"
+    VARS_CALIB_BOWDEN_UNLOAD_LENGTH = "calib_bowden_unload_length"
+    VARS_CONFIG_BOWDEN_LENGTH = "config_bowden_length"
+    VARS_TOOL_STATUS = "tr_state_tool_status"
+
     def __init__(self, config):
         self.printer = config.get_printer()
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
+        self.printer.register_event_handler("klippy:ready", 
+                                            self.handle_ready)
 
         # read spool and buffer pull speeds
         self.spool_pull_speed = config.getfloat(
@@ -81,6 +89,7 @@ class TradRack:
         self.selector_unload_length = config.getfloat(
             'selector_unload_length', above=0.)
         self.bowden_load_length = config.getfloat('bowden_length', above=0.)
+        self.config_bowden_length = self.bowden_load_length
         self.extruder_load_length = config.getfloat(
             'extruder_load_length', above=0.)
         self.hotend_load_length = config.getfloat(
@@ -187,6 +196,43 @@ class TradRack:
 
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
+        save_variables = self.printer.lookup_object('save_variables', None)
+        if save_variables is None:
+            raise self.printer.config_error("[save_variables] is required for "
+                                            "trad_rack")
+        self.variables = save_variables.allVariables
+
+    def handle_ready(self):
+        self._load_saved_state()
+        
+    def _load_saved_state(self):
+        # load bowden lengths if the user has not changed the config value
+        prev_config_bowden_length = self.variables.get(
+            self.VARS_CONFIG_BOWDEN_LENGTH)
+        if prev_config_bowden_length \
+            and self.config_bowden_length == prev_config_bowden_length:
+            # update load length
+            load_length_stats = self.variables.get(
+                self.VARS_CALIB_BOWDEN_LOAD_LENGTH)
+            if load_length_stats:
+                self.bowden_load_length = load_length_stats['new_set_length']
+                for i in range(load_length_stats['sample_count']):
+                    self.bowden_load_length_filter.update(
+                        self.bowden_load_length)
+            
+            # update unload length
+            unload_length_stats = self.variables.get(
+                self.VARS_CALIB_BOWDEN_UNLOAD_LENGTH)
+            if unload_length_stats:
+                self.bowden_unload_length = unload_length_stats['new_set_length']
+                for i in range(unload_length_stats['sample_count']):
+                    self.bowden_unload_length_filter.update(
+                        self.bowden_unload_length)
+        else:
+            # save bowden_length config value
+            self.gcode.run_script_from_command(
+                "SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\""
+                % (self.VARS_CONFIG_BOWDEN_LENGTH, self.config_bowden_length))
 
     # gcode commands
     cmd_TR_HOME_help = "Home Trad Rack's selector"
@@ -220,8 +266,9 @@ class TradRack:
     cmd_TR_LOAD_LANE_help = ("Load filament from the spool into Trad Rack in "
                              "the specified lane")
     def cmd_TR_LOAD_LANE(self, gcmd):
-        self._load_lane(gcmd.get_int('LANE', None), gcmd, 
-                        gcmd.get_int('RESET_SPEED', 1))
+        lane = gcmd.get_int('LANE', None)
+        self._load_lane(lane, gcmd, gcmd.get_int('RESET_SPEED', 1))
+
 
     cmd_TR_LOAD_TOOLHEAD_help = "Load filament from Trad Rack into the toolhead"
     def cmd_TR_LOAD_TOOLHEAD(self, gcmd):
@@ -268,6 +315,11 @@ class TradRack:
 
         # check lane
         self._check_lane_valid(lane)
+
+        # check for filament in the selector
+        if not self._query_selector_sensor():
+            raise self.gcode.error("Cannot set active lane without filament "
+                                   "in selector")
 
         # set selector position
         print_time = self.tr_toolhead.get_last_move_time()
@@ -462,6 +514,7 @@ class TradRack:
 
         gcmd.respond_info("Load complete")
 
+
     def _load_toolhead(self, lane, gcmd, bowden_length=None,
                        extruder_load_length=None, hotend_load_length=None):
         # keep track of lane in case of an error
@@ -572,6 +625,7 @@ class TradRack:
             self._write_bowden_length_data(
                 self.bowden_load_lengths_filename, length, old_set_length,
                 self.bowden_load_length, samples)
+            self._save_bowden_length("load", self.bowden_load_length, samples)
             if not (self.bowden_load_calibrated or reached_sensor_early):
                 self.bowden_load_calibrated = True
                 gcmd.respond_info("Calibrated bowden_load_length: {}"
@@ -635,8 +689,8 @@ class TradRack:
             logging.warning("trad_rack: Selector homing move failed", 
                             exc_info=True)
             raise self.gcode.error("Failed to load filament into selector. "
-                                   "No trigger on selector sensor after full "
-                                   "movement")
+                                    "No trigger on selector sensor after full "
+                                    "movement")
 
     def _unload_selector(self, gcmd, base_length=None, mark_calibrated=False):
         # check for filament in selector
@@ -679,6 +733,7 @@ class TradRack:
                 self._write_bowden_length_data(
                     self.bowden_unload_lengths_filename, length, old_set_length,
                     self.bowden_unload_length, samples)
+                self._save_bowden_length("unload", self.bowden_unload_length, samples)
                 if mark_calibrated:
                     self.bowden_unload_calibrated = True
                     gcmd.respond_info("Calibrated bowden_unload_length: {}"
@@ -816,6 +871,15 @@ class TradRack:
         except IOError as e:
             raise self.printer.command_error("Error writing to file '%s': %s",
                                              filename, str(e))
+    def _save_bowden_length(self, mode, new_set_length, samples):
+        length_stats = {
+            'new_set_length': new_set_length,
+            'sample_count': samples
+            }
+        if mode == 'load':
+            self.gcode.run_script_from_command("SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\"" % (self.VARS_CALIB_BOWDEN_LOAD_LENGTH, length_stats))
+        else:
+            self.gcode.run_script_from_command("SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\"" % (self.VARS_CALIB_BOWDEN_UNLOAD_LENGTH, length_stats))
     
     # other functions
     def get_status(self, eventtime):
