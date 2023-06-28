@@ -8,7 +8,7 @@ The parts in this folder replace the following parts:
 
 - STLs:
   - Selector:
-    - `[a]_microfit_holder_x1`
+    - `microfit_holder_x1`
     - `carriage_right_x1`
     - `servo_horn_x1`
 
