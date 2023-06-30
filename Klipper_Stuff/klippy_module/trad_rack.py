@@ -1276,8 +1276,10 @@ class TradRackRunoutSensor:
 
     def sensor_callback(self, eventtime, state):
         if self.active and not state:
-            self.active = False
-            self.reactor.register_callback(self.runout_callback)
+            idle_timeout = self.printer.lookup_object("idle_timeout")
+            if idle_timeout.get_status(eventtime)["state"] == "Printing":
+                self.active = False
+                self.reactor.register_callback(self.runout_callback)
 
     def set_active(self, active):
         self.active = active
