@@ -12,7 +12,7 @@ contains items pertaining to Trad Rack.
 lane.
 
 ### TR_LOAD_LANE
-`TR_LOAD_LANE LANE=<lane index> [RESET_SPEED=<0|1>`: Ensures filament
+`TR_LOAD_LANE LANE=<lane index> [RESET_SPEED=<0|1>]`: Ensures filament
 is loaded into the module for the specified lane by prompting the user
 to insert filament, loading filament from the module into the
 selector, and retracting the filament back into the module.
@@ -23,7 +23,7 @@ If not specified, RESET_SPEED defaults to 1.
 
 ### TR_LOAD_TOOLHEAD
 `TR_LOAD_TOOLHEAD LANE=<lane index> [BOWDEN_LENGTH=<mm>]
-[EXTRUDER_LOAD_LENGTH=<mm>] [HOTEND_LOAD_LENGTH=<mm]`: Loads filament
+[EXTRUDER_LOAD_LENGTH=<mm>] [HOTEND_LOAD_LENGTH=<mm>]`: Loads filament
 from the specified lane into the toolhead. If there is already an
 "active lane" because the toolhead has been loaded beforehand, it will
 be unloaded before loading the new filament. If any of the optional
