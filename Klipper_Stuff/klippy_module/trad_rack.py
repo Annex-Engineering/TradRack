@@ -88,8 +88,9 @@ class TradRack:
             'servo_wait_ms', default=500., above=0.) / 1000.
         self.selector_unload_length = config.getfloat(
             'selector_unload_length', above=0.)
-        self.bowden_load_length = config.getfloat('bowden_length', above=0.)
-        self.config_bowden_length = self.bowden_load_length
+        self.config_bowden_length = self.bowden_load_length \
+                                  = self.bowden_unload_length \
+                                  = config.getfloat('bowden_length', above=0.)
         self.extruder_load_length = config.getfloat(
             'extruder_load_length', above=0.)
         self.hotend_load_length = config.getfloat(
@@ -103,10 +104,6 @@ class TradRack:
                 'toolhead_unload_length',
                 default=self.extruder_load_length + self.hotend_load_length,
                 above=0.)
-        bowden_unload_length_mod = config.getfloat(
-            'bowden_unload_length_mod', default=0.)
-        self.bowden_unload_length = self.bowden_load_length \
-                                    + bowden_unload_length_mod
         self.selector_sense_speed = config.getfloat(
             'selector_sense_speed', default=40., above=0.)
         self.selector_unload_speed = config.getfloat(

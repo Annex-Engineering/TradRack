@@ -82,10 +82,6 @@ toolhead_unload_length:
 #   specified, this parameter must be specified.
 #   If toolhead_fil_sensor_pin is not specified, the default is
 #   extruder_load_length + hotend_load_length.
-#bowden_unload_length_mod: 0.0
-#   Length modifier (in mm) for moving filament through the bowden
-#   tube between Trad Rack and the toolhead during unloads.
-#   See Tuning.md for details. The default is 0.0.
 #selector_sense_speed: 40.0
 #   Speed (in mm/s) when moving filament until the selector
 #   sensor is triggered or untriggered. See Tuning.md for details

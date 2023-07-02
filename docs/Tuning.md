@@ -82,16 +82,7 @@ movement) and a Mosquito Magnum hotend.
 - `toolhead_unload_length` (mm): this length is meant to retract the
   filament tip from the toolhead so the extruder gears are not
   touching it, starting from the point where the toolhead sensor is
-  untriggered. If you have `bowden_unload_length_mod` set to zero, the
-  filament tip should end up roughly at the same place after this move
-  as it does during loading before the toolhead sensor homing starts.
-- `bowden_unload_length_mod` (mm): this length is added to
-  `bowden_length` when moving the filament through the bowden tube
-  during unloads. Its purpose is to let you use different bowden tube
-  lengths during loading and unloading. For example, you can use a
-  negative number (and increase `toolhead_unload_length` by the same
-  absolute value) in order to pull the filament farther out of the
-  toolhead before the main extruder disengages for extra safety.
+  untriggered.
 
 ## Bowden lengths
 
