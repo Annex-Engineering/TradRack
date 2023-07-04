@@ -20,6 +20,8 @@ quickly as possible with minimal reading, see the
   Klipper module.
 - [Status Reference](klipper/Status_Reference.md): information
   available to macros (and similar) from the trad_rack Klipper module.
+- [Save Variables](klipper/Save_Variables.md): information on the
+  variables that Trad Rack saves to disk using save_variables.
 
 ## Tuning
 - [Tuning](Tuning.md): overview of the loading and unloading

@@ -82,10 +82,6 @@ toolhead_unload_length:
 #   specified, this parameter must be specified.
 #   If toolhead_fil_sensor_pin is not specified, the default is
 #   extruder_load_length + hotend_load_length.
-#bowden_unload_length_mod: 0.0
-#   Length modifier (in mm) for moving filament through the bowden
-#   tube between Trad Rack and the toolhead during unloads.
-#   See Tuning.md for details. The default is 0.0.
 #selector_sense_speed: 40.0
 #   Speed (in mm/s) when moving filament until the selector
 #   sensor is triggered or untriggered. See Tuning.md for details
@@ -122,6 +118,24 @@ toolhead_unload_length:
 #   Whether to use the toolhead sensor when unloading the toolhead.
 #   See Tuning.md for details. Defaults to True but is ignored if
 #   toolhead_fil_sensor_pin is not specified.
+#fil_homing_retract_dist: 20.0
+#   Distance (in mm) to retract filament away from a filament sensor
+#   before moving on to the next move. This retraction occurs whenever
+#   a filament sensor is triggered early during a fast move through
+#   the bowden tube. See Tuning.md for details. The default is 20.0.
+#target_toolhead_homing_dist:
+#   Target filament travel distance (in mm) when homing to the
+#   toolhead filament sensor during a load. See Tuning.md for details.
+#   Defaults to either 10.0 or toolhead_unload_length, whichever is
+#   greater.
+#target_selector_homing_dist:
+#   Target filament travel distance (in mm) when homing to the
+#   selector filament sensor during an unload. See Tuning.md for
+#   details. The default is 10.0.
+#bowden_length_samples: 10
+#   Maximum number of samples that are averaged to set bowden lengths
+#   for loading and unloading. See Tuning.md for details. The default
+#   is 10.
 #pre_unload_gcode:
 #   Gcode command template that is run before the toolhead is
 #   unloaded. The default is to run no extra commands.
