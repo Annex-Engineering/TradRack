@@ -28,6 +28,10 @@ gcode:
     {% endif %}
 ```
 
+
+The [save_variables] config section is required. 
+See the [Klipper config reference document](https://www.klipper3d.org/Config_Reference.html#save_variables) for details on how to add this section.
+
 ### Using provided config files
 
 Place the following files inside your Klipper config folder and

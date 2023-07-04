@@ -74,9 +74,9 @@ macro includes both ramming and unloading.
 ## Changes to make to existing profiles
 
 This section explains changes to make to an existing single-tool
-slicing profile. Setting names used here follow the "parameter names"
+slicer profile. Setting names used here follow the "parameter names"
 that are used in the slicer config files; you can use the search
-function to see which settings these refer to in the GUI.
+function to see which settings these correspond to in the GUI.
 
 ### Printer Settings
 
@@ -96,10 +96,11 @@ Printer Settings tab.
     ```
     
     Explanation:
+    - `CLEAR_PAUSE`: Clears the paused state.
     - `TR_LOCATE_SELECTOR`: See the 
       [G-Codes document](/docs/klipper/G-Codes.md/#tr_locate_selector)
-      for more details
-    - `TR_Print_Start`: Loads the first filament into the toolhead
+      for more details.
+    - `TR_Print_Start`: Loads the first filament into the toolhead.
   - Usually not required: if any g-code command or macro that gets
     called within your Start G-code section contains the `M18` or
     `M84` command, add the following to the end of
@@ -117,7 +118,7 @@ Printer Settings tab.
 
     Explanation:
     - The `M18` or `M84` command disables all motors on the printer,
-      include Trad Rack's motors. This will cause problems the next
+      including Trad Rack's motors. This will cause problems the next
       time Trad Rack tries to move its selector. Normally it is a bad
       idea to disable the motors inside your start g-code. However,
       it is sometimes used as a workaround in the \[homing_override\]

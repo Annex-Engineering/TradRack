@@ -4,7 +4,7 @@ This document explains how to add the provided PrusaSlicer profiles
 to your slicer, as well as setup tips pertaining to PrusaSlicer
 specifically. Setting names used here follow the "parameter names"
 that are used in the slicer config files; you can use the search
-function to see which settings these refer to in the GUI.
+function to see which settings these correspond to in the GUI.
 
 ## Adding provided profiles
 A vendor bundle for PrusaSlicer 2.6.0 can be found in the
@@ -18,10 +18,13 @@ the included profiles, first copy the contents of the folder to the
 - PrusaSlicer ***alpha***\* version:
   - Windows: `C:\Users\<username>\AppData\Roaming\PrusaSlicer-alpha`
   - Mac: `/Users/<username>/Library/Application Support/PrusaSlicer-alpha`
+- PrusaSlicer ***beta***\* version:
+  - Windows: `C:\Users\<username>\AppData\Roaming\PrusaSlicer-beta`
+  - Mac: `/Users/<username>/Library/Application Support/PrusaSlicer-beta`
 
 \* the vendor .ini file will have the slicer version it is meant for
-written at the top. Make sure you check whether it is a stable or
-alpha version so that you copy the items to the correct folder.
+written at the top. Make sure you check whether it is a stable, alpha,
+or beta version so that you copy the items to the correct folder.
 
 Next, launch PrusaSlicer and open the Configuration Wizard by clicking
 `Configuration > Configuration Wizard`. Click on "Other Vendors" on
