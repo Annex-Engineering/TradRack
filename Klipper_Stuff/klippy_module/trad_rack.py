@@ -49,7 +49,7 @@ class TradRack:
         # set up toolhead filament sensor
         toolhead_fil_sensor_pin = config.get('toolhead_fil_sensor_pin', None)
         self.toolhead_fil_endstops = []
-        if not toolhead_fil_sensor_pin is None:
+        if toolhead_fil_sensor_pin is not None:
             # register endstop
             ppins = self.printer.lookup_object('pins')
             mcu_endstop = ppins.setup_pin('endstop', toolhead_fil_sensor_pin)
@@ -241,7 +241,7 @@ class TradRack:
                 self.VARS_CALIB_BOWDEN_LOAD_LENGTH)
             if load_length_stats:
                 self.bowden_load_length = load_length_stats['new_set_length']
-                for i in range(load_length_stats['sample_count']):
+                for _ in range(load_length_stats['sample_count']):
                     self.bowden_load_length_filter.update(
                         self.bowden_load_length)
             
@@ -249,8 +249,9 @@ class TradRack:
             unload_length_stats = self.variables.get(
                 self.VARS_CALIB_BOWDEN_UNLOAD_LENGTH)
             if unload_length_stats:
-                self.bowden_unload_length = unload_length_stats['new_set_length']
-                for i in range(unload_length_stats['sample_count']):
+                self.bowden_unload_length = \
+                    unload_length_stats['new_set_length']
+                for _ in range(unload_length_stats['sample_count']):
                     self.bowden_unload_length_filter.update(
                         self.bowden_unload_length)
         else:
@@ -862,7 +863,7 @@ class TradRack:
                                        "triggered after full movement")
             
             # update bowden_unload_length
-            if not base_length is None:
+            if base_length is not None:
                 length = move_start - trigpos[1] + base_length \
                          - self.target_selector_homing_dist
                 old_set_length = self.bowden_unload_length
@@ -872,7 +873,8 @@ class TradRack:
                 self._write_bowden_length_data(
                     self.bowden_unload_lengths_filename, length, old_set_length,
                     self.bowden_unload_length, samples)
-                self._save_bowden_length("unload", self.bowden_unload_length, samples)
+                self._save_bowden_length("unload", self.bowden_unload_length, 
+                                         samples)
                 if mark_calibrated:
                     self.bowden_unload_calibrated = True
                     gcmd.respond_info("Calibrated bowden_unload_length: {}"
@@ -1126,10 +1128,14 @@ class TradRack:
             'sample_count': samples
             }
         if mode == 'load':
-            self.gcode.run_script_from_command("SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\"" % (self.VARS_CALIB_BOWDEN_LOAD_LENGTH, length_stats))
+            self.gcode.run_script_from_command("SAVE_VARIABLE VARIABLE=%s "
+                "VALUE=\"%s\""
+                % (self.VARS_CALIB_BOWDEN_LOAD_LENGTH, length_stats))
         else:
-            self.gcode.run_script_from_command("SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\"" % (self.VARS_CALIB_BOWDEN_UNLOAD_LENGTH, length_stats))
-
+            self.gcode.run_script_from_command("SAVE_VARIABLE VARIABLE=%s "
+                "VALUE=\"%s\""
+                % (self.VARS_CALIB_BOWDEN_UNLOAD_LENGTH, length_stats))
+    
     # other functions
     def get_status(self, eventtime):
         return {
