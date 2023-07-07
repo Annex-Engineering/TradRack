@@ -1036,7 +1036,7 @@ class TradRack:
     def _set_default_lane(self, tool, lane=None):
         # set lane that was passed in
         if not lane is None:
-            self.tool_map[lane] = tool
+            self._assign_lane(lane, tool)
             self.default_lanes[tool] = lane
             return
         
