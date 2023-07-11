@@ -39,8 +39,8 @@ Place the following files inside your Klipper config folder and
 in your main printer config file:
 
 - Either
-  [trad_rack_nebula_2209.cfg](Klipper_Stuff/klipper_config/trad_rack_nebula_2209.cfg),
-  [trad_rack_nebula_5160.cfg](Klipper_Stuff/klipper_config/trad_rack_nebula_5160.cfg),
+  [trad_rack_nebula_2209.cfg](/Klipper_Stuff/klipper_config/trad_rack_nebula_2209.cfg),
+  [trad_rack_nebula_5160.cfg](/Klipper_Stuff/klipper_config/trad_rack_nebula_5160.cfg),
   or [trad_rack_skr_pico.cfg](/Klipper_Stuff/klipper_config/trad_rack_skr_pico.cfg):
   base config file. This file is required. Make sure to complete the
   following changes:
