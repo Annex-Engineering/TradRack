@@ -38,10 +38,12 @@ Place the following files inside your Klipper config folder and
 [include them](https://www.klipper3d.org/Config_Reference.html#include)
 in your main printer config file:
 
-- [trad_rack_skr_pico.cfg](/Klipper_Stuff/klipper_config/trad_rack_skr_pico.cfg):
-  base config file, meant for use with
-  the BIGTREETECH SKR Pico board. This file is required.
-  Make sure to complete the following changes:
+- Either
+  [trad_rack_nebula_2209.cfg](Klipper_Stuff/klipper_config/trad_rack_nebula_2209.cfg),
+  [trad_rack_nebula_5160.cfg](Klipper_Stuff/klipper_config/trad_rack_nebula_5160.cfg),
+  or [trad_rack_skr_pico.cfg](/Klipper_Stuff/klipper_config/trad_rack_skr_pico.cfg):
+  base config file. This file is required. Make sure to complete the
+  following changes:
   - [mcu tr] section
     - Replace `serial` with the serial for your board.
       See Klipper's 
@@ -60,9 +62,11 @@ in your main printer config file:
   - [stepper_tr_selector] section
     - Change `position_max` accordingly depending on your 
       `lane_count`.
-  - [tmc2209 stepper_tr_selector] section
+  - [tmc2209 stepper_tr_selector] or [tmc5160 stepper_tr_selector]
+    section
     - Change `run_current` to match your selector motor.
-  - [tmc2209 stepper_tr_fil_driver] section
+  - [tmc2209 stepper_tr_fil_driver] or [tmc5160 stepper_tr_fil_driver]
+    section
     - Change `run_current` to match your filament driver motor.
 - [trad_rack_optional.cfg](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg):
   optional config file. This file is recommended but may be more or
@@ -74,7 +78,7 @@ Follow the instructions in
 [using provided config files](#using-provided-config-files). In
 addition, modify every "pin" or "uart_address" setting in
 [trad_rack_skr_pico.cfg](/Klipper_Stuff/klipper_config/trad_rack_skr_pico.cfg)
-to match your board: copy each of these settings from a corresponding
+to match your board; copy each of these settings from a corresponding
 section in the
 [example Klipper config for your board](https://github.com/Klipper3d/klipper/tree/master/config). Some settings such as `tx_pin` or `uart_address` might
 not be needed.
