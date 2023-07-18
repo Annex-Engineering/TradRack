@@ -13,7 +13,8 @@ Our discord server can be found here:
 ![Image of TradRack](Images/render2.png?raw=true)
 
 ## Beta Signup
-- Please sign up for our "closed beta" here: https://forms.gle/6mjbbGU7nZ2DkA7z6
+
+Closed beta signups are currently closed. An open beta will be available in time.
 
 ## Stats
 
