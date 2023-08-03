@@ -482,8 +482,11 @@ class TradRack:
         self.curr_lane = lane
 
     def _load_lane(self, lane, gcmd, reset_speed=False):
+        # check lane
+        self._check_lane_valid(lane)
+        
         # reset lane speed
-        if reset_speed and lane is not None:
+        if reset_speed:
             self.lanes_unloaded[lane] = False
 
         # move selector
