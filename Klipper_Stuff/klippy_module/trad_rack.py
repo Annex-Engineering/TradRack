@@ -458,6 +458,10 @@ class TradRack:
         if hotend_load_length is None:
             hotend_load_length = self.hotend_load_length
 
+        # save gcode state
+        self.gcode.run_script_from_command(
+            "SAVE_GCODE_STATE NAME=TR_TOOLCHANGE_STATE")
+
         # unload current lane if there is filament in the selector
         self.toolhead.wait_moves()
         if self._query_selector_sensor():
@@ -562,6 +566,10 @@ class TradRack:
         self.post_load_macro.run_gcode_from_command()
         self.toolhead.wait_moves()
         self.tr_toolhead.wait_moves()
+
+        # restore gcode state
+        self.gcode.run_script_from_command(
+            "RESTORE_GCODE_STATE NAME=TR_TOOLCHANGE_STATE MOVE=1")
 
     def _load_selector(self, lane):
         # move selector
