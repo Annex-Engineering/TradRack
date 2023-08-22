@@ -188,7 +188,7 @@ class TradRack:
             desc=self.cmd_TR_LOCATE_SELECTOR_help)
         self.gcode.register_command('TR_SET_HOTEND_LOAD_LENGTH',
             self.cmd_TR_SET_HOTEND_LOAD_LENGTH,
-            desc=self.TR_SET_HOTEND_LOAD_LENGTH_help)
+            desc=self.cmd_TR_SET_HOTEND_LOAD_LENGTH_help)
         for i in range(self.lane_count):
             self.gcode.register_command('T{}'.format(i),
                 self.cmd_SELECT_TOOL,
