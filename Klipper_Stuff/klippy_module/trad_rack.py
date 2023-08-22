@@ -158,6 +158,9 @@ class TradRack:
         self.gcode.register_command('TR_LOCATE_SELECTOR',
             self.cmd_TR_LOCATE_SELECTOR,
             desc=self.cmd_TR_LOCATE_SELECTOR_help)
+        self.gcode.register_command('TR_SET_HOTEND_LOAD_LENGTH',
+            self.cmd_TR_SET_HOTEND_LOAD_LENGTH,
+            desc=self.TR_SET_HOTEND_LOAD_LENGTH_help)
         for i in range(self.lane_count):
             self.gcode.register_command('T{}'.format(i),
                 self.cmd_SELECT_TOOL,
@@ -325,6 +328,18 @@ class TradRack:
             if not self._is_selector_homed():
                 self.cmd_TR_HOME(self.gcode.create_gcode_command(
                     "TR_HOME", "TR_HOME", {}))
+
+    cmd_TR_SET_HOTEND_LOAD_LENGTH_help = ("Sets hotend_load_length. Does not "
+                                          "persist across restarts.")
+    def cmd_TR_SET_HOTEND_LOAD_LENGTH(self, gcmd):        
+        value = gcmd.get_float('VALUE', None, minval=0.)
+        if value is None:
+            adjust = gcmd.get_float('ADJUST', None)
+            if adjust is None:
+                raise self.gcode.error("VALUE or ADJUST must be specified")
+            value = max(0., self.hotend_load_length + adjust)
+        self.hotend_load_length = value
+        gcmd.respond_info("hotend_load_length: %f" % (self.hotend_load_length))
 
     cmd_SELECT_TOOL_help = ("Load filament from Trad Rack into the toolhead "
                             "with T<index> commands")
