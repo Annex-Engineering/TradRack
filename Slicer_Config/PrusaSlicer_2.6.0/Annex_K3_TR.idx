@@ -2,6 +2,7 @@ min_slic3r_version=2.6.0-beta1
 0.1.4 Remove filament_density from common settings
 0.1.3 Add support_tree_branch_diameter_double_wall parameter
 min_slic3r_version = 2.6.0-alpha6
+0.1.3 Set overhangs to 1, set wipe_tower_cone_angle to 25
 0.1.2 Set retract_length_toolchange to 0 for all extruders
 0.1.1 Set temperatures from the initial tool in start g-code
 0.1.0 Initial

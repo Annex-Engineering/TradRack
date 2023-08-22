@@ -186,6 +186,9 @@ class TradRack:
         self.gcode.register_command('TR_LOCATE_SELECTOR',
             self.cmd_TR_LOCATE_SELECTOR,
             desc=self.cmd_TR_LOCATE_SELECTOR_help)
+        self.gcode.register_command('TR_SET_HOTEND_LOAD_LENGTH',
+            self.cmd_TR_SET_HOTEND_LOAD_LENGTH,
+            desc=self.TR_SET_HOTEND_LOAD_LENGTH_help)
         for i in range(self.lane_count):
             self.gcode.register_command('T{}'.format(i),
                 self.cmd_SELECT_TOOL,
@@ -398,6 +401,18 @@ class TradRack:
                 self.cmd_TR_HOME(self.gcode.create_gcode_command(
                     "TR_HOME", "TR_HOME", {}))
 
+    cmd_TR_SET_HOTEND_LOAD_LENGTH_help = ("Sets hotend_load_length. Does not "
+                                          "persist across restarts.")
+    def cmd_TR_SET_HOTEND_LOAD_LENGTH(self, gcmd):        
+        value = gcmd.get_float('VALUE', None, minval=0.)
+        if value is None:
+            adjust = gcmd.get_float('ADJUST', None)
+            if adjust is None:
+                raise self.gcode.error("VALUE or ADJUST must be specified")
+            value = max(0., self.hotend_load_length + adjust)
+        self.hotend_load_length = value
+        gcmd.respond_info("hotend_load_length: %f" % (self.hotend_load_length))
+
     cmd_SELECT_TOOL_help = ("Load filament from Trad Rack into the toolhead "
                             "with T<index> commands")
     def cmd_SELECT_TOOL(self, gcmd):
@@ -533,6 +548,10 @@ class TradRack:
             extruder_load_length = self.extruder_load_length
         if hotend_load_length is None:
             hotend_load_length = self.hotend_load_length
+
+        # save gcode state
+        self.gcode.run_script_from_command(
+            "SAVE_GCODE_STATE NAME=TR_TOOLCHANGE_STATE")
 
         # unload current lane if there is filament in the selector
         self.toolhead.wait_moves()
@@ -670,6 +689,10 @@ class TradRack:
         self.post_load_macro.run_gcode_from_command()
         self.toolhead.wait_moves()
         self.tr_toolhead.wait_moves()
+
+        # restore gcode state
+        self.gcode.run_script_from_command(
+            "RESTORE_GCODE_STATE NAME=TR_TOOLCHANGE_STATE MOVE=1")
 
     def _load_selector(self, lane):
         # move selector
