@@ -6,7 +6,7 @@ Klipper.
 ## Klippy module
 
 Place [trad_rack.py](/Klipper_Stuff/klippy_module/trad_rack.py)
-in `/klipper/klippy/extras` and restart the Klipper service to load
+in `~/klipper/klippy/extras` and restart the Klipper service to load
 the module.
 
 ## Config files
