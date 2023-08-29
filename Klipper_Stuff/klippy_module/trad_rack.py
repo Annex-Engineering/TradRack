@@ -296,7 +296,7 @@ class TradRack:
     def cmd_TR_SERVO_DOWN(self, gcmd):
         if not gcmd.get_int('FORCE', 0):
             # check that the selector is at a lane
-            if self.curr_lane is None or not self._is_selector_homed:
+            if not self._can_lower_servo():
                 raise self.gcode.error("Selector must be moved to a lane "
                                        "before lowering the servo")
 
@@ -459,6 +459,10 @@ class TradRack:
     def _check_lane_valid(self, lane):
         if lane is None or lane > self.lane_count - 1 or lane < 0:
             raise self.gcode.error("Invalid LANE")
+        
+    def _can_lower_servo(self):
+        return (self._is_selector_homed() and self.curr_lane is not None) \
+            or self._query_selector_sensor()
 
     def _reset_fil_driver(self):
         self.tr_toolhead.get_last_move_time()
@@ -781,7 +785,7 @@ class TradRack:
         self.active_lane = None
 
         # check that the selector is at a lane
-        if self.curr_lane is None or not self._is_selector_homed:
+        if not self._can_lower_servo():
             raise self.gcode.error("Selector must be moved to a lane "
                                    "before unloading")
 
@@ -850,7 +854,8 @@ class TradRack:
         self._unload_selector(gcmd, move_start - pos[1], mark_calibrated)
 
         # note that the current lane's buffer has been filled
-        self.lanes_unloaded[self.curr_lane] = True
+        if self.curr_lane is not None:
+            self.lanes_unloaded[self.curr_lane] = True
 
     def _send_pause(self):
         self.pause_macro.run_gcode_from_command()
@@ -1206,4 +1211,3 @@ class MovingAverageFilter:
 
 def load_config(config):
     return TradRack(config)
-
