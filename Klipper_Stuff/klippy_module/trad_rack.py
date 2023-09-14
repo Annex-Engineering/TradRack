@@ -65,15 +65,9 @@ class TradRack:
 
         # read lane count and get lane positions
         self.lane_count = config.getint('lane_count', minval=2)
-        self.lane_spacing = config.getfloat('lane_spacing', above=0.)
-        self.lane_positions = []
-        curr_pos = 0
-        for i in range(self.lane_count):
-            curr_pos += config.getfloat('lane_spacing_mod_' + str(i),
-                                        default=0.)
-            offset = config.getfloat('lane_offset_' + str(i), default=0.)
-            self.lane_positions.append(curr_pos + offset)
-            curr_pos += self.lane_spacing
+        self.lane_position_manager = TradRackLanePositionManager(
+            self.lane_count, config)
+        self.lane_positions = self.lane_position_manager.get_lane_positions()
 
         # create bowden length filters
         bowden_samples = config.getint(
@@ -144,6 +138,7 @@ class TradRack:
             "~/bowden_load_lengths.csv")
         self.bowden_unload_lengths_filename = os.path.expanduser(
             "~/bowden_unload_lengths.csv")
+        self.tr_next_generator = None
 
         # custom user macros
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
@@ -186,6 +181,12 @@ class TradRack:
         self.gcode.register_command('TR_LOCATE_SELECTOR',
             self.cmd_TR_LOCATE_SELECTOR,
             desc=self.cmd_TR_LOCATE_SELECTOR_help)
+        self.gcode.register_command('TR_CALIBRATE_SELECTOR',
+            self.cmd_TR_CALIBRATE_SELECTOR,
+            desc=self.cmd_TR_CALIBRATE_SELECTOR_help)
+        self.gcode.register_command('TR_NEXT',
+            self.cmd_TR_NEXT,
+            desc=self.cmd_TR_NEXT_help)
         self.gcode.register_command('TR_SET_HOTEND_LOAD_LENGTH',
             self.cmd_TR_SET_HOTEND_LOAD_LENGTH,
             desc=self.cmd_TR_SET_HOTEND_LOAD_LENGTH_help)
@@ -400,6 +401,26 @@ class TradRack:
             if not self._is_selector_homed():
                 self.cmd_TR_HOME(self.gcode.create_gcode_command(
                     "TR_HOME", "TR_HOME", {}))
+
+    cmd_TR_CALIBRATE_SELECTOR_help = ("Calibrate lane_spacing and the "
+                                      "selector's min, endstop, and max "
+                                      "positions")
+    def cmd_TR_CALIBRATE_SELECTOR(self, gcmd):
+        self.tr_next_generator = self._calibrate_selector(gcmd)
+        next(self.tr_next_generator)
+
+    cmd_TR_NEXT_help = ("You will be prompted to use this command if Trad Rack "
+                        "requires user confirmation")
+    def cmd_TR_NEXT(self, gcmd):
+        if self.tr_next_generator:
+            try:
+                next(self.tr_next_generator)
+            except Exception as e:
+                self.tr_next_generator = None
+                if not isinstance(e, StopIteration):
+                    raise
+        else:
+            raise self.gcode.error("TR_NEXT command is inactive")
 
     cmd_TR_SET_HOTEND_LOAD_LENGTH_help = ("Sets hotend_load_length. Does not "
                                           "persist across restarts.")
@@ -915,6 +936,158 @@ class TradRack:
                 "VALUE=\"%s\""
                 % (self.VARS_CALIB_BOWDEN_UNLOAD_LENGTH, length_stats))
 
+    def _calibrate_selector(self, gcmd):
+        extra_travel = 1.
+
+        # prompt user to set the selector at lane 0
+        self._prompt_selector_calibration(0, gcmd)
+        yield
+
+        # measure position of lane 0 relative to endstop
+        pos_endstop = self.tr_kinematics.get_selector_rail() \
+                                        .get_homing_info().position_endstop
+        max_travel = self.lane_positions[0] - pos_endstop + extra_travel
+        endstop_to_lane0 = self._measure_selector_to_endstop(max_travel, gcmd)
+
+        # prompt user to set the selector at the last lane
+        self._prompt_selector_calibration(self.lane_count - 1, gcmd)
+        yield
+
+        # measure position of last lane relative to endstop
+        max_travel = self.lane_positions[self.lane_count - 1] \
+                    - self.lane_positions[0] + endstop_to_lane0 + extra_travel
+        endstop_to_last_lane = self._measure_selector_to_endstop(max_travel, 
+                                                                 gcmd)
+
+        # process calibration and set new lane positions
+        pos_endstop, lane_spacing, self.lane_positions = \
+            self.lane_position_manager.process_selector_calibration(
+                endstop_to_lane0, endstop_to_last_lane)
+
+        # round new config values
+        lane_spacing = round(lane_spacing, 6)
+        pos_endstop = round(pos_endstop, 3)
+        pos_min = math.floor(min(pos_endstop, self.lane_positions[0]) \
+            * 1000) / 1000
+        pos_max = math.ceil(self.lane_positions[self.lane_count - 1] \
+            * 1000) / 1000
+        
+        # set new selector values
+        rail = self.tr_kinematics.get_selector_rail()
+        rail.position_min = pos_min
+        rail.position_endstop = pos_endstop
+        rail.position_max = pos_max
+
+        # set current selector position
+        self.tr_toolhead.get_last_move_time()
+        pos = self.tr_toolhead.get_position()
+        pos[0] = pos_endstop
+        self.tr_toolhead.set_position(pos, homing_axes=(0,))
+        
+        # show results and prompt user to save config
+        gcmd.respond_info(
+            "trad_rack: lane_spacing: {lane_spacing:.6f}\n"
+            "{stepper}: position_min: {pos_min:.3f}\n"
+            "{stepper}: position_endstop: {pos_endstop:.3f}\n"
+            "{stepper}: position_max: {pos_max:.3f}\n"
+            "Make sure to update the printer config file with these parameters "
+            "so they will be kept across restarts."
+            .format(lane_spacing=lane_spacing, stepper=SELECTOR_STEPPER_NAME,
+                    pos_min=pos_min, pos_endstop=pos_endstop, pos_max=pos_max))
+
+    def _prompt_selector_calibration(self, lane, gcmd):
+        # go to lane
+        if not self._is_selector_homed():
+            self.cmd_TR_HOME(self.gcode.create_gcode_command(
+                "TR_HOME", "TR_HOME", {}))
+        self._go_to_lane(lane)
+
+        # lower servo and turn the drive gear until filament is detected
+        self._lower_servo()
+        self.tr_toolhead.wait_moves()
+        gcmd.respond_info("Please insert filament in lane %d" % (lane))
+
+        # disable selector motor
+        print_time = self.tr_toolhead.get_last_move_time()
+        stepper_enable = self.printer.lookup_object('stepper_enable')
+        enable = stepper_enable.lookup_enable(SELECTOR_STEPPER_NAME)
+        enable.motor_disable(print_time)
+
+        # load filament into the selector
+        self._load_selector(lane)
+
+        # extend filament past the sensor
+        self._reset_fil_driver()
+        self.tr_toolhead.get_last_move_time()
+        pos = self.tr_toolhead.get_position()
+        pos[1] += 15.
+        self.tr_toolhead.move(pos, self.selector_unload_speed)
+
+        # reset filament driver position
+        self._reset_fil_driver()
+
+        # raise servo
+        self._raise_servo()
+
+        # prompt user to position selector
+        self.tr_toolhead.wait_moves()
+        gcmd.respond_info("To ensure that the filament paths of the lane "
+                          "module and selector are aligned, adjust the "
+                          "selector's position by hand until the filament can "
+                          "slide smoothly with very little resistance. Then "
+                          "use TR_NEXT to continue selector calibration.")
+    
+    def _measure_selector_to_endstop(self, max_travel, gcmd):
+        # set selector position
+        print_time = self.tr_toolhead.get_last_move_time()
+        pos = self.tr_toolhead.get_position()
+        pos[0] = max_travel
+        self.tr_toolhead.set_position(pos, homing_axes=(0,))
+        stepper_enable = self.printer.lookup_object('stepper_enable')
+        enable = stepper_enable.lookup_enable(SELECTOR_STEPPER_NAME)
+        enable.motor_enable(print_time)
+
+        # unload selector into current lane
+        self._unload_selector(gcmd)
+
+        # clear current lane
+        self.curr_lane = None
+
+        # prepare for homing move
+        self.tr_toolhead.get_last_move_time()
+        pos = self.tr_toolhead.get_position()
+        pos[0] = 0.
+        rail = self.tr_kinematics.get_selector_rail()
+        endstops = rail.get_endstops()
+        hi = rail.get_homing_info()
+        if hi.retract_dist:
+            speed = hi.second_homing_speed
+        else:
+            speed = hi.speed
+
+        # retract first if endstop is already triggered
+        self.selector_endstops = self.tr_kinematics.get_selector_rail() \
+                                                   .get_endstops()
+        move_time = self.tr_toolhead.get_last_move_time()
+        if not not self.selector_endstops[0][0].query_endstop(move_time):
+            curr_pos = self.tr_toolhead.get_position()
+            curr_pos[0] += 5.
+            self.tr_toolhead.move(curr_pos, hi.speed)
+            self.tr_toolhead.wait_moves()
+
+        # homing move
+        hmove = HomingMove(self.printer, endstops, self.tr_toolhead)
+        trigpos = hmove.homing_move(pos, speed, probe_pos=True)
+
+        # set selector position
+        self.tr_toolhead.get_last_move_time()
+        pos = self.tr_toolhead.get_position()
+        pos[0] = hi.position_endstop
+        self.tr_toolhead.set_position(pos, homing_axes=(0,))
+
+        # return distance traveled
+        return max_travel - trigpos[0]
+
     # other functions
     def get_status(self, eventtime):
         return {
@@ -1192,6 +1365,45 @@ class TradRackServo:
         else:
             self.servo._set_pwm(print_time,
                                 self.servo._get_pwm_from_angle(angle))
+
+class TradRackLanePositionManager:
+    def __init__(self, lane_count, config):
+        self.lane_count = lane_count
+        self.lane_spacing = config.getfloat('lane_spacing', above=0.)
+        self.lane_spacing_mods = []
+        self.lane_spacing_mod_internal = 0.
+        self.lane_offsets = []
+        for i in range(lane_count):
+            self.lane_spacing_mods.append(config.getfloat(
+                'lane_spacing_mod_' + str(i), default=0.))
+            self.lane_spacing_mod_internal += self.lane_spacing_mods[i]
+            self.lane_offsets.append(config.getfloat(
+                'lane_offset_' + str(i), default=0.))
+        self.lane_spacing_mod_internal -= self.lane_spacing_mods[0]
+            
+    def get_lane_positions(self):
+        lane_positions = []
+        curr_pos = 0
+        for i in range(self.lane_count):
+            curr_pos += self.lane_spacing_mods[i]
+            lane_positions.append(curr_pos + self.lane_offsets[i])
+            curr_pos += self.lane_spacing
+        return lane_positions
+
+    def process_selector_calibration(self, endstop_to_lane0,
+                                     endstop_to_last_lane):
+        # account for lane offsets
+        endstop_to_lane0 -= self.lane_offsets[0]
+        endstop_to_last_lane -= self.lane_offsets[self.lane_count - 1]
+
+        # calculate endstop position and lane settings
+        pos_endstop = self.lane_spacing_mods[0] - endstop_to_lane0
+        lane_span = endstop_to_last_lane - endstop_to_lane0
+        self.lane_spacing = (lane_span - self.lane_spacing_mod_internal) \
+                            / (self.lane_count - 1)
+        lane_positions = self.get_lane_positions()
+
+        return pos_endstop, self.lane_spacing, lane_positions
 
 class MovingAverageFilter:
     def __init__(self, max_entries):

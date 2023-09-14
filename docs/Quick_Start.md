@@ -70,6 +70,30 @@ should be exiting to the left to match the orientation in the image:
 Tighten the two screws you loosened earlier. Then remove the servo jig
 and reattach the servo to Trad Rack.
 
+## Selector calibration
+
+This section involves calibrating `lane_spacing`, as well as the min,
+endstop, and max positions of the selector motor. You will need access
+to filament (either a spool or a short piece is fine).
+
+Run the following gcode command and follow the instructions in the
+console:
+
+```
+TR_CALIBRATE_SELECTOR
+```
+
+When the calibration finishes and you are prompted to do so, replace
+the values in your main Trad Rack config file with the new values
+for the following:
+
+- in [trad_rack]:
+  - `lane_spacing`
+- in [stepper_tr_selector]:
+  - `position_min`
+  - `position_endstop`
+  - `position_max`
+
 ## Slicing
 
 See the [Slicing document](slicing/Slicing.md).
