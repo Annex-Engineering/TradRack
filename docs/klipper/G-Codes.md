@@ -73,3 +73,22 @@ known so that it is ready for a print. If the user needs to take an
 action, they will be prompted to do so and the print will be paused
 (for example if the selector sensor is triggered but no active lane is
 set). It is recommended to call this command in the print start gcode.
+
+## TR_CALIBRATE_SELECTOR
+`TR_CALIBRATE_SELECTOR`: Initiates the process of calibrating
+lane_spacing, as well as the min, endstop, and max positions of the
+selector motor. You will be guided through the selector calibration
+process via messages in the console.
+
+## TR_NEXT
+`TR_NEXT`: You will be prompted to use this command if Trad Rack
+requires user confirmation before continuing an action.
+
+## TR_SET_HOTEND_LOAD_LENGTH
+`TR_SET_HOTEND_LOAD_LENGTH VALUE=<value>|ADJUST=<adjust>`: Sets the
+value of hotend_load_length, overriding its value from the
+[trad_rack config section](Config_Reference.md#trad_rack). Does not
+persist across restarts. If the VALUE parameter is used,
+hotend_load_length will be set to the value passed in. If the ADJUST
+parameter is used, the adjustment will be added to the current value
+of hotend_load_length.

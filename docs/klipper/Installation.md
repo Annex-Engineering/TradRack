@@ -6,7 +6,7 @@ Klipper.
 ## Klippy module
 
 Place [trad_rack.py](/Klipper_Stuff/klippy_module/trad_rack.py)
-in `/klipper/klippy/extras` and restart the Klipper service to load
+in `~/klipper/klippy/extras` and restart the Klipper service to load
 the module.
 
 ## Config files
@@ -61,7 +61,7 @@ in your main printer config file:
         - `toolhead_unload_length`
   - [stepper_tr_selector] section
     - Change `position_max` accordingly depending on your 
-      `lane_count`.
+      `lane_count`, using the formula in the config file.
   - [tmc2209 stepper_tr_selector] or [tmc5160 stepper_tr_selector]
     section
     - Change `run_current` to match your selector motor.
