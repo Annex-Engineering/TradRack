@@ -67,7 +67,7 @@ selector_unload_length:
 bowden_length:
 #   Length (in mm) to quickly move filament through the bowden tube
 #   between Trad Rack and the toolhead during loads and unloads.
-#   This parameter must be specified.
+#   See Tuning.md for details. This parameter must be specified.
 extruder_load_length:
 #   Length (in mm) to move filament into the extruder when loading the
 #   toolhead. See Tuning.md for details.
