@@ -34,7 +34,8 @@ class TradRack:
             'buffer_pull_speed', default=self.spool_pull_speed, above=0.)
 
         # create toolhead
-        self.tr_toolhead = TradRackToolHead(config, self.buffer_pull_speed)
+        self.tr_toolhead = TradRackToolHead(config, self.buffer_pull_speed,
+                                            lambda : self.extruder_synced)
         self.sel_max_velocity, _ = self.tr_toolhead.get_sel_max_velocity()
 
         # get servo
@@ -1100,7 +1101,7 @@ class TradRack:
 SDS_CHECK_TIME = 0.001 # step+dir+step filter in stepcompress.c
 
 class TradRackToolHead(toolhead.ToolHead, object):
-    def __init__(self, config, buffer_pull_speed):
+    def __init__(self, config, buffer_pull_speed, is_extruder_synced):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
         self.all_mcus = [
@@ -1115,8 +1116,6 @@ class TradRackToolHead(toolhead.ToolHead, object):
                                             self._handle_shutdown)
         # Velocity and acceleration control
         tr_config = config.getsection('trad_rack')
-        extruder_accel = config.getsection('extruder') \
-                               .getfloat('max_extrude_only_accel')
         self.sel_max_velocity = tr_config.getfloat('selector_max_velocity',
             above=0.)
         self.fil_max_velocity = tr_config.getfloat('filament_max_velocity',
@@ -1124,7 +1123,7 @@ class TradRackToolHead(toolhead.ToolHead, object):
         self.max_velocity = max(self.sel_max_velocity, self.fil_max_velocity)
         self.sel_max_accel = tr_config.getfloat('selector_max_accel', above=0.)
         self.fil_max_accel = tr_config.getfloat('filament_max_accel',
-            default=extruder_accel, above=0.)
+            default=1500., above=0.)
         self.max_accel = max(self.sel_max_accel, self.fil_max_accel)
         self.requested_accel_to_decel = config.getfloat(
             'max_accel_to_decel', self.max_accel * 0.5, above=0.)
@@ -1166,7 +1165,7 @@ class TradRackToolHead(toolhead.ToolHead, object):
         self.Coord = gcode.Coord
         self.extruder = kinematics.extruder.DummyExtruder(self.printer)
         try:
-            self.kin = TradRackKinematics(self, config)
+            self.kin = TradRackKinematics(self, config, is_extruder_synced)
         except config.error as e:
             raise
         except self.printer.lookup_object('pins').error as e:
@@ -1188,7 +1187,7 @@ class TradRackToolHead(toolhead.ToolHead, object):
         return self.fil_max_velocity, self.fil_max_accel
 
 class TradRackKinematics:
-    def __init__(self, toolhead, config):
+    def __init__(self, toolhead, config, is_extruder_synced):
         self.printer = config.get_printer()
         # Setup axis rails
         selector_stepper_section = config.getsection(SELECTOR_STEPPER_NAME)
@@ -1215,6 +1214,8 @@ class TradRackKinematics:
             note_valid=False)
         self.selector_max = selector_stepper_section.getfloat('position_max',
             note_valid=False)
+
+        self.is_extruder_synced = is_extruder_synced
 
     def get_steppers(self):
         rails = self.rails
@@ -1272,8 +1273,27 @@ class TradRackKinematics:
             or ypos < limits[1][0] or ypos > limits[1][1]):
             self._check_endstops(move)
 
+        # Get filament driver speed and accel limits
+        if self.is_extruder_synced():
+            extruder = self.printer.lookup_object('toolhead').get_extruder()
+            fil_max_velocity = min(self.fil_max_velocity,
+                                   extruder.max_e_velocity)
+            fil_max_accel = min(self.fil_max_accel,
+                                extruder.max_e_accel)
+        else:
+            fil_max_velocity = self.fil_max_velocity
+            fil_max_accel = self.fil_max_accel
+
+        # Move with both axes - update velocity and accel
+        if move.axes_d[0] and move.axes_d[1]:
+            vel = move.move_d * min(self.sel_max_velocity / abs(move.axes_d[0]),
+                                    fil_max_velocity / abs(move.axes_d[1]))
+            accel = move.move_d * min(self.sel_max_accel / abs(move.axes_d[0]),
+                                      fil_max_accel / abs(move.axes_d[1]))
+            move.limit_speed(vel, accel)
+
         # Move with selector - update velocity and accel
-        if move.axes_d[0]:
+        elif move.axes_d[0]:
             move.limit_speed(self.sel_max_velocity, self.sel_max_accel)
 
         # Move with filament driver - update velocity and accel
@@ -1383,7 +1403,7 @@ class TradRackLanePositionManager:
             
     def get_lane_positions(self):
         lane_positions = []
-        curr_pos = 0
+        curr_pos = 0.
         for i in range(self.lane_count):
             curr_pos += self.lane_spacing_mods[i]
             lane_positions.append(curr_pos + self.lane_offsets[i])

@@ -20,9 +20,9 @@ selector_max_accel:
 #filament_max_velocity:
 #   Maximum velocity (in mm/s) for filament movement. 
 #   Defaults to buffer_pull_speed.
-#filament_max_accel:
+#filament_max_accel: 1500.0
 #   Maximum acceleration (in mm/s^2) for filament movement.
-#   Defaults to max_extrude_only_accel from the [extruder] section.
+#   The default is 1500.0.
 toolhead_fil_sensor_pin:
 #   The pin on which the toolhead filament sensor is connected.
 #   If a pin is not specified, no toolhead filament sensor will 
