@@ -20,9 +20,9 @@ selector_max_accel:
 #filament_max_velocity:
 #   Maximum velocity (in mm/s) for filament movement. 
 #   Defaults to buffer_pull_speed.
-#filament_max_accel:
+#filament_max_accel: 1500.0
 #   Maximum acceleration (in mm/s^2) for filament movement.
-#   Defaults to max_extrude_only_accel from the [extruder] section.
+#   The default is 1500.0.
 toolhead_fil_sensor_pin:
 #   The pin on which the toolhead filament sensor is connected.
 #   If a pin is not specified, no toolhead filament sensor will 
@@ -67,7 +67,7 @@ selector_unload_length:
 bowden_length:
 #   Length (in mm) to quickly move filament through the bowden tube
 #   between Trad Rack and the toolhead during loads and unloads.
-#   This parameter must be specified.
+#   See Tuning.md for details. This parameter must be specified.
 extruder_load_length:
 #   Length (in mm) to move filament into the extruder when loading the
 #   toolhead. See Tuning.md for details.

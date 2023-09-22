@@ -44,7 +44,7 @@ filament profiles with "No Ramming" in their name. You must
 select a printer profile with "Experimental" in its name to allow
 these print and/or filament profiles to be selected.
 
-In addition, if you use a "No Ramming" print profile, you must modify
+In addition, if you use a "No Unload" print profile, you must modify
 `post_process` depending on where you have python installed and where
 [remove_unload.py](/Slicer_Scripts/remove_unload.py) is located on
 your computer. You can do this either in the slicer or by directly
