@@ -1553,7 +1553,7 @@ class TradRackKinematics:
 
         # Move with filament driver - update velocity and accel
         elif move.axes_d[1]:
-            move.limit_speed(self.fil_max_velocity, self.fil_max_accel)
+            move.limit_speed(fil_max_velocity, fil_max_accel)
 
     def get_status(self, eventtime):
         axes = [a for a, (l, h) in zip("xy", self.limits) if l <= h]
