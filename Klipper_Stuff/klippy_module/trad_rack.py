@@ -19,6 +19,7 @@ class TradRack:
     VARS_CALIB_BOWDEN_UNLOAD_LENGTH = "calib_bowden_unload_length"
     VARS_CONFIG_BOWDEN_LENGTH = "config_bowden_length"
     VARS_TOOL_STATUS = "tr_state_tool_status"
+    VARS_HEATER_TARGET = "tr_last_heater_target"
 
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -143,6 +144,7 @@ class TradRack:
         self.bowden_unload_lengths_filename = os.path.expanduser(
             "~/bowden_unload_lengths.csv")
         self.ignore_next_unload_length = False
+        self.last_heater_target = 0.
         self.tr_next_generator = None
 
         # resume variables
@@ -249,6 +251,9 @@ class TradRack:
             self.gcode.run_script_from_command(
                 "SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\""
                 % (self.VARS_CONFIG_BOWDEN_LENGTH, self.config_bowden_length))
+            
+        # load last heater target
+        self.last_heater_target = self.variables.get(self.VARS_HEATER_TARGET)
 
     # gcode commands
     cmd_TR_HOME_help = "Home Trad Rack's selector"
@@ -290,6 +295,12 @@ class TradRack:
     def cmd_TR_LOAD_TOOLHEAD(self, gcmd):
         start_lane = self.active_lane
         lane = gcmd.get_int('LANE', None)
+
+        # wait for heater temp if needed
+        self._wait_for_heater_temp(gcmd.get_float('MIN_TEMP', 0., minval=0.),
+                                   gcmd.get_float('EXACT_TEMP', 0., minval=0.))
+
+        # load toolhead
         try:
             self._load_toolhead(lane, gcmd,
                                 gcmd.get_float('BOWDEN_LENGTH', None,
@@ -305,6 +316,11 @@ class TradRack:
 
     cmd_TR_UNLOAD_TOOLHEAD_help = "Unload filament from the toolhead"
     def cmd_TR_UNLOAD_TOOLHEAD(self, gcmd):
+        # wait for heater temp if needed
+        self._wait_for_heater_temp(gcmd.get_float('MIN_TEMP', 0., minval=0.),
+                                   gcmd.get_float('EXACT_TEMP', 0., minval=0.))
+        
+        # unload toolhead
         self._unload_toolhead(gcmd)
 
     cmd_TR_SERVO_DOWN_help = "Lower the servo"
@@ -608,6 +624,38 @@ class TradRack:
         self._raise_servo()
 
         gcmd.respond_info("Load complete")
+    
+    def _wait_for_heater_temp(self, min_temp=0., exact_temp=0.):
+        # get current and target temps
+        heater = self.toolhead.get_extruder().get_heater()
+        smoothed_temp, target_temp = heater.get_temp(self.reactor.monotonic())
+        min_extrude_temp = heater.min_extrude_temp
+
+        # raise an error if no valid temp has been set
+        if max(min_temp, exact_temp, target_temp, self.last_heater_target) \
+            < min_extrude_temp:
+            raise self.gcode.error("Extruder temperature must be set above "
+                                   "min_extrude_temp")
+
+        # set temp and wait if below acceptable temp
+        min_temp = max(min_temp, min_extrude_temp)
+        if exact_temp or smoothed_temp < min_temp:
+            if exact_temp:
+                temp = exact_temp
+            elif target_temp > min_temp:
+                temp = target_temp
+            else:
+                temp = max(min_temp, self.last_heater_target)
+            pheaters = self.printer.lookup_object('heaters')
+            pheaters.set_temperature(heater, temp, True)
+    
+    def _save_heater_target(self):
+        heater = self.toolhead.get_extruder().get_heater()
+        _, target_temp = heater.get_temp(self.reactor.monotonic())
+        self.gcode.run_script_from_command(
+            "SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\""
+            % (self.VARS_HEATER_TARGET, target_temp))
+        self.last_heater_target = target_temp
 
     def _load_toolhead(self, lane, gcmd, bowden_length=None,
                        extruder_load_length=None, hotend_load_length=None):
@@ -765,6 +813,9 @@ class TradRack:
 
         # set active lane
         self.active_lane = lane
+
+        # save heater target
+        self._save_heater_target()
 
         # run post-load custom gcode
         self.post_load_macro.run_gcode_from_command()
