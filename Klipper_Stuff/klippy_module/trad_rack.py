@@ -208,7 +208,8 @@ class TradRack:
             desc=self.cmd_TR_SET_HOTEND_LOAD_LENGTH_help)
         for i in range(self.lane_count):
             self.gcode.register_command('T{}'.format(i),
-                self.cmd_SELECT_TOOL,
+                lambda params: self.cmd_SELECT_TOOL(
+                    self.gcode._get_extended_params(params)),
                 desc=self.cmd_SELECT_TOOL_help)
 
     def handle_connect(self):
