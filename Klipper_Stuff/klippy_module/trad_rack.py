@@ -295,33 +295,25 @@ class TradRack:
     def cmd_TR_LOAD_TOOLHEAD(self, gcmd):
         start_lane = self.active_lane
         lane = gcmd.get_int('LANE', None)
-
-        # wait for heater temp if needed
-        self._wait_for_heater_temp(gcmd.get_float('MIN_TEMP', 0., minval=0.),
-                                   gcmd.get_float('EXACT_TEMP', 0., minval=0.))
-
-        # load toolhead
         try:
             self._load_toolhead(lane, gcmd,
+                                gcmd.get_float('MIN_TEMP', 0., minval=0.),
+                                gcmd.get_float('EXACT_TEMP', 0., minval=0.),
                                 gcmd.get_float('BOWDEN_LENGTH', None,
                                                minval=0.),
                                 gcmd.get_float('EXTRUDER_LOAD_LENGTH', None,
                                                minval=0.),
                                 gcmd.get_float('HOTEND_LOAD_LENGTH', None,
                                                minval=0.))
-        except:
+        except TradRackLoadError:
             logging.warning("trad_rack: Toolchange from lane {} to {} failed"
                             .format(start_lane, lane), exc_info=True)
             self._send_pause()
 
     cmd_TR_UNLOAD_TOOLHEAD_help = "Unload filament from the toolhead"
     def cmd_TR_UNLOAD_TOOLHEAD(self, gcmd):
-        # wait for heater temp if needed
-        self._wait_for_heater_temp(gcmd.get_float('MIN_TEMP', 0., minval=0.),
-                                   gcmd.get_float('EXACT_TEMP', 0., minval=0.))
-        
-        # unload toolhead
-        self._unload_toolhead(gcmd)
+        self._unload_toolhead(gcmd, gcmd.get_float('MIN_TEMP', 0., minval=0.),
+                              gcmd.get_float('EXACT_TEMP', 0., minval=0.))
 
     cmd_TR_SERVO_DOWN_help = "Lower the servo"
     def cmd_TR_SERVO_DOWN(self, gcmd):
@@ -657,8 +649,9 @@ class TradRack:
             % (self.VARS_HEATER_TARGET, target_temp))
         self.last_heater_target = target_temp
 
-    def _load_toolhead(self, lane, gcmd, bowden_length=None,
-                       extruder_load_length=None, hotend_load_length=None):
+    def _load_toolhead(self, lane, gcmd, min_temp=0., exact_temp=0.,
+                       bowden_length=None, extruder_load_length=None,
+                       hotend_load_length=None):
         # set up resume callback
         self._set_up_resume("load toolhead", {})
 
@@ -681,6 +674,9 @@ class TradRack:
         # save gcode state
         self.gcode.run_script_from_command(
             "SAVE_GCODE_STATE NAME=TR_TOOLCHANGE_STATE")
+        
+        # wait for heater temp if needed
+        self._wait_for_heater_temp(min_temp, exact_temp)
 
         # unload current lane if there is filament in the selector
         self.toolhead.wait_moves()
@@ -698,7 +694,8 @@ class TradRack:
                 self.lanes_unloaded[self.curr_lane] = False
                 logging.warning("trad_rack: Failed to unload toolhead",
                                 exc_info=True)
-                raise self.gcode.error("Failed to load toolhead")
+                raise TradRackLoadError("Failed to load toolhead. Could not "
+                                        "unload toolhead before load")
 
         # load filament into the selector
         try:
@@ -711,7 +708,8 @@ class TradRack:
             self.retry_lane = lane
             logging.warning("trad_rack: Failed to load selector",
                             exc_info=True)
-            raise self.gcode.error("Failed to load toolhead")
+            raise TradRackLoadError("Failed to load toolhead. Could not load "
+                                    "selector from lane %d" % lane)
 
         # move filament through the bowden tube
         self._reset_fil_driver()
@@ -761,8 +759,9 @@ class TradRack:
                 self.retry_lane = lane
                 logging.warning("trad_rack: Toolhead sensor homing move failed",
                                 exc_info=True)
-                raise self.gcode.error("Failed to load toolhead. No trigger on "
-                                       "toolhead sensor after full movement")
+                raise TradRackLoadError("Failed to load toolhead. No trigger "
+                                        "on toolhead sensor after full "
+                                        "movement")
 
             # update bowden_load_length
             length = trigpos[1] - move_start + base_length \
@@ -908,7 +907,7 @@ class TradRack:
         # raise servo
         self._raise_servo()
 
-    def _unload_toolhead(self, gcmd):
+    def _unload_toolhead(self, gcmd, min_temp=0., exact_temp=0.):
         # reset active lane
         self.active_lane = None
 
@@ -916,6 +915,9 @@ class TradRack:
         if not self._can_lower_servo():
             raise self.gcode.error("Selector must be moved to a lane "
                                    "before unloading")
+        
+        # wait for heater temp if needed
+        self._wait_for_heater_temp(min_temp, exact_temp)
 
         # run pre-unload custom gcode
         self.pre_unload_macro.run_gcode_from_command()
@@ -1562,6 +1564,9 @@ class MovingAverageFilter:
 
     def get_entry_count(self):
         return len(self.queue)
+    
+class TradRackLoadError(Exception):
+    pass
 
 def load_config(config):
     return TradRack(config)
