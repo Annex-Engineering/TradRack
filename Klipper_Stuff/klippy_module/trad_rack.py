@@ -664,6 +664,10 @@ class TradRack:
         self._check_lane_valid(lane)
         if lane == self.active_lane:
             return
+        
+        # check if homed
+        if not self._is_selector_homed():
+            raise self.gcode.error("Must home selector first")
 
         # check and set lengths
         if bowden_length is None:
