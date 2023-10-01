@@ -8,7 +8,7 @@ function to see which settings these correspond to in the GUI.
 
 ## Adding provided profiles
 A vendor bundle for SuperSlicer 2.4.58 can be found in the
-[SuperSlicer_2.4.58 folder](/Slicer_Config/PrusaSlicer_2.4.58). To use
+[SuperSlicer_2.4.58 folder](/Slicer_Config/SuperSlicer_2.4.58). To use
 the included profiles, first copy the contents of the folder to the
 `vendor` folder located in:
 
