@@ -254,7 +254,8 @@ class TradRack:
                 % (self.VARS_CONFIG_BOWDEN_LENGTH, self.config_bowden_length))
             
         # load last heater target
-        self.last_heater_target = self.variables.get(self.VARS_HEATER_TARGET)
+        self.last_heater_target = self.variables.get(self.VARS_HEATER_TARGET,
+                                                     0.)
 
     # gcode commands
     cmd_TR_HOME_help = "Home Trad Rack's selector"
