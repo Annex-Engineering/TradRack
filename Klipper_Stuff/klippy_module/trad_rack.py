@@ -126,6 +126,8 @@ class TradRack:
             'target_selector_homing_dist', 10., above=0.)
         self.user_wait_time = config.getint(
             'user_wait_time', default=15, minval=-1)
+        register_toolchange_commands = config.getboolean(
+            'register_toolchange_commands', default=True)
 
         # other variables
         self.toolhead = None
@@ -206,11 +208,12 @@ class TradRack:
         self.gcode.register_command('TR_SET_HOTEND_LOAD_LENGTH',
             self.cmd_TR_SET_HOTEND_LOAD_LENGTH,
             desc=self.cmd_TR_SET_HOTEND_LOAD_LENGTH_help)
-        for i in range(self.lane_count):
-            self.gcode.register_command('T{}'.format(i),
-                lambda params: self.cmd_SELECT_TOOL(
-                    self.gcode._get_extended_params(params)),
-                desc=self.cmd_SELECT_TOOL_help)
+        if register_toolchange_commands:
+            for i in range(self.lane_count):
+                self.gcode.register_command('T{}'.format(i),
+                    lambda params: self.cmd_SELECT_TOOL(
+                        self.gcode._get_extended_params(params)),
+                    desc=self.cmd_SELECT_TOOL_help)
 
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
