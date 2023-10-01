@@ -136,6 +136,11 @@ toolhead_unload_length:
 #   Maximum number of samples that are averaged to set bowden lengths
 #   for loading and unloading. See Tuning.md for details. The default
 #   is 10.
+#user_wait_time: 15
+#   Time (in seconds) to wait for the user to take an action
+#   before continuing automatically. If set to -1, Trad Rack will wait
+#   for the user indefinitely. This value is currently used by the
+#   TR_LOCATE_SELECTOR gcode command. The default is 15.
 #pre_unload_gcode:
 #   Gcode command template that is run before the toolhead is
 #   unloaded. The default is to run no extra commands.
@@ -144,8 +149,8 @@ toolhead_unload_length:
 #   loaded. The default is to run no extra commands.
 #pause_gcode:
 #   Gcode command template that is run whenever Trad Rack needs to
-#   pause the print due to a failed load or unload. The default is to
-#   run the PAUSE gcode command.
+#   pause the print (usually due to a failed load or unload). The
+#   default is to run the PAUSE gcode command.
 #resume_gcode:
 #   Gcode command template that is run whenever the TR_RESUME command
 #   needs to resume the print. The default is to run the RESUME

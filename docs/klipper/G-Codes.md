@@ -22,13 +22,21 @@ specified LANE will be reset to `spool_pull_speed`
 If not specified, RESET_SPEED defaults to 1.
 
 ### TR_LOAD_TOOLHEAD
-`TR_LOAD_TOOLHEAD LANE=<lane index> [BOWDEN_LENGTH=<mm>]
+`TR_LOAD_TOOLHEAD LANE=<lane index> [MIN_TEMP=<temperature>]
+[EXACT_TEMP=<temperature>] [BOWDEN_LENGTH=<mm>]
 [EXTRUDER_LOAD_LENGTH=<mm>] [HOTEND_LOAD_LENGTH=<mm>]`: Loads filament
 from the specified lane into the toolhead. If there is already an
 "active lane" because the toolhead has been loaded beforehand, it will
-be unloaded before loading the new filament. If any of the optional
-length parameters are specified, they override the corresponding
-settings in the
+be unloaded before loading the new filament. If `MIN_TEMP` is
+specified and it is higher than the extruder's current temperature,
+then the extruder will be heated to at least `MIN_TEMP` before
+unloading/loading; the current extruder temperature target may be used
+instead if it is higher than `MIN_TEMP`, and if not then
+[tr_last_heater_target](Save_Variables.md) may be used. If
+`EXACT_TEMP` is specified, the extruder will be heated to `EXACT_TEMP`
+before unloading/loading, regardless of any other temperature setting.
+If any of the optional length parameters are specified, they override
+the corresponding settings in the
 [trad_rack config section](Config_Reference.md#trad_rack).
 
 ### T0, T1, T2, etc.
@@ -38,8 +46,16 @@ accepted by the TR_LOAD_TOOLHEAD command can also be used with these
 commands.
 
 ### TR_UNLOAD_TOOLHEAD
-`TR_UNLOAD_TOOLHEAD`: Unloads filament from the toolhead and back into
-its module.
+`TR_UNLOAD_TOOLHEAD [MIN_TEMP=<temperature>]
+[EXACT_TEMP=<temperature>]`: Unloads filament from the toolhead and
+back into its module. If `MIN_TEMP` is specified and it is higher than
+the extruder's current temperature, then the extruder will be heated
+to at least `MIN_TEMP` before unloading; the current extruder
+temperature target may be used instead if it is higher than
+`MIN_TEMP`, and if not then [tr_last_heater_target](Save_Variables.md)
+may be used. If `EXACT_TEMP` is specified, the extruder will be heated
+to `EXACT_TEMP` before unloading/loading, regardless of any other
+temperature setting.
 
 ### TR_SERVO_DOWN
 `TR_SERVO_DOWN [FORCE=<0|1>]`: Moves the servo to bring the drive gear down. The
