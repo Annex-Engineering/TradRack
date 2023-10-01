@@ -370,51 +370,6 @@ class TradRack:
         if self.resume_callback(gcmd, **self.resume_kwargs):
             self.resume_callback = None
             self.resume_macro.run_gcode_from_command()
-
-    def _set_up_resume(self, resume_type, resume_kwargs):
-        self.resume_callback = self.resume_callbacks[resume_type]
-        self.resume_kwargs = resume_kwargs
-
-    def _resume_load_toolhead(self, gcmd):
-        # retry loading lane
-        self._load_lane(self.retry_lane, gcmd)
-
-        # load next filament into toolhead
-        self._load_toolhead(self.next_lane, gcmd)
-
-        gcmd.respond_info("Toolhead loaded succesfully. Resuming print")
-        return True
-
-    def _resume_check_condition(self, gcmd, condition,
-                                resume_msg="Resuming print",
-                                fail_msg="Condition not met to resume"):
-        if condition():
-            gcmd.respond_info(resume_msg)
-            return True
-        gcmd.respond_info(fail_msg)
-        return False
-    
-    def _resume_locate_selector(self, gcmd, condition,
-                                resume_msg="Resuming print",
-                                fail_msg="Condition not met to resume"):
-        if condition():
-            if not self._is_selector_homed():
-                self.cmd_TR_HOME(self.gcode.create_gcode_command(
-                    "TR_HOME", "TR_HOME", {}))
-            self.ignore_next_unload_length = False
-            gcmd.respond_info(resume_msg)
-            return True
-        gcmd.respond_info(fail_msg)
-        return False
-    
-    def _unload_toolhead_and_resume(self):
-        pause_resume = self.printer.lookup_object('pause_resume')
-        if pause_resume.get_status(self.reactor.monotonic())['is_paused']:
-            self.gcode.respond_info("Unloading toolhead")
-            self.cmd_TR_UNLOAD_TOOLHEAD(self.gcode.create_gcode_command(
-                "TR_UNLOAD_TOOLHEAD", "TR_UNLOAD_TOOLHEAD", {}))
-            self.cmd_TR_RESUME(self.gcode.create_gcode_command(
-                "TR_RESUME", "TR_RESUME", {}))
                 
     cmd_TR_LOCATE_SELECTOR_help = ("Ensures the position of Trad Rack's "
                                    "selector is known so that it is ready for "
@@ -1205,6 +1160,53 @@ class TradRack:
 
         # return distance traveled
         return max_travel - trigpos[0]
+    
+    # resume callbacks
+    def _resume_load_toolhead(self, gcmd):
+        # retry loading lane
+        self._load_lane(self.retry_lane, gcmd)
+
+        # load next filament into toolhead
+        self._load_toolhead(self.next_lane, gcmd)
+
+        gcmd.respond_info("Toolhead loaded succesfully. Resuming print")
+        return True
+
+    def _resume_check_condition(self, gcmd, condition,
+                                resume_msg="Resuming print",
+                                fail_msg="Condition not met to resume"):
+        if condition():
+            gcmd.respond_info(resume_msg)
+            return True
+        gcmd.respond_info(fail_msg)
+        return False
+    
+    def _resume_locate_selector(self, gcmd, condition,
+                                resume_msg="Resuming print",
+                                fail_msg="Condition not met to resume"):
+        if condition():
+            if not self._is_selector_homed():
+                self.cmd_TR_HOME(self.gcode.create_gcode_command(
+                    "TR_HOME", "TR_HOME", {}))
+            self.ignore_next_unload_length = False
+            gcmd.respond_info(resume_msg)
+            return True
+        gcmd.respond_info(fail_msg)
+        return False
+    
+    # other resume helper functions
+    def _set_up_resume(self, resume_type, resume_kwargs):
+        self.resume_callback = self.resume_callbacks[resume_type]
+        self.resume_kwargs = resume_kwargs
+    
+    def _unload_toolhead_and_resume(self):
+        pause_resume = self.printer.lookup_object('pause_resume')
+        if pause_resume.get_status(self.reactor.monotonic())['is_paused']:
+            self.gcode.respond_info("Unloading toolhead")
+            self.cmd_TR_UNLOAD_TOOLHEAD(self.gcode.create_gcode_command(
+                "TR_UNLOAD_TOOLHEAD", "TR_UNLOAD_TOOLHEAD", {}))
+            self.cmd_TR_RESUME(self.gcode.create_gcode_command(
+                "TR_RESUME", "TR_RESUME", {}))
 
     # other functions
     def get_status(self, eventtime):
