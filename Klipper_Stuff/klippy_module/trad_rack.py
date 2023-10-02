@@ -19,9 +19,11 @@ class TradRack:
     VARS_CALIB_BOWDEN_UNLOAD_LENGTH = "calib_bowden_unload_length"
     VARS_CONFIG_BOWDEN_LENGTH = "config_bowden_length"
     VARS_TOOL_STATUS = "tr_state_tool_status"
+    VARS_HEATER_TARGET = "tr_last_heater_target"
 
     def __init__(self, config):
         self.printer = config.get_printer()
+        self.reactor = self.printer.get_reactor()
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
         self.printer.register_event_handler("klippy:ready",
@@ -127,6 +129,10 @@ class TradRack:
             max(10., self.toolhead_unload_length), above=0.)
         self.target_selector_homing_dist = config.getfloat(
             'target_selector_homing_dist', 10., above=0.)
+        self.user_wait_time = config.getint(
+            'user_wait_time', default=15, minval=-1)
+        register_toolchange_commands = config.getboolean(
+            'register_toolchange_commands', default=True)
 
         # other variables
         self.toolhead = None
@@ -144,7 +150,18 @@ class TradRack:
             "~/bowden_load_lengths.csv")
         self.bowden_unload_lengths_filename = os.path.expanduser(
             "~/bowden_unload_lengths.csv")
+        self.ignore_next_unload_length = False
+        self.last_heater_target = 0.
         self.tr_next_generator = None
+
+        # resume variables
+        self.resume_callbacks = {
+            "load toolhead": self._resume_load_toolhead,
+            "check condition": self._resume_check_condition,
+            "locate selector": self._resume_locate_selector
+        }
+        self.resume_callback = None
+        self.resume_kwargs = None
 
         # tool mapping
         self.lanes_dead = [False] * self.lane_count
@@ -219,10 +236,12 @@ class TradRack:
         self.gcode.register_command('TR_PRINT_TOOL_GROUPS',
             self.cmd_TR_PRINT_TOOL_GROUPS,
             desc=self.cmd_TR_PRINT_TOOL_GROUPS_help)
-        for i in range(self.lane_count):
-            self.gcode.register_command('T{}'.format(i),
-                self.cmd_SELECT_TOOL,
-                desc=self.cmd_SELECT_TOOL_help)
+        if register_toolchange_commands:
+            for i in range(self.lane_count):
+                self.gcode.register_command('T{}'.format(i),
+                    lambda params: self.cmd_SELECT_TOOL(
+                        self.gcode._get_extended_params(params)),
+                    desc=self.cmd_SELECT_TOOL_help)
 
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
@@ -264,6 +283,10 @@ class TradRack:
             self.gcode.run_script_from_command(
                 "SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\""
                 % (self.VARS_CONFIG_BOWDEN_LENGTH, self.config_bowden_length))
+
+        # load last heater target
+        self.last_heater_target = self.variables.get(self.VARS_HEATER_TARGET,
+                                                     0.)
 
     def handle_runout(self, eventtime):
         # pause
@@ -348,20 +371,23 @@ class TradRack:
         # load toolhead
         try:
             self._load_toolhead(lane, gcmd,
+                                gcmd.get_float('MIN_TEMP', 0., minval=0.),
+                                gcmd.get_float('EXACT_TEMP', 0., minval=0.),
                                 gcmd.get_float('BOWDEN_LENGTH', None,
                                                minval=0.),
                                 gcmd.get_float('EXTRUDER_LOAD_LENGTH', None,
                                                minval=0.),
                                 gcmd.get_float('HOTEND_LOAD_LENGTH', None,
                                                minval=0.))
-        except:
+        except TradRackLoadError:
             logging.warning("trad_rack: Toolchange from lane {} to {} failed"
                             .format(start_lane, lane), exc_info=True)
             self._send_pause()
 
     cmd_TR_UNLOAD_TOOLHEAD_help = "Unload filament from the toolhead"
     def cmd_TR_UNLOAD_TOOLHEAD(self, gcmd):
-        self._unload_toolhead(gcmd)
+        self._unload_toolhead(gcmd, gcmd.get_float('MIN_TEMP', 0., minval=0.),
+                              gcmd.get_float('EXACT_TEMP', 0., minval=0.))
 
     cmd_TR_SERVO_DOWN_help = "Lower the servo"
     def cmd_TR_SERVO_DOWN(self, gcmd):
@@ -420,55 +446,49 @@ class TradRack:
 
     cmd_TR_RESUME_help = ("Resume after a failed load or unload")
     def cmd_TR_RESUME(self, gcmd):
-        if self.runout_lane is None or self.runout_steps_done == 2:
-            # retry loading lane
-            self._load_lane(self.retry_lane, gcmd)
-
-        if self.runout_lane is None:
-            # load next filament into toolhead
-            self._load_toolhead(self.next_lane, gcmd)
-
-            # resume
-            gcmd.respond_info("Toolhead loaded succesfully. Resuming print")
-            self._send_resume()
-        else:
-            self._runout_replace_filament(gcmd)
+        if self.resume_callback(gcmd, **self.resume_kwargs):
+            self.resume_callback = None
+            self.resume_macro.run_gcode_from_command()
 
     cmd_TR_LOCATE_SELECTOR_help = ("Ensures the position of Trad Rack's "
                                    "selector is known so that it is ready for "
                                    "a print")
     def cmd_TR_LOCATE_SELECTOR(self, gcmd):
         if self._query_selector_sensor():
-            if self._is_selector_homed():
-                if self.active_lane is None:
-                    if self.curr_lane is None:
-                        # ask user to set the active lane or reload the lane
-                        gcmd.respond_info("Selector sensor is triggered but no "
-                                          "active lane is set. Please use "
-                                          "TR_SET_ACTIVE_LANE if the toolhead "
-                                          "is already loaded, else remove the "
-                                          "filament and use TR_LOAD_LANE to "
-                                          "reload the current lane. Then use "
-                                          "RESUME to resume the print.")
-                        self._send_pause()
-                    else:
-                        # unload selector into current lane
-                        self._unload_selector(gcmd)
-                # (else assume the toolhead is already loaded)
+            if self.active_lane is None:
+                # ask user to set the active lane or unload the lane
+                gcmd.respond_info("Selector sensor is triggered but no active "
+                                  "lane is set. Please use TR_SET_ACTIVE_LANE "
+                                  "if the toolhead is already loaded, else use "
+                                  "TR_UNLOAD_TOOLHEAD to unload the filament. "
+                                  "Then use TR_RESUME to resume the print.")
+                self.ignore_next_unload_length = True
+                
+                # set up resume callback
+                resume_kwargs = {
+                    "condition": lambda : self.active_lane \
+                        or not self._query_selector_sensor(),
+                    "fail_msg": "Cannot resume. Please use either "
+                                "TR_SET_ACTIVE_LANE or TR_UNLOAD_TOOLHEAD, "
+                                "then use TR_RESUME."
+                }
+                self._set_up_resume("locate selector", resume_kwargs)
+
+                # set up callback to run if user takes no action
+                if self.user_wait_time != -1:
+                    gcmd.respond_info("If no action is taken within %d "
+                                      "seconds, Trad Rack will unload the "
+                                      "toolhead and resume automatically."
+                                      % (self.user_wait_time))
+                    RunIfNoActivity(self.tr_toolhead, self.reactor,
+                                    self._unload_toolhead_and_resume,
+                                    self.user_wait_time)
+
+                # pause and wait for user to resume
+                self._send_pause()
             else:
-                if self.active_lane is None:
-                    # ask user to set the active lane or home and reload the
-                    # lane
-                    gcmd.respond_info("Selector sensor is triggered but no "
-                                      "active lane is set. Please use "
-                                      "TR_SET_ACTIVE_LANE if the toolhead "
-                                      "is already loaded, else remove the "
-                                      "filament and use TR_HOME to home the "
-                                      "selector and TR_LOAD_LANE to "
-                                      "reload the current lane. Then use "
-                                      "RESUME to resume the print.")
-                    self._send_pause()
-                else:
+                # (if the selector is homed, nothing needs to be done)
+                if not self._is_selector_homed():
                     # set selector position and enable motor
                     # (this allows printing again without reloading the
                     # toolhead if the motor was disabled after the last print)
@@ -593,12 +613,9 @@ class TradRack:
                 self.toolhead.dwell(self.servo_wait)
         self.servo_raised = True
 
-    def _get_time(self):
-        return self.printer.get_reactor().monotonic()
-
     def _is_selector_homed(self):
         return 'x' in self.tr_toolhead.get_kinematics() \
-                                      .get_status(self._get_time()) \
+                                      .get_status(self.reactor.monotonic()) \
                                       ['homed_axes']
 
     def _query_selector_sensor(self):
@@ -688,10 +705,45 @@ class TradRack:
         self._raise_servo()
 
         gcmd.respond_info("Load complete")
+    
+    def _wait_for_heater_temp(self, min_temp=0., exact_temp=0.):
+        # get current and target temps
+        heater = self.toolhead.get_extruder().get_heater()
+        smoothed_temp, target_temp = heater.get_temp(self.reactor.monotonic())
+        min_extrude_temp = heater.min_extrude_temp
 
+        # raise an error if no valid temp has been set
+        if max(min_temp, exact_temp, target_temp, self.last_heater_target) \
+            < min_extrude_temp:
+            raise self.gcode.error("Extruder temperature must be set above "
+                                   "min_extrude_temp")
 
-    def _load_toolhead(self, lane, gcmd, bowden_length=None,
-                       extruder_load_length=None, hotend_load_length=None):
+        # set temp and wait if below acceptable temp
+        min_temp = max(min_temp, min_extrude_temp)
+        if exact_temp or smoothed_temp < min_temp:
+            if exact_temp:
+                temp = exact_temp
+            elif target_temp > min_temp:
+                temp = target_temp
+            else:
+                temp = max(min_temp, self.last_heater_target)
+            pheaters = self.printer.lookup_object('heaters')
+            pheaters.set_temperature(heater, temp, True)
+    
+    def _save_heater_target(self):
+        heater = self.toolhead.get_extruder().get_heater()
+        _, target_temp = heater.get_temp(self.reactor.monotonic())
+        self.gcode.run_script_from_command(
+            "SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\""
+            % (self.VARS_HEATER_TARGET, target_temp))
+        self.last_heater_target = target_temp
+
+    def _load_toolhead(self, lane, gcmd, min_temp=0., exact_temp=0.,
+                       bowden_length=None, extruder_load_length=None,
+                       hotend_load_length=None):
+        # set up resume callback
+        self._set_up_resume("load toolhead", {})
+
         # keep track of lane in case of an error
         self.next_lane = lane
 
@@ -699,6 +751,10 @@ class TradRack:
         self._check_lane_valid(lane)
         if lane == self.active_lane:
             return
+        
+        # check if homed
+        if not self._is_selector_homed():
+            raise self.gcode.error("Must home selector first")
 
         # check and set lengths
         if bowden_length is None:
@@ -711,6 +767,9 @@ class TradRack:
         # save gcode state
         self.gcode.run_script_from_command(
             "SAVE_GCODE_STATE NAME=TR_TOOLCHANGE_STATE")
+
+        # wait for heater temp if needed
+        self._wait_for_heater_temp(min_temp, exact_temp)
 
         # disable runout detection
         self.selector_sensor.set_active(False)
@@ -731,7 +790,8 @@ class TradRack:
                 self.lanes_unloaded[self.curr_lane] = False
                 logging.warning("trad_rack: Failed to unload toolhead",
                                 exc_info=True)
-                raise self.gcode.error("Failed to load toolhead")
+                raise TradRackLoadError("Failed to load toolhead. Could not "
+                                        "unload toolhead before load")
 
         # load filament into the selector
         try:
@@ -744,7 +804,8 @@ class TradRack:
             self.retry_lane = lane
             logging.warning("trad_rack: Failed to load selector",
                             exc_info=True)
-            raise self.gcode.error("Failed to load toolhead")
+            raise TradRackLoadError("Failed to load toolhead. Could not load "
+                                    "selector from lane %d" % lane)
 
         # move filament through the bowden tube
         self._reset_fil_driver()
@@ -794,8 +855,9 @@ class TradRack:
                 self.retry_lane = lane
                 logging.warning("trad_rack: Toolhead sensor homing move failed",
                                 exc_info=True)
-                raise self.gcode.error("Failed to load toolhead. No trigger on "
-                                       "toolhead sensor after full movement")
+                raise TradRackLoadError("Failed to load toolhead. No trigger "
+                                        "on toolhead sensor after full "
+                                        "movement")
 
             # update bowden_load_length
             length = trigpos[1] - move_start + base_length \
@@ -852,6 +914,9 @@ class TradRack:
 
         # enable runout detection
         self.selector_sensor.set_active(True)
+
+        # save heater target
+        self._save_heater_target()
 
         # run post-load custom gcode
         self.post_load_macro.run_gcode_from_command()
@@ -915,7 +980,7 @@ class TradRack:
                                        "triggered after full movement")
 
             # update bowden_unload_length
-            if base_length is not None:
+            if base_length is not None and not self.ignore_next_unload_length:
                 length = move_start - trigpos[1] + base_length \
                          - self.target_selector_homing_dist
                 old_set_length = self.bowden_unload_length
@@ -944,7 +1009,7 @@ class TradRack:
         # raise servo
         self._raise_servo()
 
-    def _unload_toolhead(self, gcmd):
+    def _unload_toolhead(self, gcmd, min_temp=0., exact_temp=0.):
         # reset active lane
         self.active_lane = None
 
@@ -955,6 +1020,9 @@ class TradRack:
         if not self._can_lower_servo():
             raise self.gcode.error("Selector must be moved to a lane "
                                    "before unloading")
+        
+        # wait for heater temp if needed
+        self._wait_for_heater_temp(min_temp, exact_temp)
 
         # run pre-unload custom gcode
         self.pre_unload_macro.run_gcode_from_command()
@@ -1023,6 +1091,9 @@ class TradRack:
         # note that the current lane's buffer has been filled
         if self.curr_lane is not None:
             self.lanes_unloaded[self.curr_lane] = True
+
+        # reset ignore_next_unload_length
+        self.ignore_next_unload_length = False
 
     def _send_pause(self):
         self.pause_macro.run_gcode_from_command()
@@ -1122,6 +1193,9 @@ class TradRack:
         return lanes
 
     def _runout_replace_filament(self, gcmd):
+        # set up resume callback
+        self._set_up_resume("runout", {})
+
         # unload
         if self.runout_steps_done < 1:
             try:
@@ -1343,6 +1417,58 @@ class TradRack:
 
         # return distance traveled
         return max_travel - trigpos[0]
+    
+    # resume callbacks
+    def _resume_load_toolhead(self, gcmd):
+        # retry loading lane
+        self._load_lane(self.retry_lane, gcmd)
+
+        # load next filament into toolhead
+        self._load_toolhead(self.next_lane, gcmd)
+
+        gcmd.respond_info("Toolhead loaded succesfully. Resuming print")
+        return True
+
+    def _resume_check_condition(self, gcmd, condition,
+                                resume_msg="Resuming print",
+                                fail_msg="Condition not met to resume"):
+        if condition():
+            gcmd.respond_info(resume_msg)
+            return True
+        gcmd.respond_info(fail_msg)
+        return False
+    
+    def _resume_locate_selector(self, gcmd, condition,
+                                resume_msg="Resuming print",
+                                fail_msg="Condition not met to resume"):
+        if condition():
+            if not self._is_selector_homed():
+                self.cmd_TR_HOME(self.gcode.create_gcode_command(
+                    "TR_HOME", "TR_HOME", {}))
+            self.ignore_next_unload_length = False
+            gcmd.respond_info(resume_msg)
+            return True
+        gcmd.respond_info(fail_msg)
+        return False
+    
+    def _resume_runout(self, gcmd):
+        self._runout_replace_filament(gcmd)
+        self.resume_callback = None
+        return False
+    
+    # other resume helper functions
+    def _set_up_resume(self, resume_type, resume_kwargs):
+        self.resume_callback = self.resume_callbacks[resume_type]
+        self.resume_kwargs = resume_kwargs
+    
+    def _unload_toolhead_and_resume(self):
+        pause_resume = self.printer.lookup_object('pause_resume')
+        if pause_resume.get_status(self.reactor.monotonic())['is_paused']:
+            self.gcode.respond_info("Unloading toolhead")
+            self.cmd_TR_UNLOAD_TOOLHEAD(self.gcode.create_gcode_command(
+                "TR_UNLOAD_TOOLHEAD", "TR_UNLOAD_TOOLHEAD", {}))
+            self.cmd_TR_RESUME(self.gcode.create_gcode_command(
+                "TR_RESUME", "TR_RESUME", {}))
 
     # other functions
     def get_status(self, eventtime):
@@ -1679,6 +1805,19 @@ class TradRackLanePositionManager:
         lane_positions = self.get_lane_positions()
 
         return pos_endstop, self.lane_spacing, lane_positions
+    
+class RunIfNoActivity:
+    def __init__(self, toolhead, reactor, callback, delay):
+        self.toolhead = toolhead
+        self.initial_print_time = self.toolhead.get_last_move_time()
+        self.callback = callback
+        reactor.register_callback(self._run_if_no_activity,
+                                  reactor.monotonic() + delay)
+
+    def _run_if_no_activity(self, eventtime):
+        print_time, _, lookahead_empty = self.toolhead.check_busy(eventtime)
+        if lookahead_empty and print_time == self.initial_print_time:
+            self.callback()
 
 class MovingAverageFilter:
     def __init__(self, max_entries):
@@ -1695,6 +1834,9 @@ class MovingAverageFilter:
 
     def get_entry_count(self):
         return len(self.queue)
+
+class TradRackLoadError(Exception):
+    pass
 
 class TradRackRunoutSensor:
     def __init__(self, config, runout_callback, pin):

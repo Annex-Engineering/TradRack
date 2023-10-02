@@ -33,3 +33,13 @@ after a restart. See the
 \* if `toolhead_fil_sensor_pin` is not specified or
 `load_with_toolhead_sensor` is False, `calib_bowden_load_length` will
 not be saved.
+
+## Other variables
+
+The following miscellaneous variables are saved.
+
+- `tr_last_heater_target`: Extruder target temperature from the last
+time the toolhead was loaded. This variable may be used by the
+[TR_LOAD_TOOLHEAD or TR_UNLOAD_TOOLHEAD gcode commands](G-Codes.md)
+for setting the extruder temperature before unloading/loading. This
+variable is saved each time the toolhead is loaded.
