@@ -92,15 +92,16 @@ Printer Settings tab.
     ```
     CLEAR_PAUSE
     TR_LOCATE_SELECTOR
-    TR_Print_Start EXTRUDER={first_layer_temperature[initial_tool]} LANE=[initial_tool]
+    T{initial_tool} MIN_TEMP={first_layer_temperature[initial_tool]}
     ```
     
     Explanation:
     - `CLEAR_PAUSE`: Clears the paused state.
-    - `TR_LOCATE_SELECTOR`: See the 
+    - `TR_LOCATE_SELECTOR`: See the
       [G-Codes document](/docs/klipper/G-Codes.md/#tr_locate_selector)
       for more details.
-    - `TR_Print_Start`: Loads the first filament into the toolhead.
+    - `T{initial_tool} MIN_TEMP={...}`: Loads the first filament into
+      the toolhead.
   - Usually not required: if any g-code command or macro that gets
     called within your Start G-code section contains the `M18` or
     `M84` command, add the following to the end of
