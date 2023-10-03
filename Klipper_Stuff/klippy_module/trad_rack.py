@@ -157,8 +157,7 @@ class TradRack:
         # resume variables
         self.resume_callbacks = {
             "load toolhead": self._resume_load_toolhead,
-            "check condition": self._resume_check_condition,
-            "locate selector": self._resume_locate_selector
+            "check condition": self._resume_check_condition
         }
         self.resume_callback = None
         self.resume_kwargs = None
@@ -468,11 +467,12 @@ class TradRack:
                 resume_kwargs = {
                     "condition": lambda : self.active_lane \
                         or not self._query_selector_sensor(),
+                    "action": self._resume_act_locate_selector,
                     "fail_msg": "Cannot resume. Please use either "
                                 "TR_SET_ACTIVE_LANE or TR_UNLOAD_TOOLHEAD, "
                                 "then use TR_RESUME."
                 }
-                self._set_up_resume("locate selector", resume_kwargs)
+                self._set_up_resume("check condition", resume_kwargs)
 
                 # set up callback to run if user takes no action
                 if self.user_wait_time != -1:
@@ -1441,23 +1441,12 @@ class TradRack:
         gcmd.respond_info("Toolhead loaded succesfully. Resuming print")
         return True
 
-    def _resume_check_condition(self, gcmd, condition,
+    def _resume_check_condition(self, gcmd, condition, action=None,
                                 resume_msg="Resuming print",
                                 fail_msg="Condition not met to resume"):
         if condition():
-            gcmd.respond_info(resume_msg)
-            return True
-        gcmd.respond_info(fail_msg)
-        return False
-    
-    def _resume_locate_selector(self, gcmd, condition,
-                                resume_msg="Resuming print",
-                                fail_msg="Condition not met to resume"):
-        if condition():
-            if not self._is_selector_homed():
-                self.cmd_TR_HOME(self.gcode.create_gcode_command(
-                    "TR_HOME", "TR_HOME", {}))
-            self.ignore_next_unload_length = False
+            if action is not None:
+                action()
             gcmd.respond_info(resume_msg)
             return True
         gcmd.respond_info(fail_msg)
@@ -1467,7 +1456,7 @@ class TradRack:
         self._runout_replace_filament(gcmd)
         self.resume_callback = None
         return False
-    
+
     # other resume helper functions
     def _set_up_resume(self, resume_type, resume_kwargs):
         self.resume_callback = self.resume_callbacks[resume_type]
@@ -1481,6 +1470,12 @@ class TradRack:
                 "TR_UNLOAD_TOOLHEAD", "TR_UNLOAD_TOOLHEAD", {}))
             self.cmd_TR_RESUME(self.gcode.create_gcode_command(
                 "TR_RESUME", "TR_RESUME", {}))
+
+    def _resume_act_locate_selector(self):
+        if not self._is_selector_homed():
+            self.cmd_TR_HOME(self.gcode.create_gcode_command(
+                "TR_HOME", "TR_HOME", {}))
+        self.ignore_next_unload_length = False
 
     # other functions
     def get_status(self, eventtime):
