@@ -499,6 +499,12 @@ class TradRack:
         move_time = self.tr_toolhead.get_last_move_time()
         return not not self.fil_driver_endstops[0][0].query_endstop(move_time)
 
+    def _query_toolhead_sensor(self):
+        if not self.toolhead_fil_endstops:
+            return None
+        move_time = self.tr_toolhead.get_last_move_time()
+        return not not self.toolhead_fil_endstops[0][0].query_endstop(move_time)
+
     def _check_lane_valid(self, lane):
         if lane is None or lane > self.lane_count - 1 or lane < 0:
             raise self.gcode.error("Invalid LANE")
@@ -642,24 +648,22 @@ class TradRack:
         # wait for heater temp if needed
         self._wait_for_heater_temp(min_temp, exact_temp)
 
-        # unload current lane if there is filament in the selector
-        self.toolhead.wait_moves()
-        if self._query_selector_sensor():
-            try:
-                self._unload_toolhead(gcmd)
-            except:
-                self._raise_servo()
-                gcmd.respond_info("Failed to unload. Please pull "
-                                  "filament {lane} out of the toolhead and "
-                                  "selector, then use TR_RESUME to reload "
-                                  "lane {lane} and continue."
-                                  .format(lane=str(self.curr_lane)))
-                self.retry_lane = self.curr_lane
-                self.lanes_unloaded[self.curr_lane] = False
-                logging.warning("trad_rack: Failed to unload toolhead",
-                                exc_info=True)
-                raise TradRackLoadError("Failed to load toolhead. Could not "
-                                        "unload toolhead before load")
+        # unload current lane (if filament is detected)
+        try:
+            self._unload_toolhead(gcmd)
+        except:
+            self._raise_servo()
+            gcmd.respond_info("Failed to unload. Please pull the filament in "
+                              "lane {lane} out of the toolhead and selector, "
+                              "then use TR_RESUME to reload lane {lane} and "
+                              "continue."
+                              .format(lane=str(self.curr_lane)))
+            self.retry_lane = self.curr_lane
+            self.lanes_unloaded[self.curr_lane] = False
+            logging.warning("trad_rack: Failed to unload toolhead",
+                            exc_info=True)
+            raise TradRackLoadError("Failed to load toolhead. Could not unload "
+                                    "toolhead before load")
 
         # load filament into the selector
         try:
@@ -874,6 +878,14 @@ class TradRack:
     def _unload_toolhead(self, gcmd, min_temp=0., exact_temp=0.):
         # reset active lane
         self.active_lane = None
+
+        # check for filament
+        self.toolhead.wait_moves()
+        if not (self._query_selector_sensor() or self._query_toolhead_sensor()):
+            # reset ignore_next_unload_length
+            self.ignore_next_unload_length = False
+            
+            return
 
         # check that the selector is at a lane
         if not self._can_lower_servo():
