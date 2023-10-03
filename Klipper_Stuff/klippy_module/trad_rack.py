@@ -357,13 +357,25 @@ class TradRack:
 
             # get default lane for the selected tool
             lane = self.default_lanes[tool]
-            if lane == -1:
+            if lane is None:
                 gcmd.respond_info("Tool {tool} has no lanes assigned to it. "
                                   "Use TR_ASSIGN_LANE LANE=<lane index> "
                                   "TOOL={tool} to assign a lane to tool "
                                   "{tool}, then use TR_RESUME to continue."
                                   .format(tool=str(tool)))
-                # NOT DONE
+
+                # set up resume callback
+                resume_kwargs = {
+                    "condition": lambda t=tool: self.default_lanes[t] \
+                        is not None,
+                    "action": lambda t=tool: self._resume_act_load_toolhead(t),
+                    "fail_msg": "Cannot resume. Please use TR_ASSIGN_LANE to "
+                                "assign a lane to tool %d, then use TR_RESUME."
+                                % tool
+                }
+                self._set_up_resume("check condition", resume_kwargs)
+
+                # pause and wait for user to resume
                 self._send_pause()
                 return
         
@@ -1186,16 +1198,24 @@ class TradRack:
             if self.tool_map[lane] == tool:
                 self.default_lanes[tool] = lane
                 return
-        self.default_lanes[tool] = -1
+        self.default_lanes[tool] = None
 
     def _make_lane_default(self, lane):
         self.default_lanes[self.tool_map[lane]] = lane
     
     def _assign_lane(self, lane, tool):
         prev_tool = self.tool_map[lane]
+
+        # assign lane to tool
         self.tool_map[lane] = tool
+
+        # reassign default lane for previous tool if needed
         if self.default_lanes[prev_tool] == lane:
             self._set_default_lane(prev_tool)
+
+        # ensure new tool has a default lane assigned
+        if self.default_lanes[tool] is None:
+            self.default_lanes[tool] = lane
 
     def _get_assigned_lanes(self, tool):
         lanes = []
@@ -1240,13 +1260,13 @@ class TradRack:
                                           lanes=str(assigned_lanes)))
                 return
             self.replacement_lane = lane
+            self.runout_lane = None
             self.runout_steps_done = 2
         
         # load toolhead
         self._load_toolhead(self.replacement_lane, gcmd)
         
         # resume
-        self.runout_lane = None
         gcmd.respond_info("Toolhead loaded succesfully. Resuming print")
         self._send_resume()
 
@@ -1476,6 +1496,10 @@ class TradRack:
             self.cmd_TR_HOME(self.gcode.create_gcode_command(
                 "TR_HOME", "TR_HOME", {}))
         self.ignore_next_unload_length = False
+
+    def _resume_act_load_toolhead(self, tool):
+        self.cmd_TR_LOAD_TOOLHEAD(self.gcode.create_gcode_command(
+            "TR_LOAD_TOOLHEAD", "TR_LOAD_TOOLHEAD", {"TOOL": tool}))
 
     # other functions
     def get_status(self, eventtime):
