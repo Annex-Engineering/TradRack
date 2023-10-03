@@ -157,7 +157,8 @@ class TradRack:
         # resume variables
         self.resume_callbacks = {
             "load toolhead": self._resume_load_toolhead,
-            "check condition": self._resume_check_condition
+            "check condition": self._resume_check_condition,
+            "runout": self._resume_runout
         }
         self.resume_callback = None
         self.resume_kwargs = None
