@@ -21,7 +21,7 @@ See the [Klipper installation document](klipper/Installation.md).
 
 ## Servo calibration
 
-This section involves setting the rotation direction and angle of the
+This section involves setting the rotation direction and angles of the
 servo. You will need to have Trad Rack fully assembled, wired, and
 connected to your printer with Klipper running.
 
@@ -60,15 +60,81 @@ TR_SERVO_DOWN FORCE=1
 Loosen the screw in the center of the servo horn and the screw in
 the clamp.
 
+For this section, you will need the servo jig that has "HORN ANGLE"
+written on the side:
+
+![HORN ANGLE servo jig](images/horn_angle_jig.png?raw=true)
+
 Insert the servo into the servo jig. You may need to rotate the
 servo horn around the servo spline by hand so that it is at the
 correct angle for the bearing to fit into the jig. The servo's wires
 should be exiting to the left to match the orientation in the image:
 
-![Servo in jig](images/servo_in_jig.png?raw=true)
+![Servo in HORN ANGLE jig](images/servo_in_horn_angle_jig.png?raw=true)
 
-Tighten the two screws you loosened earlier. Then remove the servo jig
-and reattach the servo to Trad Rack.
+Tighten the two screws you loosened earlier. Then remove the servo
+jig.
+
+## Servo up angle
+
+For this section, you will need the servo jig that has "UP ANGLE"
+written on the side:
+
+![UP ANGLE servo jig](images/up_angle_jig.png?raw=true)
+
+Insert the servo into the servo jig. The servo's wires should be
+exiting to the left to match the orientation in the image:
+
+![Servo in UP ANGLE jig](images/servo_in_up_angle_jig.png?raw=true)
+
+Run the following gcode command. Observe the "commanded angle" that is
+reported in the console:
+
+```
+TR_SERVO_TEST
+```
+
+Look at the front of the servo jig and check the position of the screw
+in the bearing relative to the slots. The goal of this section is
+to get the screw close to lining up with the slots:
+
+![UP ANGLE servo jig slot check](images/up_angle_jig_slot_check.png?raw=true)
+
+There is a range of acceptable angles, and the screw does not
+have to exactly align with the slots. If the servo angle is within the
+target range, the jig will be able to slide far enough over the servo
+that the screw protrudes from the front of the jig:
+
+| Wrong angle (screw can't protrude)                  | Angle within target range (screw protrudes)       |
+| ---                                                 | ---                                               |
+| ![](images/up_angle_jig_no_protrusion.png?raw=true) | ![](images/up_angle_jig_protrusion.png?raw=true)  |
+
+If the jig is blocked from being able to slide far enough for the
+screw to protrude, you will need to try another angle. Use the
+following command to test a specific angle. The "commanded angle" from
+earlier corresponds to the current angle of the servo. A higher angle
+will turn the servo counterclockwise, and a lower angle will turn it
+clockwise:
+
+```
+TR_SERVO_TEST ANGLE=<angle>
+```
+
+Repeat with different angles as necessary until the servo is 
+within the target range.
+
+Once the servo aligns well enough with the slots that the screw can
+protrude from the jig, observe the last "raw angle" value reported in
+the console. In your main Trad Rack config file, replace the value of
+`servo_up_angle` in the [trad_rack] section with the "raw angle"
+value. Remove the servo jig and restart Klipper. Then run the
+following gcode command:
+
+```
+TR_SERVO_DOWN FORCE=1
+```
+
+Finally, reattach the servo to Trad Rack.
 
 ## Selector calibration
 

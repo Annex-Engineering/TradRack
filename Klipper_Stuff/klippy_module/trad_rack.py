@@ -186,6 +186,8 @@ class TradRack:
             desc=self.cmd_TR_SERVO_DOWN_help)
         self.gcode.register_command('TR_SERVO_UP', self.cmd_TR_SERVO_UP,
             desc=self.cmd_TR_SERVO_UP_help)
+        self.gcode.register_command('TR_SERVO_TEST', self.cmd_TR_SERVO_TEST,
+            desc=self.cmd_TR_SERVO_TEST_help)
         self.gcode.register_command('TR_SET_ACTIVE_LANE',
             self.cmd_TR_SET_ACTIVE_LANE,
             desc=self.cmd_TR_SET_ACTIVE_LANE_help)
@@ -334,6 +336,44 @@ class TradRack:
     def cmd_TR_SERVO_UP(self, gcmd):
         # raise servo
         self._raise_servo()
+
+    cmd_TR_SERVO_TEST_help = ("Test an angle for Trad Rack's servo relative to"
+                              "servo_down_angle")
+    def cmd_TR_SERVO_TEST(self, gcmd):
+        # get commanded and raw angles
+        cmd_angle = gcmd.get_float('ANGLE',
+            abs(self.servo_up_angle - self.servo_down_angle))
+        if self.servo_up_angle > self.servo_down_angle:
+            raw_angle = self.servo_down_angle + cmd_angle
+            raw_to_cmd = lambda raw: raw - self.servo_down_angle
+        else:
+            raw_angle = self.servo_down_angle - cmd_angle
+            raw_to_cmd = lambda raw: self.servo_down_angle - raw
+        
+        # display angles
+        gcmd.respond_info("commanded angle: %.3f\n"
+                          "raw angle: %.3f" % (cmd_angle, raw_angle))
+            
+        # check raw angle
+        max_angle = self.servo.get_max_angle()
+        if raw_angle > max_angle:
+            raise self.gcode.error("Raw angle is above the maximum of %.3f "
+                                   "(corresponding to a commanded angle of "
+                                   "%.3f). If the servo is not rotating far "
+                                   "enough, try increasing maximum_pulse_width "
+                                   "in the [%s] section in the config file."
+                                   % (max_angle, raw_to_cmd(max_angle),
+                                      SERVO_NAME))
+        elif raw_angle < 0.:
+            raise self.gcode.error("Raw angle is below the minimum of 0.0 "
+                                   "(corresponding to a commanded angle of "
+                                   "%.3f). If the servo is not rotating far "
+                                   "enough, try decreasing minimum_pulse_width "
+                                   "in the [%s] section in the config file."
+                                   % (raw_to_cmd(0.), SERVO_NAME))
+
+        # set servo
+        self.servo.set_servo(angle=raw_angle)
 
     cmd_TR_SET_ACTIVE_LANE_help = ("Set lane number that is currently loaded "
                                    "in the toolhead")
@@ -1514,6 +1554,9 @@ class TradRackServo:
         else:
             self.servo._set_pwm(print_time,
                                 self.servo._get_pwm_from_angle(angle))
+            
+    def get_max_angle(self):
+        return self.servo.max_angle
 
 class TradRackLanePositionManager:
     def __init__(self, lane_count, config):
