@@ -1026,7 +1026,8 @@ class TradRack:
         # raise servo
         self._raise_servo()
 
-    def _unload_toolhead(self, gcmd, min_temp=0., exact_temp=0.):
+    def _unload_toolhead(self, gcmd, min_temp=0., exact_temp=0.,
+                         force_unload=False):
         # reset active lane
         self.active_lane = None
 
@@ -1035,7 +1036,8 @@ class TradRack:
 
         # check for filament
         self.toolhead.wait_moves()
-        if not (self._query_selector_sensor() or self._query_toolhead_sensor()):
+        if not (force_unload or self._query_selector_sensor()
+                or self._query_toolhead_sensor()):
             # reset ignore_next_unload_length
             self.ignore_next_unload_length = False
             
@@ -1232,7 +1234,7 @@ class TradRack:
         # unload
         if self.runout_steps_done < 1:
             try:
-                self._unload_toolhead(gcmd)
+                self._unload_toolhead(gcmd, force_unload=True)
             except:
                 self._raise_servo()
                 gcmd.respond_info("Failed to unload. Please pull "
