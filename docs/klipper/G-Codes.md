@@ -67,6 +67,14 @@ carriage.
 ### TR_SERVO_UP
 `TR_SERVO_UP`: Moves the servo to bring the drive gear up.
 
+### TR_SERVO_TEST
+`TR_SERVO_TEST [ANGLE=<degrees>]`: Moves the servo to the specified
+ANGLE relative to the down position. If ANGLE is not specified, the
+servo will be moved to the up position defined by servo_up_angle from
+the [trad_rack config section](Config_Reference.md#trad_rack).
+This command is meant for testing different servo angles in order
+to find the correct value for servo_up_angle.
+
 ### TR_SET_ACTIVE_LANE
 `TR_SET_ACTIVE_LANE LANE=<lane index>`: Tells Trad Rack to assume the
 toolhead has been loaded with filament from the specified lane. The

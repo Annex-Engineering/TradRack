@@ -203,6 +203,8 @@ class TradRack:
             desc=self.cmd_TR_SERVO_DOWN_help)
         self.gcode.register_command('TR_SERVO_UP', self.cmd_TR_SERVO_UP,
             desc=self.cmd_TR_SERVO_UP_help)
+        self.gcode.register_command('TR_SERVO_TEST', self.cmd_TR_SERVO_TEST,
+            desc=self.cmd_TR_SERVO_TEST_help)
         self.gcode.register_command('TR_SET_ACTIVE_LANE',
             self.cmd_TR_SET_ACTIVE_LANE,
             desc=self.cmd_TR_SET_ACTIVE_LANE_help)
@@ -416,6 +418,44 @@ class TradRack:
     def cmd_TR_SERVO_UP(self, gcmd):
         # raise servo
         self._raise_servo()
+
+    cmd_TR_SERVO_TEST_help = ("Test an angle for Trad Rack's servo relative to"
+                              "servo_down_angle")
+    def cmd_TR_SERVO_TEST(self, gcmd):
+        # get commanded and raw angles
+        cmd_angle = gcmd.get_float('ANGLE',
+            abs(self.servo_up_angle - self.servo_down_angle))
+        if self.servo_up_angle > self.servo_down_angle:
+            raw_angle = self.servo_down_angle + cmd_angle
+            raw_to_cmd = lambda raw: raw - self.servo_down_angle
+        else:
+            raw_angle = self.servo_down_angle - cmd_angle
+            raw_to_cmd = lambda raw: self.servo_down_angle - raw
+        
+        # display angles
+        gcmd.respond_info("commanded angle: %.3f\n"
+                          "raw angle: %.3f" % (cmd_angle, raw_angle))
+            
+        # check raw angle
+        max_angle = self.servo.get_max_angle()
+        if raw_angle > max_angle:
+            raise self.gcode.error("Raw angle is above the maximum of %.3f "
+                                   "(corresponding to a commanded angle of "
+                                   "%.3f). If the servo is not rotating far "
+                                   "enough, try increasing maximum_pulse_width "
+                                   "in the [%s] section in the config file."
+                                   % (max_angle, raw_to_cmd(max_angle),
+                                      SERVO_NAME))
+        elif raw_angle < 0.:
+            raise self.gcode.error("Raw angle is below the minimum of 0.0 "
+                                   "(corresponding to a commanded angle of "
+                                   "%.3f). If the servo is not rotating far "
+                                   "enough, try decreasing minimum_pulse_width "
+                                   "in the [%s] section in the config file."
+                                   % (raw_to_cmd(0.), SERVO_NAME))
+
+        # set servo
+        self.servo.set_servo(angle=raw_angle)
 
     cmd_TR_SET_ACTIVE_LANE_help = ("Set lane number that is currently loaded "
                                    "in the toolhead")
@@ -661,8 +701,9 @@ class TradRack:
         pos[1] = 0.
         self.tr_toolhead.set_position(pos, homing_axes=(1,))
         if self.extruder_synced:
-            e_stepper = self.toolhead.get_extruder().extruder_stepper.stepper
-            e_stepper.set_position((0., 0., 0.))
+            steppers = self._get_extruder_mcu_steppers()
+            for stepper in steppers:
+                stepper.set_position((0., 0., 0.))
 
     def _go_to_lane(self, lane):
         # check if homed
@@ -851,7 +892,7 @@ class TradRack:
 
         # sync extruder to filament driver
         self.tr_toolhead.wait_moves()
-        prev_sk, prev_trapq = self._sync_extruder_to_fil_driver()
+        prev_sks, prev_trapq = self._sync_extruder_to_fil_driver()
 
         # move filament until toolhead sensor is triggered
         if self.load_with_toolhead_sensor and self.toolhead_fil_endstops:
@@ -865,7 +906,7 @@ class TradRack:
                                             probe_pos=True)
             except:
                 self._raise_servo()
-                self._unsync_extruder_from_fil_driver(prev_sk, prev_trapq)
+                self._unsync_extruder_from_fil_driver(prev_sks, prev_trapq)
                 gcmd.respond_info("Failed to load toolhead from lane {lane}. "
                                   "Use TR_RESUME to reload lane {lane} and "
                                   "retry.".format(lane=str(lane)))
@@ -921,7 +962,7 @@ class TradRack:
 
         # unsync extruder from filament driver
         self.tr_toolhead.wait_moves()
-        self._unsync_extruder_from_fil_driver(prev_sk, prev_trapq)
+        self._unsync_extruder_from_fil_driver(prev_sks, prev_trapq)
 
         # set active lane
         self.active_lane = lane
@@ -1061,7 +1102,7 @@ class TradRack:
 
         # sync extruder to filament driver
         self.tr_toolhead.wait_moves()
-        prev_sk, prev_trapq = self._sync_extruder_to_fil_driver()
+        prev_sks, prev_trapq = self._sync_extruder_to_fil_driver()
 
         # move filament until toolhead sensor is untriggered
         if self.unload_with_toolhead_sensor and self.toolhead_fil_endstops:
@@ -1074,7 +1115,7 @@ class TradRack:
                                   triggered=False)
             except:
                 self._raise_servo()
-                self._unsync_extruder_from_fil_driver(prev_sk, prev_trapq)
+                self._unsync_extruder_from_fil_driver(prev_sks, prev_trapq)
                 logging.warning("trad_rack: Toolhead sensor homing move failed",
                                 exc_info=True)
                 raise self.gcode.error("Failed to unload toolhead. Toolhead "
@@ -1089,7 +1130,7 @@ class TradRack:
 
         # unsync extruder from filament driver
         self.tr_toolhead.wait_moves()
-        self._unsync_extruder_from_fil_driver(prev_sk, prev_trapq)
+        self._unsync_extruder_from_fil_driver(prev_sks, prev_trapq)
 
         # move filament through the bowden tube
         self.tr_toolhead.get_last_move_time()
@@ -1128,31 +1169,44 @@ class TradRack:
     def _send_resume(self):
         self.resume_macro.run_gcode_from_command()
 
+    def _get_extruder_mcu_steppers(self):
+        extruder = self.toolhead.get_extruder()
+        if hasattr(extruder, 'get_extruder_steppers'):
+            steppers = []
+            for extruder_stepper in extruder.get_extruder_steppers():
+                steppers.append(extruder_stepper.stepper)
+            return steppers
+        else:
+            return [extruder.extruder_stepper.stepper]
+
     def _sync_extruder_to_fil_driver(self):
         self.toolhead.flush_step_generation()
         self.tr_toolhead.flush_step_generation()
-        e_stepper = self.toolhead.get_extruder().extruder_stepper.stepper
+        self._reset_fil_driver()
+        steppers = self._get_extruder_mcu_steppers()
+        prev_trapq = steppers[0].get_trapq()
         tr_trapq = self.tr_toolhead.get_trapq()
         ffi_main, ffi_lib = chelper.get_ffi()
-        stepper_kinematics = ffi_main.gc(
-            ffi_lib.cartesian_stepper_alloc(b'y'), ffi_lib.free)
-        prev_sk = e_stepper.set_stepper_kinematics(stepper_kinematics)
-        prev_trapq = e_stepper.set_trapq(tr_trapq)
-        self._reset_fil_driver()
-        e_stepper.set_position((0., 0., 0.))
-        handler = e_stepper.generate_steps
-        self.tr_toolhead.register_step_generator(handler)
+        prev_sks = []
+        for stepper in steppers:
+            stepper_kinematics = ffi_main.gc(
+                ffi_lib.cartesian_stepper_alloc(b'y'), ffi_lib.free)
+            prev_sks.append(stepper.set_stepper_kinematics(stepper_kinematics))
+            stepper.set_trapq(tr_trapq)
+            stepper.set_position((0., 0., 0.))
+            self.tr_toolhead.register_step_generator(stepper.generate_steps)
         self.extruder_synced = True
-        return prev_sk, prev_trapq
+        return prev_sks, prev_trapq
 
-    def _unsync_extruder_from_fil_driver(self, prev_sk, prev_trapq):
+    def _unsync_extruder_from_fil_driver(self, prev_sks, prev_trapq):
         self.toolhead.flush_step_generation()
         self.tr_toolhead.flush_step_generation()
-        e_stepper = self.toolhead.get_extruder().extruder_stepper.stepper
-        handler = e_stepper.generate_steps
-        self.tr_toolhead.step_generators.remove(handler)
-        e_stepper.set_trapq(prev_trapq)
-        e_stepper.set_stepper_kinematics(prev_sk)
+        steppers = self._get_extruder_mcu_steppers()
+        for i in range(len(steppers)):
+            stepper = steppers[i]
+            self.tr_toolhead.step_generators.remove(stepper.generate_steps)
+            stepper.set_trapq(prev_trapq)
+            stepper.set_stepper_kinematics(prev_sks[i])
         self.extruder_synced = False
 
     def _reset_tool_map(self):
@@ -1800,6 +1854,9 @@ class TradRackServo:
         else:
             self.servo._set_pwm(print_time,
                                 self.servo._get_pwm_from_angle(angle))
+            
+    def get_max_angle(self):
+        return self.servo.max_angle
 
 class TradRackLanePositionManager:
     def __init__(self, lane_count, config):
