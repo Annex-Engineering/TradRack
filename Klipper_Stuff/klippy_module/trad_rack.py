@@ -640,17 +640,24 @@ class TradRack:
         min_temp = max(min_temp, min_extrude_temp)
         if exact_temp or smoothed_temp < min_temp:
             if exact_temp:
-                temp = exact_temp
+                temp = save_temp = exact_temp
             elif target_temp > min_temp:
-                temp = target_temp
+                temp = save_temp = target_temp
             else:
                 temp = max(min_temp, self.last_heater_target)
+                if min_temp >= min_extrude_temp:
+                    save_temp = min_temp
+                else:
+                    save_temp = None
             pheaters = self.printer.lookup_object('heaters')
             pheaters.set_temperature(heater, temp, True)
+            return save_temp
+        return target_temp
     
-    def _save_heater_target(self):
-        heater = self.toolhead.get_extruder().get_heater()
-        _, target_temp = heater.get_temp(self.reactor.monotonic())
+    def _save_heater_target(self, target_temp=None):
+        if target_temp is None:
+            heater = self.toolhead.get_extruder().get_heater()
+            _, target_temp = heater.get_temp(self.reactor.monotonic())
         self.gcode.run_script_from_command(
             "SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\""
             % (self.VARS_HEATER_TARGET, target_temp))
@@ -687,7 +694,7 @@ class TradRack:
             "SAVE_GCODE_STATE NAME=TR_TOOLCHANGE_STATE")
         
         # wait for heater temp if needed
-        self._wait_for_heater_temp(min_temp, exact_temp)
+        save_temp = self._wait_for_heater_temp(min_temp, exact_temp)
 
         # unload current lane (if filament is detected)
         try:
@@ -823,7 +830,8 @@ class TradRack:
         self.active_lane = lane
 
         # save heater target
-        self._save_heater_target()
+        if save_temp is not None:
+            self._save_heater_target(target_temp=save_temp)
 
         # run post-load custom gcode
         self.post_load_macro.run_gcode_from_command()
