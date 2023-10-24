@@ -34,15 +34,14 @@ See the [Klipper config reference document](https://www.klipper3d.org/Config_Ref
 
 ### Using provided config files
 
-Place the following files inside your Klipper config folder and
+Copy the following files into your Klipper config folder and
 [include them](https://www.klipper3d.org/Config_Reference.html#include)
 in your main printer config file:
 
-- Either
-  [trad_rack_nebula_2209.cfg](/Klipper_Stuff/klipper_config/trad_rack_nebula_2209.cfg),
-  [trad_rack_nebula_5160.cfg](/Klipper_Stuff/klipper_config/trad_rack_nebula_5160.cfg),
-  or [trad_rack_skr_pico.cfg](/Klipper_Stuff/klipper_config/trad_rack_skr_pico.cfg):
-  base config file. This file is required. Make sure to complete the
+- One of the files from the
+[base_config_options folder](/Klipper_Stuff/klipper_config/base_config_options/):
+  base config file. Several options are provided for different boards
+  or stepper drivers. This file is required. Make sure to complete the
   following changes:
   - [mcu tr] section
     - Replace `serial` with the serial for your board.
@@ -77,9 +76,8 @@ in your main printer config file:
 Follow the instructions in
 [using provided config files](#using-provided-config-files). In
 addition, modify every "pin" or "uart_address" setting in
-[trad_rack_skr_pico.cfg](/Klipper_Stuff/klipper_config/trad_rack_skr_pico.cfg)
-to match your board; copy each of these settings from a corresponding
-section in the
+the base config file to match your board: copy each of these settings
+from a corresponding section in the
 [example Klipper config for your board](https://github.com/Klipper3d/klipper/tree/master/config). Some settings such as `tx_pin` or `uart_address` might
 not be needed.
 
