@@ -733,9 +733,10 @@ class TradRack:
     def _restore_extruder_sync(self):
         if self.sync_to_extruder and self.active_lane is not None:
             self.extruder_sync_manager.sync_fil_driver_to_extruder()
-            self._lower_servo()
+            self._lower_servo(True)
         else:
             self._raise_servo()
+            self.tr_toolhead.wait_moves()
             self.extruder_sync_manager.unsync()
 
     def _go_to_lane(self, lane):
