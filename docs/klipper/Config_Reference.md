@@ -136,6 +136,11 @@ toolhead_unload_length:
 #   Maximum number of samples that are averaged to set bowden lengths
 #   for loading and unloading. See Tuning.md for details. The default
 #   is 10.
+#sync_to_extruder: False
+#   Syncs Trad Rack's filament driver to the extruder during printing,
+#   as well as during any extrusion moves within toolhead loading or
+#   unloading that would normally involve only the extruder.
+#   The default is False.
 #user_wait_time: 15
 #   Time (in seconds) to wait for the user to take an action
 #   before continuing automatically. If set to -1, Trad Rack will wait

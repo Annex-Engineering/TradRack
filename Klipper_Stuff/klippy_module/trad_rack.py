@@ -36,8 +36,9 @@ class TradRack:
             'buffer_pull_speed', default=self.spool_pull_speed, above=0.)
 
         # create toolhead
-        self.tr_toolhead = TradRackToolHead(config, self.buffer_pull_speed,
-                                            lambda : self.extruder_synced)
+        self.tr_toolhead = TradRackToolHead(
+            config, self.buffer_pull_speed,
+            lambda : self.extruder_sync_manager.is_extruder_synced())
         self.sel_max_velocity, _ = self.tr_toolhead.get_sel_max_velocity()
 
         # get servo
@@ -82,6 +83,11 @@ class TradRack:
             'bowden_length_samples', default=10, minval=1)
         self.bowden_load_length_filter = MovingAverageFilter(bowden_samples)
         self.bowden_unload_length_filter = MovingAverageFilter(bowden_samples)
+
+        # create extruder sync manager
+        self.extruder_sync_manager = TradRackExtruderSyncManager(
+            self.printer, self.tr_toolhead,
+            self.tr_kinematics.get_fil_driver_rail())
 
         # read other values
         self.servo_down_angle = config.getfloat('servo_down_angle')
@@ -129,6 +135,8 @@ class TradRack:
             max(10., self.toolhead_unload_length), above=0.)
         self.target_selector_homing_dist = config.getfloat(
             'target_selector_homing_dist', 10., above=0.)
+        self.sync_to_extruder = config.getboolean(
+            'sync_to_extruder', False)
         self.user_wait_time = config.getint(
             'user_wait_time', default=15, minval=-1)
         register_toolchange_commands = config.getboolean(
@@ -142,7 +150,6 @@ class TradRack:
         self.next_lane = None       # next lane to load to toolhead if resuming
         self.load_length = 600      # filament homing move distance
         self.servo_raised = None
-        self.extruder_synced = False
         self.lanes_unloaded = [False] * self.lane_count
         self.bowden_load_calibrated = False
         self.bowden_unload_calibrated = False
@@ -226,6 +233,12 @@ class TradRack:
         self.gcode.register_command('TR_SET_HOTEND_LOAD_LENGTH',
             self.cmd_TR_SET_HOTEND_LOAD_LENGTH,
             desc=self.cmd_TR_SET_HOTEND_LOAD_LENGTH_help)
+        self.gcode.register_command('TR_SYNC_TO_EXTRUDER',
+            self.cmd_TR_SYNC_TO_EXTRUDER,
+            desc=self.cmd_TR_SYNC_TO_EXTRUDER_help)
+        self.gcode.register_command('TR_UNSYNC_FROM_EXTRUDER',
+            self.cmd_TR_UNSYNC_FROM_EXTRUDER,
+            desc=self.cmd_TR_UNSYNC_FROM_EXTRUDER_help)
         self.gcode.register_command('TR_ASSIGN_LANE',
             self.cmd_TR_ASSIGN_LANE,
             desc=self.cmd_TR_ASSIGN_LANE_help)
@@ -484,6 +497,9 @@ class TradRack:
         self.curr_lane = lane
         self.active_lane = lane
 
+        # restore extruder sync
+        self._restore_extruder_sync()
+
         # make lane the new default for its assigned tool
         self._make_lane_default(lane)
 
@@ -494,7 +510,6 @@ class TradRack:
                                      "the toolhead is not loaded")
     def cmd_TR_RESET_ACTIVE_LANE(self, gcmd):
         self.active_lane = None
-        self.selector_sensor.set_active(False)
 
     cmd_TR_RESUME_help = ("Resume after a failed load or unload")
     def cmd_TR_RESUME(self, gcmd):
@@ -588,6 +603,20 @@ class TradRack:
             value = max(0., self.hotend_load_length + adjust)
         self.hotend_load_length = value
         gcmd.respond_info("hotend_load_length: %f" % (self.hotend_load_length))
+
+    cmd_TR_SYNC_TO_EXTRUDER_help = ("Sync Trad Rack's filament driver to the "
+                                    "extruder")
+    def cmd_TR_SYNC_TO_EXTRUDER(self, gcmd):
+        self.toolhead.wait_moves()
+        self.sync_to_extruder = True
+        self._restore_extruder_sync()
+
+    cmd_TR_UNSYNC_FROM_EXTRUDER_help = ("Unsync Trad Rack's filament driver "
+                                        "from the extruder")
+    def cmd_TR_UNSYNC_FROM_EXTRUDER(self, gcmd):
+        self.toolhead.wait_moves()
+        self.sync_to_extruder = False
+        self._restore_extruder_sync()
 
     cmd_TR_ASSIGN_LANE_help = ("Assign a lane to a tool")
     def cmd_TR_ASSIGN_LANE(self, gcmd):
@@ -696,14 +725,15 @@ class TradRack:
             or self._query_selector_sensor()
 
     def _reset_fil_driver(self):
-        self.tr_toolhead.get_last_move_time()
-        pos = self.tr_toolhead.get_position()
-        pos[1] = 0.
-        self.tr_toolhead.set_position(pos, homing_axes=(1,))
-        if self.extruder_synced:
-            steppers = self._get_extruder_mcu_steppers()
-            for stepper in steppers:
-                stepper.set_position((0., 0., 0.))
+        self.extruder_sync_manager.reset_fil_driver()
+
+    def _restore_extruder_sync(self):
+        if self.sync_to_extruder and self.active_lane is not None:
+            self.extruder_sync_manager.sync_fil_driver_to_extruder()
+            self._lower_servo()
+        else:
+            self._raise_servo()
+            self.extruder_sync_manager.unsync()
 
     def _go_to_lane(self, lane):
         # check if homed
@@ -899,7 +929,7 @@ class TradRack:
 
         # sync extruder to filament driver
         self.tr_toolhead.wait_moves()
-        prev_sks, prev_trapq = self._sync_extruder_to_fil_driver()
+        self.extruder_sync_manager.sync_extruder_to_fil_driver()
 
         # move filament until toolhead sensor is triggered
         if self.load_with_toolhead_sensor and self.toolhead_fil_endstops:
@@ -913,7 +943,7 @@ class TradRack:
                                             probe_pos=True)
             except:
                 self._raise_servo()
-                self._unsync_extruder_from_fil_driver(prev_sks, prev_trapq)
+                self.extruder_sync_manager.unsync()
                 gcmd.respond_info("Failed to load toolhead from lane {lane}. "
                                   "Use TR_RESUME to reload lane {lane} and "
                                   "retry.".format(lane=str(lane)))
@@ -960,19 +990,20 @@ class TradRack:
         # flush lookahead and raise servo before move ends
         print_time = self.tr_toolhead.get_last_move_time() - self.servo_wait \
                      + servo_delay
-        self._raise_servo(tr_toolhead_dwell=False, wait_moves=False,
-                          print_time=print_time)
+        if not self.sync_to_extruder:
+            self._raise_servo(tr_toolhead_dwell=False, wait_moves=False,
+                              print_time=print_time)
 
-        # wait for servo move if necessary
-        if servo_delay:
-            self.tr_toolhead.dwell(servo_delay)
-
-        # unsync extruder from filament driver
-        self.tr_toolhead.wait_moves()
-        self._unsync_extruder_from_fil_driver(prev_sks, prev_trapq)
+            # wait for servo move if necessary
+            if servo_delay:
+                self.tr_toolhead.dwell(servo_delay)
 
         # set active lane
         self.active_lane = lane
+        
+        # unsync extruder from filament driver
+        self.tr_toolhead.wait_moves()
+        self._restore_extruder_sync()
 
         # make lane the new default for its assigned tool
         self._make_lane_default(lane)
@@ -1110,7 +1141,7 @@ class TradRack:
 
         # sync extruder to filament driver
         self.tr_toolhead.wait_moves()
-        prev_sks, prev_trapq = self._sync_extruder_to_fil_driver()
+        self.extruder_sync_manager.sync_extruder_to_fil_driver()
 
         # move filament until toolhead sensor is untriggered
         if self.unload_with_toolhead_sensor and self.toolhead_fil_endstops:
@@ -1123,7 +1154,7 @@ class TradRack:
                                   triggered=False)
             except:
                 self._raise_servo()
-                self._unsync_extruder_from_fil_driver(prev_sks, prev_trapq)
+                self.extruder_sync_manager.unsync()
                 logging.warning("trad_rack: Toolhead sensor homing move failed",
                                 exc_info=True)
                 raise self.gcode.error("Failed to unload toolhead. Toolhead "
@@ -1138,7 +1169,7 @@ class TradRack:
 
         # unsync extruder from filament driver
         self.tr_toolhead.wait_moves()
-        self._unsync_extruder_from_fil_driver(prev_sks, prev_trapq)
+        self.extruder_sync_manager.unsync()
 
         # move filament through the bowden tube
         self.tr_toolhead.get_last_move_time()
@@ -1904,7 +1935,116 @@ class TradRackLanePositionManager:
         lane_positions = self.get_lane_positions()
 
         return pos_endstop, self.lane_spacing, lane_positions
+
+EXTRUDER_TO_FIL_DRIVER = 0
+FIL_DRIVER_TO_EXTRUDER = 1
+
+class TradRackExtruderSyncManager:
+    def __init__(self, printer, tr_toolhead, fil_driver_rail):
+        self.printer = printer
+        self.toolhead = None
+        self.tr_toolhead = tr_toolhead
+        self.fil_driver_rail = fil_driver_rail
+
+        self.printer.register_event_handler("klippy:connect",
+                                            self.handle_connect)
+        self.sync_state = None
+        self._prev_sks = None
+        self._prev_trapq = None
+
+    def handle_connect(self):
+        self.toolhead = self.printer.lookup_object('toolhead')
+
+    def _get_extruder_mcu_steppers(self):
+        extruder = self.toolhead.get_extruder()
+        if hasattr(extruder, 'get_extruder_steppers'):
+            steppers = []
+            for extruder_stepper in extruder.get_extruder_steppers():
+                steppers.append(extruder_stepper.stepper)
+            return steppers
+        else:
+            return [extruder.extruder_stepper.stepper]
+
+    def reset_fil_driver(self):
+        self.tr_toolhead.get_last_move_time()
+        pos = self.tr_toolhead.get_position()
+        pos[1] = 0.
+        self.tr_toolhead.set_position(pos, homing_axes=(1,))
+        if self.sync_state == EXTRUDER_TO_FIL_DRIVER:
+            steppers = self._get_extruder_mcu_steppers()
+            for stepper in steppers:
+                stepper.set_position((0., 0., 0.))
+        
+    def _sync(self, sync_type):
+        self.unsync()
+        self.toolhead.flush_step_generation()
+        self.tr_toolhead.flush_step_generation()
+
+        ffi_main, ffi_lib = chelper.get_ffi()
+        if sync_type == EXTRUDER_TO_FIL_DRIVER:
+            steppers = self._get_extruder_mcu_steppers()
+            self._prev_trapq = steppers[0].get_trapq()
+            external_trapq = self.tr_toolhead.get_trapq()
+            stepper_alloc = ffi_lib.cartesian_stepper_alloc(b'y')
+            external_toolhead = self.tr_toolhead
+            self.reset_fil_driver()
+            new_pos = 0.
+        elif sync_type == FIL_DRIVER_TO_EXTRUDER:
+            steppers = self.fil_driver_rail.get_steppers()
+            self._prev_trapq = self.tr_toolhead.get_trapq()
+            extruder = self.toolhead.get_extruder()
+            external_trapq = extruder.get_trapq()
+            stepper_alloc = ffi_lib.extruder_stepper_alloc()
+            external_toolhead = self.toolhead
+            new_pos = extruder.last_position
+        else:
+            raise Exception("Invalid sync_type: %d" % sync_type)
+        
+        self._prev_sks = []
+        for stepper in steppers:
+            stepper_kinematics = ffi_main.gc(stepper_alloc, ffi_lib.free)
+            self._prev_sks.append(
+                stepper.set_stepper_kinematics(stepper_kinematics))
+            stepper.set_trapq(external_trapq)
+            stepper.set_position((new_pos, 0., 0.))
+            external_toolhead.register_step_generator(stepper.generate_steps)
+        self.sync_state = sync_type
+
+    def sync_extruder_to_fil_driver(self):
+        self._sync(EXTRUDER_TO_FIL_DRIVER)
+
+    def sync_fil_driver_to_extruder(self):
+        self._sync(FIL_DRIVER_TO_EXTRUDER)
+        
+    def unsync(self):
+        if self.sync_state is None:
+            return
+
+        self.toolhead.flush_step_generation()
+        self.tr_toolhead.flush_step_generation()
+
+        if self.sync_state == EXTRUDER_TO_FIL_DRIVER:
+            steppers = self._get_extruder_mcu_steppers()
+            external_toolhead = self.tr_toolhead
+        elif self.sync_state == FIL_DRIVER_TO_EXTRUDER:
+            steppers = self.fil_driver_rail.get_steppers()
+            external_toolhead = self.toolhead
+        else:
+            raise Exception("Invalid sync_state: %d" % self.sync_state)
+        
+        for i in range(len(steppers)):
+            stepper = steppers[i]
+            external_toolhead.step_generators.remove(stepper.generate_steps)
+            stepper.set_trapq(self._prev_trapq)
+            stepper.set_stepper_kinematics(self._prev_sks[i])
+        self.sync_state = None
     
+    def is_extruder_synced(self):
+        return self.sync_state == EXTRUDER_TO_FIL_DRIVER
+    
+    def is_fil_driver_synced(self):
+        return self.sync_state == FIL_DRIVER_TO_EXTRUDER
+
 class RunIfNoActivity:
     def __init__(self, toolhead, reactor, callback, delay):
         self.toolhead = toolhead
