@@ -1052,16 +1052,6 @@ class TradRack:
     def _send_pause(self):
         self.pause_macro.run_gcode_from_command()
 
-    def _get_extruder_mcu_steppers(self):
-        extruder = self.toolhead.get_extruder()
-        if hasattr(extruder, 'get_extruder_steppers'):
-            steppers = []
-            for extruder_stepper in extruder.get_extruder_steppers():
-                steppers.append(extruder_stepper.stepper)
-            return steppers
-        else:
-            return [extruder.extruder_stepper.stepper]
-
     def _write_bowden_length_data(self, filename, length, old_set_length,
                                   new_set_length, samples):
         try:
