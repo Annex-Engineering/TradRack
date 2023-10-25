@@ -510,6 +510,9 @@ class TradRack:
                                      "the toolhead is not loaded")
     def cmd_TR_RESET_ACTIVE_LANE(self, gcmd):
         self.active_lane = None
+        self._raise_servo()
+        self.extruder_sync_manager.unsync()
+        self.selector_sensor.set_active(False)
 
     cmd_TR_RESUME_help = ("Resume after a failed load or unload")
     def cmd_TR_RESUME(self, gcmd):
