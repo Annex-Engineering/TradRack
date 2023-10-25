@@ -1110,7 +1110,7 @@ class TradRack:
         self._raise_servo()
 
     def _unload_toolhead(self, gcmd, min_temp=0., exact_temp=0.,
-                         force_unload=False):
+                         force_unload=False, sync=False):
         # reset active lane
         self.active_lane = None
 
@@ -1134,10 +1134,19 @@ class TradRack:
         # wait for heater temp if needed
         self._wait_for_heater_temp(min_temp, exact_temp)
 
+        # sync filament driver to extruder for pre-unload custom gcode
+        if sync:
+            self.extruder_sync_manager.sync_fil_driver_to_extruder()
+            self._lower_servo(True)
+
         # run pre-unload custom gcode
-        self.pre_unload_macro.run_gcode_from_command()
-        self.toolhead.wait_moves()
-        self.tr_toolhead.wait_moves()
+        try:
+            self.pre_unload_macro.run_gcode_from_command()
+            self.toolhead.wait_moves()
+            self.tr_toolhead.wait_moves()
+        finally:
+            # unsync filament driver from extruder
+            self.extruder_sync_manager.unsync()
 
         # lower servo
         self._lower_servo(True)
@@ -1330,7 +1339,7 @@ class TradRack:
         # unload
         if self.runout_steps_done < 1:
             try:
-                self._unload_toolhead(gcmd, force_unload=True)
+                self._unload_toolhead(gcmd, force_unload=True, sync=True)
             except:
                 self._raise_servo()
                 gcmd.respond_info("Failed to unload. Please pull "
