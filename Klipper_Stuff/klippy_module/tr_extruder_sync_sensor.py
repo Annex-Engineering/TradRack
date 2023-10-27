@@ -34,22 +34,31 @@ class TradRackExtruderSyncSensor:
         self.multiplier_low = config.getfloat(
             'multiplier_low', default=0.95, minval=0., maxval=1.)
         self.verbose = config.getboolean('verbose', False)
-        
+
         # other variables
         self.enabled = False
         self.last_state = False
         self.set_multiplier = None
+        self.enable_conditions = [lambda : not self.enabled]
+        self.disable_conditions = [lambda : self.enabled]
         self.gcode = self.printer.lookup_object('gcode')
     
     def handle_connect(self):
-        self.set_multiplier = self.printer.lookup_object('trad_rack') \
-                                  .set_fil_driver_multiplier
-    
+        trad_rack = self.printer.lookup_object('trad_rack')
+        self.set_multiplier = trad_rack.set_fil_driver_multiplier
+        self.disable_conditions.append(trad_rack.is_fil_driver_synced)
+
     def handle_enable(self):
+        for condition in self.enable_conditions:
+            if not condition():
+                return
         self.enabled = True
         self.update_multiplier()
 
     def handle_disable(self):
+        for condition in self.disable_conditions:
+            if not condition():
+                return
         self.reset_multiplier()
         self.enabled = False
 

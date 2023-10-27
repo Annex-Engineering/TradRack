@@ -1295,6 +1295,9 @@ class TradRack:
     def set_fil_driver_multiplier(self, multiplier):
         self.extruder_sync_manager.set_fil_driver_multiplier(multiplier)
 
+    def is_fil_driver_synced(self):
+        return self.extruder_sync_manager.is_fil_driver_synced()
+
     def get_status(self, eventtime):
         return {
             'curr_lane': self.curr_lane,
@@ -1702,7 +1705,7 @@ class TradRackExtruderSyncManager:
         self._prev_rotation_dists = []
         for stepper in steppers:
             stepper_kinematics = ffi_main.gc(stepper_alloc, ffi_lib.free)
-            self._prev_rotation_dists.append(stepper.get_rotation_distance())
+            self._prev_rotation_dists.append(stepper.get_rotation_distance()[0])
             self._prev_sks.append(
                 stepper.set_stepper_kinematics(stepper_kinematics))
             stepper.set_trapq(external_trapq)
