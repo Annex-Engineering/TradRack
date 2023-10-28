@@ -46,6 +46,7 @@ class TradRackExtruderSyncSensor:
     def handle_connect(self):
         trad_rack = self.printer.lookup_object('trad_rack')
         self.set_multiplier = trad_rack.set_fil_driver_multiplier
+        self.enable_conditions.append(trad_rack.is_fil_driver_synced)
         self.disable_conditions.append(trad_rack.is_fil_driver_synced)
 
     def handle_enable(self):
@@ -81,6 +82,8 @@ class TradRackExtruderSyncSensor:
 
     def reset_multiplier(self):
         self.set_multiplier(1.)
+        if self.verbose:
+            self.gcode.respond_info("Reset filament driver multiplier")
 
     def get_status(self, eventtime):
         return {
