@@ -56,7 +56,7 @@ If not specified, RESET_SPEED defaults to 1.
 [MIN_TEMP=<temperature>] [EXACT_TEMP=<temperature>]
 [BOWDEN_LENGTH=<mm>] [EXTRUDER_LOAD_LENGTH=<mm>]
 [HOTEND_LOAD_LENGTH=<mm>]`: Loads filament from the specified lane or
-tool into the toolhead [^1]. Either LANE or TOOL must be specified. If
+tool into the toolhead*. Either LANE or TOOL must be specified. If
 both are specified, then LANE takes precedence. If there is already an
 "active lane" because the toolhead has been loaded beforehand, it will
 be unloaded before loading the new filament. If `MIN_TEMP` is
@@ -71,7 +71,7 @@ If any of the optional length parameters are specified, they override
 the corresponding settings in the
 [trad_rack config section](Config_Reference.md#trad_rack).
 
-[^1]: See the [Tool Mapping document](/docs/Tool_Mapping.md) for
+\* see the [Tool Mapping document](/docs/Tool_Mapping.md) for
 details on the difference between lanes and tools and how they relate
 to each other.
 
