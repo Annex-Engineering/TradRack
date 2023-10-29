@@ -52,7 +52,7 @@ specified LANE will be reset to `spool_pull_speed`
 If not specified, RESET_SPEED defaults to 1.
 
 ### TR_LOAD_TOOLHEAD
-`TR_LOAD_TOOLHEAD [LANE=<lane index>] [TOOL=<tool index>]
+`TR_LOAD_TOOLHEAD LANE=<lane index>|TOOL=<tool index>
 [MIN_TEMP=<temperature>] [EXACT_TEMP=<temperature>]
 [BOWDEN_LENGTH=<mm>] [EXTRUDER_LOAD_LENGTH=<mm>]
 [HOTEND_LOAD_LENGTH=<mm>]`: Loads filament from the specified lane or
