@@ -3,6 +3,17 @@
 This document is modeled after Klipper's
 [Config Reference document](https://www.klipper3d.org/Config_Reference.html)
 but only contains items pertaining to Trad Rack.
+
+**Table of Contents**
+- [Main configuration](#main-configuration)
+  - [\[trad\_rack\]](#trad_rack)
+- [Additional sections](#additional-sections)
+  - [\[stepper\_tr\_selector\]](#stepper_tr_selector)
+  - [\[stepper\_tr\_fil\_driver\]](#stepper_tr_fil_driver)
+  - [\[tmc2209 stepper\_tr\_selector\]](#tmc2209-stepper_tr_selector)
+  - [\[tmc2209 stepper\_tr\_fil\_driver\]](#tmc2209-stepper_tr_fil_driver)
+  - [\[servo tr\_servo\]](#servo-tr_servo)
+
 ## Main configuration
 
 ### [trad_rack]
