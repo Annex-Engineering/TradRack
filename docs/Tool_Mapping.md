@@ -1,5 +1,8 @@
 # Tool Mapping
 
+This document contains info on tool mapping/lane groups and how
+runouts are handled.
+
 By default, each tool or extruder number specified in gcode
 corresponds to a lane module on Trad Rack. However, tool numbers can
 be decoupled from lane numbers. This allows reassigning a lane to a
