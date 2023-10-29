@@ -242,6 +242,9 @@ class TradRack:
         self.gcode.register_command('TR_ASSIGN_LANE',
             self.cmd_TR_ASSIGN_LANE,
             desc=self.cmd_TR_ASSIGN_LANE_help)
+        self.gcode.register_command('TR_SET_DEFAULT_LANE',
+            self.cmd_TR_SET_DEFAULT_LANE,
+            desc=self.cmd_TR_SET_DEFAULT_LANE_help)
         self.gcode.register_command('TR_RESET_TOOL_MAP',
             self.cmd_TR_RESET_TOOL_MAP,
             desc=self.cmd_TR_RESET_TOOL_MAP_help)
@@ -635,6 +638,28 @@ class TradRack:
 
         # mark lane as not dead
         self.lanes_dead[lane] = False
+
+        # make lane the new default for the tool
+        if gcmd.get_int('SET_DEFAULT', 0):
+            self.default_lanes[tool] = lane
+
+    cmd_cmd_TR_SET_DEFAULT_LANE_help = ("Set the default lane for a tool")
+    def cmd_TR_SET_DEFAULT_LANE(self, gcmd):
+        lane = gcmd.get_int('LANE', None)
+        tool = gcmd.get_int('TOOL', None)
+
+        # check lane
+        self._check_lane_valid(lane)
+
+        if tool is None:
+            # set lane as default for its currently-assigned tool
+            self._make_lane_default(lane)
+        else:
+            # check tool
+            self._check_tool_valid(tool)
+
+            # set lane as default for the tool
+            self._set_default_lane(tool, lane)
 
     cmd_TR_RESET_TOOL_MAP_help = ("Reset tools assigned to each lane")
     def cmd_TR_RESET_TOOL_MAP(self, gcmd):
