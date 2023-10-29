@@ -3,6 +3,16 @@
 This document lists the steps to get Trad Rack set up to work with
 Klipper.
 
+**Table of Contents**
+- [Klippy module](#klippy-module)
+- [Config files](#config-files)
+  - [Preliminary changes](#preliminary-changes)
+    - [\[idle\_timeout\]](#idle_timeout)
+    - [\[save\_variables\]](#save_variables)
+  - [Using provided config files](#using-provided-config-files)
+  - [Modifying provided config files for a different board](#modifying-provided-config-files-for-a-different-board)
+  - [Building a config from scratch](#building-a-config-from-scratch)
+
 ## Klippy module
 
 Place [trad_rack.py](/Klipper_Stuff/klippy_module/trad_rack.py)
@@ -11,7 +21,14 @@ the module.
 
 ## Config files
 
+Complete the following changes/additions to your Klipper config:
+
 ### Preliminary changes
+
+The following preliminary changes should be made to your existing
+config file(s):
+
+#### [idle_timeout]
 
 It is recommended to modify the [idle_timeout] section to prevent
 the printer from disabling the heaters and motors if the printer is
@@ -28,6 +45,7 @@ gcode:
     {% endif %}
 ```
 
+#### [save_variables]
 
 The [save_variables] config section is required. 
 See the [Klipper config reference document](https://www.klipper3d.org/Config_Reference.html#save_variables) for details on how to add this section.

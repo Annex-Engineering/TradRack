@@ -6,7 +6,16 @@ specifically. Setting names used here follow the "parameter names"
 that are used in the slicer config files; you can use the search
 function to see which settings these correspond to in the GUI.
 
+**Table of Contents**
+- [Adding provided profiles](#adding-provided-profiles)
+- [Extruder count](#extruder-count)
+- [Setting up a print](#setting-up-a-print)
+- [Purge volumes](#purge-volumes)
+- [Modifying the profiles](#modifying-the-profiles)
+- [Experimental options](#experimental-options)
+
 ## Adding provided profiles
+
 A vendor bundle for SuperSlicer 2.4.58 can be found in the
 [SuperSlicer_2.4.58 folder](/Slicer_Config/SuperSlicer_2.4.58). To use
 the included profiles, first copy the contents of the folder to the
@@ -35,7 +44,7 @@ you just added.
 
 ## Extruder count
 
-Set `extruders_count` to match the number of tools on your Trad Rack.
+Set `extruders_count` to match the number of lanes on your Trad Rack.
 This setting is located in the Printer Settings Tab.
 
 ## Setting up a print

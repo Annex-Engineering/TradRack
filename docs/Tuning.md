@@ -3,6 +3,16 @@
 This document provides an overview of the loading and unloading
 processes and how to tune them.
 
+**Table of Contents**
+- [Loading process](#loading-process)
+- [Unloading process](#unloading-process)
+- [Tuning lengths](#tuning-lengths)
+- [Bowden lengths](#bowden-lengths)
+  - [Relevant config options](#relevant-config-options)
+  - [How calibration works](#how-calibration-works)
+  - [Saving and restoring bowden lengths](#saving-and-restoring-bowden-lengths)
+- [Bowden speeds](#bowden-speeds)
+
 ## Loading process
 
 The following table shows which actions are taken when loading
@@ -11,17 +21,17 @@ table to the bottom, as well as some details about each action:
 distance of each move, speed of the move, whether Trad Rack's filament
 driver motor is involved, and whether the main extruder is involved.
 
-| Description               | Distance (mm)                           | Speed (mm\s)                        | Trad Rack filament driver | Main extruder |
-| ---                       | ---                                     | ---                                 | ---                       | ---           |
-| move through bowden tube  | ["bowden_load_length"](#bowden-lengths) | see [bowden speeds](#bowden-speeds) | ✔                         | ✖             |
-| toolhead sensor homing*   | until sensor triggers                   | `toolhead_sense_speed`              | ✔                         | ✔             |
-| load extruder             | `extruder_load_length`                  | `extruder_load_speed`               | ✔                         | ✔             |
-| load hotend               | `hotend_load_length`                    | `hotend_load_speed`                 | ✔**                       | ✔             |
+| Description                 | Distance (mm)                           | Speed (mm\s)                        | Trad Rack filament driver | Main extruder       |
+| ---                         | ---                                     | ---                                 | ---                       | ---                 |
+| move through bowden tube    | ["bowden_load_length"](#bowden-lengths) | see [bowden speeds](#bowden-speeds) | :white_check_mark:        | :x:                 |
+| toolhead sensor homing[^1]  | until sensor triggers                   | `toolhead_sense_speed`              | :white_check_mark:        | :white_check_mark:  |
+| load extruder               | `extruder_load_length`                  | `extruder_load_speed`               | :white_check_mark:        | :white_check_mark:  |
+| load hotend                 | `hotend_load_length`                    | `hotend_load_speed`                 | :white_check_mark: [^2]   | :white_check_mark:  |
 
-\* this move only occurs if `toolhead_fil_sensor_pin` is specified
+[^1]: This move only occurs if `toolhead_fil_sensor_pin` is specified
 and `load_with_toolhead_sensor` is True.
 
-\** the servo will start disengaging Trad Rack's drive gear 
+[^2]: The servo will start disengaging Trad Rack's drive gear 
 `servo_wait_ms` before the move ends.
 
 ## Unloading process
@@ -29,14 +39,14 @@ and `load_with_toolhead_sensor` is True.
 The following table shows which actions are taken when unloading
 filament from the toolhead back into Trad Rack.
 
-| Description               | Distance (mm)                             | Speed (mm/s)            | Trad Rack filament driver | Main extruder |
-| ---                       | ---                                       | ---                     | ---                       | ---           |
-| toolhead sensor homing*** | until sensor is untriggered               | `toolhead_sense_speed`  | ✔                         | ✔             |
-| unload toolhead           | `toolhead_unload_length`                  | `toolhead_unload_speed` | ✔                         | ✔             |
-| move through bowden tube  | ["bowden_unload_length"](#bowden-lengths) | `buffer_pull_speed`     | ✔                         | ✖             |
-| selector sensor homing    | until sensor is untriggered               | `selector_sense_speed`  | ✔                         | ✖             |
+| Description                 | Distance (mm)                             | Speed (mm/s)            | Trad Rack filament driver | Main extruder       |
+| ---                         | ---                                       | ---                     | ---                       | ---                 |
+| toolhead sensor homing[^3]  | until sensor is untriggered               | `toolhead_sense_speed`  | :white_check_mark:        | :white_check_mark:  |
+| unload toolhead             | `toolhead_unload_length`                  | `toolhead_unload_speed` | :white_check_mark:        | :white_check_mark:  |
+| move through bowden tube    | ["bowden_unload_length"](#bowden-lengths) | `buffer_pull_speed`     | :white_check_mark:        | :x:                 |
+| selector sensor homing      | until sensor is untriggered               | `selector_sense_speed`  | :white_check_mark:        | :x:                 |
 
-\*** this move only occurs if `toolhead_fil_sensor_pin` is specified
+[^3]: This move only occurs if `toolhead_fil_sensor_pin` is specified
 and `unload_with_toolhead_sensor` is True.
 
 ## Tuning lengths

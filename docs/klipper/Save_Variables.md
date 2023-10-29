@@ -15,7 +15,7 @@ after a restart. See the
 
 - `calib_bowden_load_length`: Dict containing the following bowden
   load length data. This variable is saved each time the toolhead is
-  loaded*:
+  loaded[^1]:
   - `new_set_length`: The last calibrated "bowden_load_length".
   - `sample_count`: The number of samples that were averaged to
     determine `new_set_length`.
@@ -30,7 +30,7 @@ after a restart. See the
   bowden length data will be ignored if `bowden_length` does not match `config_bowden_length`. This variable is saved each time Klipper
   starts.
 
-\* if `toolhead_fil_sensor_pin` is not specified or
+[^1]: If `toolhead_fil_sensor_pin` is not specified or
 `load_with_toolhead_sensor` is False, `calib_bowden_load_length` will
 not be saved.
 
