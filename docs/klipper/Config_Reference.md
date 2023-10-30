@@ -3,6 +3,17 @@
 This document is modeled after Klipper's
 [Config Reference document](https://www.klipper3d.org/Config_Reference.html)
 but only contains items pertaining to Trad Rack.
+
+**Table of Contents**
+- [Main configuration](#main-configuration)
+  - [\[trad\_rack\]](#trad_rack)
+- [Additional sections](#additional-sections)
+  - [\[stepper\_tr\_selector\]](#stepper_tr_selector)
+  - [\[stepper\_tr\_fil\_driver\]](#stepper_tr_fil_driver)
+  - [\[tmc2209 stepper\_tr\_selector\]](#tmc2209-stepper_tr_selector)
+  - [\[tmc2209 stepper\_tr\_fil\_driver\]](#tmc2209-stepper_tr_fil_driver)
+  - [\[servo tr\_servo\]](#servo-tr_servo)
+
 ## Main configuration
 
 ### [trad_rack]
@@ -62,8 +73,14 @@ servo_up_angle:
 #   between the up and down angles. The default is 500.
 selector_unload_length:
 #   Length (in mm) to retract a piece of filament out of the selector
-#   and back into the module after the selector sensor has been
+#   and back into the lane module after the selector sensor has been
 #   triggered or untriggered. This parameter must be specified.
+#eject_length: 10.0
+#   Length (in mm) to eject the filament into the lane module past the
+#   length defined by selector_unload_length. The filament is ejected
+#   whenever unloading a depleted spool after a runout to make sure
+#   that filament segment is not loaded again until it has been
+#   replaced.
 bowden_length:
 #   Length (in mm) to quickly move filament through the bowden tube
 #   between Trad Rack and the toolhead during loads and unloads.
@@ -89,6 +106,9 @@ toolhead_unload_length:
 #selector_unload_speed: 60.0
 #   Speed (in mm/s) to move filament when unloading the selector.
 #   The default is 60.0.
+#eject_speed: 80.0
+#   Speed (in mm/s) to move the filament when ejecting a filament
+#   segment into the lane module.
 #spool_pull_speed: 100.0
 #   Speed (in mm/s) to move filament through the bowden tube when
 #   loading from a spool. See Tuning.md for details. 

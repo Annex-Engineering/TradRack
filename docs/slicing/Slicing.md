@@ -5,6 +5,16 @@ printing with Trad Rack. These instructions are mainly geared towards
 PrusaSlicer and SuperSlicer, but some notes on custom gcode may be
 applicable to other slicers too.
 
+**Table of Contents**
+- [Provided slicer profiles](#provided-slicer-profiles)
+  - [Prerequisites](#prerequisites)
+  - [Setup](#setup)
+  - [Experimental Options](#experimental-options)
+- [Changes to make to existing profiles](#changes-to-make-to-existing-profiles)
+  - [Printer Settings](#printer-settings)
+  - [Print Settings](#print-settings)
+  - [Filament Settings](#filament-settings)
+
 ## Provided slicer profiles
 
 Example slicer profiles are provided for PrusaSlicer and SuperSlicer.
@@ -45,7 +55,7 @@ select a printer profile with "Experimental" in its name to allow
 these print and/or filament profiles to be selected.
 
 In addition, if you use a "No Unload" print profile, you must modify
-`post_process` depending on where you have python installed and where
+`post_process` depending on where you have Python installed and where
 [remove_unload.py](/Slicer_Scripts/remove_unload.py) is located on
 your computer. You can do this either in the slicer or by directly
 editing the `Annex_K3_TR.ini` file in a text editor. If you choose to
@@ -62,14 +72,30 @@ And in the .ini file:
 post_process = "\"C:\\Users\\Ryan\\AppData\\Local\\Programs\\Python\\Python310\\python.exe\" \"C:\\Users\\Ryan\\Documents\\3d printing stuff\\TradRack_Beta\\Slicer_Scripts\\remove_unload.py\""
 ```
 
+If you don't know where you have Python installed, you can use the
+following command in the terminal to get the path:
+
+```shell
+python -c "import sys; print(sys.executable)"
+```
+
+If the above command doesn't work, try using `python3` instead of
+`python`.
+
+The script requires the following slicer settings in your filament
+profile(s) to work:
+- set `filament_unloading_speed_start` to `100`
+- make sure your `end_filament_gcode` contains the comment
+  `; Filament-specific end gcode`
+
 With the ramming and/or unload gcode removed, you will need to have
 some sort of replacement run in the `pre_unload_gcode` in the
 [trad_rack] section of your Klipper config. The simplest way to do
 this (assuming you have included
 [trad_rack_optional.cfg](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg))
 is to set `variable_shape_tip` to `True` in the
-[gcode_macro TR_Variables] section. Keep in mind that the provided `Shape_Tip`
-macro includes both ramming and unloading.
+[gcode_macro TR_Variables] section. Keep in mind that the provided
+`Shape_Tip` macro includes both ramming and unloading.
 
 ## Changes to make to existing profiles
 
@@ -135,7 +161,7 @@ Printer Settings tab.
  - `retract_length_toolchange`: Set to `0` for all extruders.
  - `cooling_tube_retraction`: See the tooltip for details.
  - `cooling_tube_length`: See the tooltip for details.
- - `parking_pos_retract`: Set this to 
+ - `parking_pos_retraction`: Set this to 
    `cooling_tube_retraction + cooling_tube_length / 2`.
  - `extra_loading_move`: Set this to a negative number with an
    absolute value slightly less than that of `parking_pos_retract`.

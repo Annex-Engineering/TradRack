@@ -3,6 +3,18 @@
 This document provides an overview of how to get Trad Rack running.
 Each section should be completed before moving on to the next.
 
+**Table of Contents**
+- [Printing and assembly](#printing-and-assembly)
+- [Wiring](#wiring)
+- [Klipper installation](#klipper-installation)
+- [Servo calibration](#servo-calibration)
+  - [Servo rotation direction](#servo-rotation-direction)
+  - [Servo horn angle](#servo-horn-angle)
+  - [Servo up angle](#servo-up-angle)
+- [Selector calibration](#selector-calibration)
+- [Slicing](#slicing)
+- [Further reading](#further-reading)
+
 ## Printing and assembly
 - [Print Settings and File Key](/Print_Settings_and_File_Key.txt):
   print settings to use and info on reading the STL filenames.
@@ -75,7 +87,7 @@ should be exiting to the left to match the orientation in the image:
 Tighten the two screws you loosened earlier. Then remove the servo
 jig.
 
-## Servo up angle
+### Servo up angle
 
 For this section, you will need the servo jig that has "UP ANGLE"
 written on the side:
