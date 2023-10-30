@@ -647,7 +647,7 @@ class TradRack:
         if gcmd.get_int('SET_DEFAULT', 0):
             self.default_lanes[tool] = lane
 
-    cmd_cmd_TR_SET_DEFAULT_LANE_help = ("Set the default lane for a tool")
+    cmd_TR_SET_DEFAULT_LANE_help = ("Set the default lane for a tool")
     def cmd_TR_SET_DEFAULT_LANE(self, gcmd):
         lane = gcmd.get_int('LANE', None)
         tool = gcmd.get_int('TOOL', None)
