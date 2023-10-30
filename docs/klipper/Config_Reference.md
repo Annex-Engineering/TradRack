@@ -73,8 +73,14 @@ servo_up_angle:
 #   between the up and down angles. The default is 500.
 selector_unload_length:
 #   Length (in mm) to retract a piece of filament out of the selector
-#   and back into the module after the selector sensor has been
+#   and back into the lane module after the selector sensor has been
 #   triggered or untriggered. This parameter must be specified.
+#eject_length: 10.0
+#   Length (in mm) to eject the filament into the lane module past the
+#   length defined by selector_unload_length. The filament is ejected
+#   whenever unloading a depleted spool after a runout to make sure
+#   that filament segment is not loaded again until it has been
+#   replaced.
 bowden_length:
 #   Length (in mm) to quickly move filament through the bowden tube
 #   between Trad Rack and the toolhead during loads and unloads.
@@ -100,6 +106,9 @@ toolhead_unload_length:
 #selector_unload_speed: 60.0
 #   Speed (in mm/s) to move filament when unloading the selector.
 #   The default is 60.0.
+#eject_speed: 80.0
+#   Speed (in mm/s) to move the filament when ejecting a filament
+#   segment into the lane module.
 #spool_pull_speed: 100.0
 #   Speed (in mm/s) to move filament through the bowden tube when
 #   loading from a spool. See Tuning.md for details. 
