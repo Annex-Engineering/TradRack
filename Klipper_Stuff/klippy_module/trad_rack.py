@@ -1256,46 +1256,6 @@ class TradRack:
     def _send_resume(self):
         self.resume_macro.run_gcode_from_command()
 
-    def _get_extruder_mcu_steppers(self):
-        extruder = self.toolhead.get_extruder()
-        if hasattr(extruder, 'get_extruder_steppers'):
-            steppers = []
-            for extruder_stepper in extruder.get_extruder_steppers():
-                steppers.append(extruder_stepper.stepper)
-            return steppers
-        else:
-            return [extruder.extruder_stepper.stepper]
-
-    def _sync_extruder_to_fil_driver(self):
-        self.toolhead.flush_step_generation()
-        self.tr_toolhead.flush_step_generation()
-        self._reset_fil_driver()
-        steppers = self._get_extruder_mcu_steppers()
-        prev_trapq = steppers[0].get_trapq()
-        tr_trapq = self.tr_toolhead.get_trapq()
-        ffi_main, ffi_lib = chelper.get_ffi()
-        prev_sks = []
-        for stepper in steppers:
-            stepper_kinematics = ffi_main.gc(
-                ffi_lib.cartesian_stepper_alloc(b'y'), ffi_lib.free)
-            prev_sks.append(stepper.set_stepper_kinematics(stepper_kinematics))
-            stepper.set_trapq(tr_trapq)
-            stepper.set_position((0., 0., 0.))
-            self.tr_toolhead.register_step_generator(stepper.generate_steps)
-        self.extruder_synced = True
-        return prev_sks, prev_trapq
-
-    def _unsync_extruder_from_fil_driver(self, prev_sks, prev_trapq):
-        self.toolhead.flush_step_generation()
-        self.tr_toolhead.flush_step_generation()
-        steppers = self._get_extruder_mcu_steppers()
-        for i in range(len(steppers)):
-            stepper = steppers[i]
-            self.tr_toolhead.step_generators.remove(stepper.generate_steps)
-            stepper.set_trapq(prev_trapq)
-            stepper.set_stepper_kinematics(prev_sks[i])
-        self.extruder_synced = False
-
     def _reset_tool_map(self):
         self.tool_map = list(range(self.lane_count))
         self.default_lanes = list(range(self.lane_count))
