@@ -23,9 +23,11 @@ quickly as possible with minimal reading, see the
 - [Save Variables](klipper/Save_Variables.md): information on the
   variables that Trad Rack saves to disk using save_variables.
 
-## Tuning
+## Tuning and Feature Overviews
 - [Tuning](Tuning.md): overview of the loading and unloading
   processes and information on how to tune them.
+- [Tool Mapping](Tool_Mapping.md): info on tool mapping/lane groups
+  and how runouts are handled.
 
 ## Slicing
 - [Slicing](slicing/Slicing.md): Information on slicing multimaterial
