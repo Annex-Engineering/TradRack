@@ -96,6 +96,8 @@ class TradRack:
             'servo_wait_ms', default=500., above=0.) / 1000.
         self.selector_unload_length = config.getfloat(
             'selector_unload_length', above=0.)
+        self.eject_length = config.getfloat(
+            'eject_length', default=30., above=0.)
         self.config_bowden_length = self.bowden_load_length \
                                   = self.bowden_unload_length \
                                   = config.getfloat('bowden_length', above=0.)
@@ -116,6 +118,8 @@ class TradRack:
             'selector_sense_speed', default=40., above=0.)
         self.selector_unload_speed = config.getfloat(
             'selector_unload_speed', default=60., above=0.)
+        self.eject_speed = config.getfloat(
+            'eject_speed', default=80., above=0.)
         self.toolhead_sense_speed = config.getfloat(
             'toolhead_sense_speed', default=self.selector_sense_speed, above=0.)
         self.extruder_load_speed = config.getfloat(
@@ -1075,7 +1079,8 @@ class TradRack:
                                     "No trigger on selector sensor after full "
                                     "movement")
 
-    def _unload_selector(self, gcmd, base_length=None, mark_calibrated=False):
+    def _unload_selector(self, gcmd, base_length=None, mark_calibrated=False,
+                         eject=False):
         # check for filament in selector
         if not self._query_selector_sensor():
             gcmd.respond_info("No filament detected. "
@@ -1126,8 +1131,13 @@ class TradRack:
         # retract filament into the module
         self._reset_fil_driver()
         pos = self.tr_toolhead.get_position()
-        pos[1] -= self.selector_unload_length
-        self.tr_toolhead.move(pos, self.selector_unload_speed)
+        if eject:
+            pos[1] -= (self.selector_unload_length + self.eject_length)
+            speed = self.eject_speed
+        else:
+            pos[1] -= self.selector_unload_length
+            speed = self.selector_unload_speed
+        self.tr_toolhead.move(pos, speed)
 
         # reset filament driver position
         self._reset_fil_driver()
@@ -1136,7 +1146,7 @@ class TradRack:
         self._raise_servo()
 
     def _unload_toolhead(self, gcmd, min_temp=0., exact_temp=0.,
-                         force_unload=False, sync=False):
+                         force_unload=False, sync=False, eject=False):
         # reset active lane
         self.active_lane = None
 
@@ -1231,7 +1241,7 @@ class TradRack:
         # unload selector
         mark_calibrated = not (self.bowden_unload_calibrated \
                                or reached_sensor_early)
-        self._unload_selector(gcmd, move_start - pos[1], mark_calibrated)
+        self._unload_selector(gcmd, move_start - pos[1], mark_calibrated, eject)
 
         # note that the current lane's buffer has been filled
         if self.curr_lane is not None:
@@ -1365,7 +1375,8 @@ class TradRack:
         # unload
         if self.runout_steps_done < 1:
             try:
-                self._unload_toolhead(gcmd, force_unload=True, sync=True)
+                self._unload_toolhead(gcmd, force_unload=True, sync=True,
+                                      eject=True)
             except:
                 self._raise_servo()
                 gcmd.respond_info("Failed to unload. Please pull "
