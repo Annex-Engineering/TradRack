@@ -525,7 +525,7 @@ class TradRack:
     def cmd_TR_RESUME(self, gcmd):
         if self.resume_callback(gcmd, **self.resume_kwargs):
             self.resume_callback = None
-            self.resume_macro.run_gcode_from_command()
+            self._send_resume()
 
     cmd_TR_LOCATE_SELECTOR_help = ("Ensures the position of Trad Rack's "
                                    "selector is known so that it is ready for "
