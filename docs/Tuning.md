@@ -107,7 +107,7 @@ movement) and a Mosquito Magnum hotend.
 
 See the drawings below for a visualization of the toolhead-specific
 lengths on toolheads with various sensor setups. Colorful labels are
-length settings, and black labels in parentheseses are references that
+length settings, and black labels in parentheses are references that
 are used to determine the starting or ending points of the length
 settings.
 

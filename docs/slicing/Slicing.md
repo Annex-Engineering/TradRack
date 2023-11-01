@@ -179,7 +179,7 @@ Printer Settings tab.
 
   See the drawing below for a visualization of the cooling tube settings.
   Colorful labels are slicer settings, and black labels in
-  parentheseses are references that are used to determine the starting
+  parentheses are references that are used to determine the starting
   or ending points of the slicer settings.
 
   ![](images/slicer_toolhead_lengths.png)
