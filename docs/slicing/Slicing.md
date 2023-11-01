@@ -187,8 +187,8 @@ Printer Settings tab.
 - `parking_pos_retraction`: Set this to 
   `cooling_tube_retraction + cooling_tube_length / 2`.
 - `extra_loading_move`: Set this to a negative number with an
-  absolute value slightly less than that of `parking_pos_retract`.
-  For example, if `parking_pos_retract` is `37`, set this to
+  absolute value slightly less than that of `parking_pos_retraction`.
+  For example, if `parking_pos_retraction` is `37`, set this to
   `-36.99`.
 - Advanced wipe tower purge volume calculs:
   - In SuperSlicer, one of the options for purge volume calculations
