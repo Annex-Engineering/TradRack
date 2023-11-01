@@ -7,6 +7,8 @@ processes and how to tune them.
 - [Loading process](#loading-process)
 - [Unloading process](#unloading-process)
 - [Tuning lengths](#tuning-lengths)
+  - [Bowden length](#bowden-length)
+  - [Toolhead-specific lengths](#toolhead-specific-lengths)
 - [Bowden lengths](#bowden-lengths)
   - [Relevant config options](#relevant-config-options)
   - [How calibration works](#how-calibration-works)
@@ -57,6 +59,8 @@ provided config file have been tuned for an Annex K3 toolhead running
 a Sherpa Micro extruder (with a sensor detecting its idler arm
 movement) and a Mosquito Magnum hotend.
 
+### Bowden length
+
 - `bowden_length` (mm): 
   - If you are using a toolhead filament sensor
     (`toolhead_fil_sensor_pin` is specified and
@@ -78,21 +82,43 @@ movement) and a Mosquito Magnum hotend.
       Trad Rack's selector filament sensor is triggered. Make sure there
       is some distance between the filament tip and the drive gears for
       safety.
+
+### Toolhead-specific lengths
+
 - `extruder_load_length` (mm): this length should be tuned to bring
-  the filament tip slightly above the start of the meltzone, starting
-  from the point where the toolhead sensor is triggered. You can base
-  this length off of measurements of your toolhead from CAD. If you
-  are not using a toolhead sensor, then the position of the filament
-  tip after moving through the bowden tube would be your starting
-  point.
+  the filament tip from the point where the toolhead sensor is
+  triggered to a point slightly above the heatbreak throat. You can
+  base this length off of measurements of your toolhead from CAD. If
+  you are not using a toolhead sensor, then the position of the
+  filament tip after moving through the bowden tube would be your
+  starting point.
 - `hotend_load_length` (mm): this length is meant to bring the
-  filament tip into the meltzone so it is ready for printing. You may
+  filament tip from the ending point of `extruder_load_length` to a
+  point inside the meltzone so it is ready for printing. You may
   have to tune this parameter through trial and error to avoid extra
-  oozing during loading or gaps in your prime tower.
-- `toolhead_unload_length` (mm): this length is meant to retract the
-  filament tip from the toolhead so the extruder gears are not
-  touching it, starting from the point where the toolhead sensor is
-  untriggered.
+  oozing during loading or gaps in your wipe tower.
+- `toolhead_unload_length` (mm): this length is meant to bring the
+  filament tip from the point where the toolhead sensor is untriggered
+  to a point above the extruder gears (where the extruder gears will
+  not touch the filament). If your toolhead sensor is above the
+  extruder gears and you are confident that the filament will not be
+  touching the extruder gears at the point where it is untriggered,
+  this length can be as low as 0.
+
+See the drawings below for a visualization of the toolhead-specific
+lengths on toolheads with various sensor setups. Colorful labels are
+length settings, and black labels in parentheseses are references that
+are used to determine the starting or ending points of the length
+settings.
+
+| Sensor location             | Drawing                                 |
+| ---                         | ---                                     |
+| Sensor above extruder gears | ![](images/toolhead_lengths/above.png)  |
+| Sensing idler arm movement  | ![](images/toolhead_lengths/idler.png)  |
+| Sensor below extruder gears | ![](images/toolhead_lengths/below.png)  |
+
+Note: the bottom point of `hotend_load_length` is not drawn to scale
+and will depend on your specific hotend, tip shaping procedure, etc.
 
 ## Bowden lengths
 

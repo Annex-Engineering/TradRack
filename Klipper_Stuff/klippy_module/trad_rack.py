@@ -108,7 +108,7 @@ class TradRack:
         if self.toolhead_fil_endstops:
             self.toolhead_unload_length = config.getfloat(
                 'toolhead_unload_length',
-                above=0.)
+                minval=0.)
         else:
             self.toolhead_unload_length = config.getfloat(
                 'toolhead_unload_length',
