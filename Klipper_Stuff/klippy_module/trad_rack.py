@@ -660,6 +660,9 @@ class TradRack:
         # assign name
         self.tool_names[tool] = name
 
+        # notify name assigned
+        self.printer.send_event("trad_rack:assigned_name", tool, name)
+
     cmd_TR_SET_DEFAULT_LANE_help = ("Set the default lane for a tool")
     def cmd_TR_SET_DEFAULT_LANE(self, gcmd):
         lane = gcmd.get_int('LANE', None)
@@ -710,7 +713,7 @@ class TradRack:
         self._check_lane_valid(lane)
 
         # notify to clear lane id
-        self.printer.send_event("trad_rack:remove_lane_id", lane)
+        self.printer.send_event("trad_rack:removed_lane_id", lane)
 
     cmd_TR_PRINT_TOOL_MAP_help = ("Print tool assignment for each lane")
     def cmd_TR_PRINT_TOOL_MAP(self, gcmd):
@@ -1422,13 +1425,20 @@ class TradRack:
             if self.default_lanes[tool] is None:
                 self.default_lanes[tool] = lane
 
+            # notify tool assigned
+            self.printer.send_event("trad_rack:assigned_tool", lane, tool)
+
         if name is not None:
             # assign name to tool
             curr_tool = self.tool_map[lane]
             self.tool_names[curr_tool] = name
 
-        # notify lane assigned
-        self.printer.send_event("trad_rack:assigned_lane", lane, tool, name, id)
+            # notify name assigned
+            self.printer.send_event("trad_rack:assigned_name", curr_tool, name)
+
+        if id is not None:
+            # notify ID assigned
+            self.printer.send_event("trad_rack:assigned_id", lane, id)
 
     def _get_assigned_lanes(self, tool):
         lanes = []

@@ -11,8 +11,8 @@ class TradRackSpoolman:
         self.printer.register_event_handler("klippy:connect",
                                             self.handle_connect)
         event_handlers = [
-            (self.handle_assign_lane,   ["trad_rack:assigned_lane"]),
-            (self.handle_remove_id,     ["trad_rack:remove_lane_id"]),
+            (self.handle_assign_id,     ["trad_rack:assigned_id"]),
+            (self.handle_remove_id,     ["trad_rack:removed_lane_id"]),
             (self.handle_reset_ids,     ["trad_rack:reset_lane_ids"]),
             (self.handle_set_active,    ["trad_rack:load_complete",
                                          "trad_rack:forced_active_lane"]),
@@ -43,7 +43,7 @@ class TradRackSpoolman:
         self.lane_count = self.trad_rack.lane_count
         self.reset_id_map()
 
-    def handle_assign_lane(self, lane, tool, name, id):
+    def handle_assign_id(self, lane, id):
         if id is not None:
             self.id_map[lane] = id
 
