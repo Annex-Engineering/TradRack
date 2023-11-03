@@ -178,7 +178,9 @@ class TradRack:
         self.lanes_dead = [False] * self.lane_count
         self.tool_map = []
         self.default_lanes = []
+        self.tool_names = []
         self._reset_tool_map()
+        self._reset_tool_names()
 
         # runout variables
         self.runout_lane = None
@@ -246,18 +248,36 @@ class TradRack:
         self.gcode.register_command('TR_ASSIGN_LANE',
             self.cmd_TR_ASSIGN_LANE,
             desc=self.cmd_TR_ASSIGN_LANE_help)
+        self.gcode.register_command('TR_ASSIGN_TOOL_NAME',
+            self.cmd_TR_ASSIGN_TOOL_NAME,
+            desc=self.cmd_TR_ASSIGN_TOOL_NAME_help)
         self.gcode.register_command('TR_SET_DEFAULT_LANE',
             self.cmd_TR_SET_DEFAULT_LANE,
             desc=self.cmd_TR_SET_DEFAULT_LANE_help)
         self.gcode.register_command('TR_RESET_TOOL_MAP',
             self.cmd_TR_RESET_TOOL_MAP,
             desc=self.cmd_TR_RESET_TOOL_MAP_help)
+        self.gcode.register_command('TR_RESET_TOOL_NAMES',
+            self.cmd_TR_RESET_TOOL_NAMES,
+            desc=self.cmd_TR_RESET_TOOL_NAMES_help)
+        self.gcode.register_command('TR_REMOVE_TOOL_NAME',
+            self.cmd_TR_REMOVE_TOOL_NAME,
+            desc=self.cmd_TR_REMOVE_TOOL_NAME_help)
+        self.gcode.register_command('TR_RESET_LANE_IDS',
+            self.cmd_TR_RESET_LANE_IDS,
+            desc=self.cmd_TR_RESET_LANE_IDS_help)
+        self.gcode.register_command('TR_REMOVE_LANE_ID',
+            self.cmd_TR_REMOVE_LANE_ID,
+            desc=self.cmd_TR_REMOVE_LANE_ID_help)
         self.gcode.register_command('TR_PRINT_TOOL_MAP',
             self.cmd_TR_PRINT_TOOL_MAP,
             desc=self.cmd_TR_PRINT_TOOL_MAP_help)
         self.gcode.register_command('TR_PRINT_TOOL_GROUPS',
             self.cmd_TR_PRINT_TOOL_GROUPS,
             desc=self.cmd_TR_PRINT_TOOL_GROUPS_help)
+        self.gcode.register.command('TR_CHECK_FOR_NAME',
+            self.cmd_TR_CHECK_FOR_NAME,
+            desc=self.cmd_TR_CHECK_FOR_NAME_help)
         if register_toolchange_commands:
             for i in range(self.lane_count):
                 self.gcode.register_command('T{}'.format(i),
@@ -372,35 +392,12 @@ class TradRack:
         start_lane = self.active_lane
         lane = gcmd.get_int('LANE', None)
         tool = gcmd.get_int('TOOL', None)
+        name = gcmd.get_int('NAME', None)
 
         # select lane
+        lane = self._select_lane(gcmd, lane, tool, name)
         if lane is None:
-            # check tool
-            self._check_tool_valid(tool)
-
-            # get default lane for the selected tool
-            lane = self.default_lanes[tool]
-            if lane is None:
-                gcmd.respond_info("Tool {tool} has no lanes assigned to it. "
-                                  "Use TR_ASSIGN_LANE LANE=<lane index> "
-                                  "TOOL={tool} to assign a lane to tool "
-                                  "{tool}, then use TR_RESUME to continue."
-                                  .format(tool=str(tool)))
-
-                # set up resume callback
-                resume_kwargs = {
-                    "condition": lambda t=tool: self.default_lanes[t] \
-                        is not None,
-                    "action": lambda t=tool: self._resume_act_load_toolhead(t),
-                    "fail_msg": "Cannot resume. Please use TR_ASSIGN_LANE to "
-                                "assign a lane to tool %d, then use TR_RESUME."
-                                % tool
-                }
-                self._set_up_resume("check condition", resume_kwargs)
-
-                # pause and wait for user to resume
-                self._send_pause()
-                return
+            return
         
         # load toolhead
         try:
@@ -512,6 +509,9 @@ class TradRack:
 
         # enable runout detection
         self.selector_sensor.set_active(True)
+
+        # notify active lane was set without loading the toolhead
+        self.printer.send_event("trad_rack:forced_active_lane")
 
     cmd_TR_RESET_ACTIVE_LANE_help = ("Resets active lane to None to indicate "
                                      "the toolhead is not loaded")
@@ -628,24 +628,37 @@ class TradRack:
         self.sync_to_extruder = False
         self._restore_extruder_sync()
 
-    cmd_TR_ASSIGN_LANE_help = ("Assign a lane to a tool")
+    cmd_TR_ASSIGN_LANE_help = ("Assign a tool, name, and/or ID to a lane")
     def cmd_TR_ASSIGN_LANE(self, gcmd):
         lane = gcmd.get_int('LANE', None)
         tool = gcmd.get_int('TOOL', None)
-        
-        # check lane and tool
-        self._check_lane_valid(lane)
-        self._check_tool_valid(tool)
-        
+        name = gcmd.get('NAME', None)
+        id = gcmd.get_int('ID', None)
+
+        if tool is None and name is None and id is None:
+            raise self.gcode.error("TOOL, NAME, or ID must be specified")
+
         # assign lane
-        self._assign_lane(lane, tool)
+        self._assign_lane(lane, tool, name, id)
 
         # mark lane as not dead
         self.lanes_dead[lane] = False
 
         # make lane the new default for the tool
         if gcmd.get_int('SET_DEFAULT', 0):
-            self.default_lanes[tool] = lane
+            curr_tool = self.tool_map[lane]
+            self.default_lanes[curr_tool] = lane
+    
+    cmd_TR_ASSIGN_TOOL_NAME_help = ("Assign a name to a tool")
+    def cmd_TR_ASSIGN_TOOL_NAME(self, gcmd):
+        tool = gcmd.get_int('TOOL', None)
+        name = gcmd.get('NAME', None)
+
+        # check tool
+        self._check_tool_valid(tool)
+
+        # assign name
+        self.tool_names[tool] = name
 
     cmd_TR_SET_DEFAULT_LANE_help = ("Set the default lane for a tool")
     def cmd_TR_SET_DEFAULT_LANE(self, gcmd):
@@ -669,6 +682,36 @@ class TradRack:
     def cmd_TR_RESET_TOOL_MAP(self, gcmd):
         self._reset_tool_map()
 
+    cmd_TR_RESET_TOOL_NAMES_help = ("Clear the name assigned to each tool")
+    def cmd_TR_RESET_TOOL_NAMES(self, gcmd):
+        self._reset_tool_names()
+    
+    cmd_TR_REMOVE_TOOL_NAME_help = ("Clear the name assigned to the specified "
+                                   "tool")
+    def cmd_TR_REMOVE_TOOL_NAME(self, gcmd):
+        tool = gcmd.get_int('TOOL', None)
+
+        # check tool
+        self._check_tool_valid(tool)
+        
+        # clear tool name
+        self.tool_names[tool] = None
+
+    cmd_TR_RESET_LANE_IDS_help = ("Clear the ID assigned to each lane")
+    def cmd_TR_RESET_LANE_IDS(self, gcmd):
+        # notify to reset lane ids
+        self.printer.send_event("trad_rack:reset_lane_ids")
+
+    cmd_TR_REMOVE_LANE_ID_help = ("Clear the ID assigned to the specified lane")
+    def cmd_TR_REMOVE_LANE_ID(self, gcmd):
+        lane = gcmd.get_int('LANE', None)
+
+        # check lane
+        self._check_lane_valid(lane)
+
+        # notify to clear lane id
+        self.printer.send_event("trad_rack:remove_lane_id", lane)
+
     cmd_TR_PRINT_TOOL_MAP_help = ("Print tool assignment for each lane")
     def cmd_TR_PRINT_TOOL_MAP(self, gcmd):
         num_chars = len(str(self.lane_count - 1))
@@ -690,11 +733,47 @@ class TradRack:
             tool_groups[self.tool_map[lane]].append(lane)
         msg = ""
         for tool in range(len(tool_groups)):
-            msg += "Tool {}: {}".format(tool, tool_groups[tool])
+            name = self.tool_names[tool]
+            if name is None:
+                name_msg = ""
+            else:
+                name_msg = " (%s)" % name
+            msg += "Tool {}{}: {}".format(tool, name_msg, tool_groups[tool])
             if len(tool_groups[tool]) > 1:
                 msg += " (default: {})".format(self.default_lanes[tool])
             msg += '\n'
         gcmd.respond_info(msg)
+
+    cmd_TR_CHECK_FOR_NAME_help = ("Ensure the specified filament name is "
+                                  "assigned to a tool")
+    def cmd_TR_CHECK_FOR_NAME(self, gcmd):
+        # get name
+        name = gcmd.get('NAME', None)
+        if name is None:
+            raise self.gcode.error("NAME must be specified")
+        
+        # check if name is assigned to a tool
+        if self._get_assigned_tool(name) is not None:
+            return
+        
+        # tell user to assign name to a tool
+        gcmd.respond_info("There is no tool with the name {name} assigned to "
+                          "it. Use TR_ASSIGN_TOOL_NAME TOOL=<tool index> "
+                          "NAME={name} to assign by tool or TR_ASSIGN_LANE "
+                          "LANE=<lane index> NAME={name} to assign by lane, "
+                          "then use TR_RESUME to continue.".format(name=name))
+        
+        # set up resume callback
+        resume_kwargs = {
+            "condition": lambda n=name: self._get_assigned_tool(n) is not None,
+            "fail_msg": "Cannot resume. Please use TR_ASSIGN_TOOL_NAME or "
+            "TR_ASSIGN_LANE to assign the name %s to a tool or lane, then use "
+            "TR_RESUME." % name
+        }
+        self._set_up_resume("check condition", resume_kwargs)
+
+        # pause and wait for user to resume
+        self._send_pause()
 
     cmd_SELECT_TOOL_help = ("Load filament from Trad Rack into the toolhead "
                             "with T<index> commands")
@@ -921,6 +1000,9 @@ class TradRack:
             raise TradRackLoadError("Failed to load toolhead. Could not unload "
                                     "toolhead before load")
 
+        # notify toolhead load started
+        self.printer.send_event("trad_rack:load_started")
+
         # load filament into the selector
         try:
             self._load_selector(lane)
@@ -1056,6 +1138,9 @@ class TradRack:
         # restore gcode state
         self.gcode.run_script_from_command(
             "RESTORE_GCODE_STATE NAME=TR_TOOLCHANGE_STATE MOVE=1")
+        
+        # notify toolhead load complete
+        self.printer.send_event("trad_rack:load_complete", lane)
 
     def _load_selector(self, lane):
         # move selector
@@ -1166,6 +1251,9 @@ class TradRack:
         if not self._can_lower_servo():
             raise self.gcode.error("Selector must be moved to a lane "
                                    "before unloading")
+
+        # notify toolhead unload started
+        self.printer.send_event("trad_rack:unload_started")
         
         # wait for heater temp if needed
         self._wait_for_heater_temp(min_temp, exact_temp)
@@ -1250,6 +1338,9 @@ class TradRack:
         # reset ignore_next_unload_length
         self.ignore_next_unload_length = False
 
+        # notify toolhead unload complete
+        self.printer.send_event("trad_rack:unload_complete")
+
     def _send_pause(self):
         self.pause_macro.run_gcode_from_command()
 
@@ -1259,6 +1350,9 @@ class TradRack:
     def _reset_tool_map(self):
         self.tool_map = list(range(self.lane_count))
         self.default_lanes = list(range(self.lane_count))
+    
+    def _reset_tool_names(self):
+        self.tool_names = [None] * self.lane_count
 
     def _find_replacement_lane(self, runout_lane):
         tool = self.tool_map[runout_lane]
@@ -1307,19 +1401,34 @@ class TradRack:
     def _make_lane_default(self, lane):
         self.default_lanes[self.tool_map[lane]] = lane
     
-    def _assign_lane(self, lane, tool):
-        prev_tool = self.tool_map[lane]
+    def _assign_lane(self, lane, tool=None, name=None, id=None):
+        # check lane
+        self._check_lane_valid()
+        
+        if tool is not None:
+            # check tool
+            self._check_tool_valid()
 
-        # assign lane to tool
-        self.tool_map[lane] = tool
+            prev_tool = self.tool_map[lane]
 
-        # reassign default lane for previous tool if needed
-        if self.default_lanes[prev_tool] == lane:
-            self._set_default_lane(prev_tool)
+            # assign lane to tool
+            self.tool_map[lane] = tool
 
-        # ensure new tool has a default lane assigned
-        if self.default_lanes[tool] is None:
-            self.default_lanes[tool] = lane
+            # reassign default lane for previous tool if needed
+            if self.default_lanes[prev_tool] == lane:
+                self._set_default_lane(prev_tool)
+
+            # ensure new tool has a default lane assigned
+            if self.default_lanes[tool] is None:
+                self.default_lanes[tool] = lane
+
+        if name is not None:
+            # assign name to tool
+            curr_tool = self.tool_map[lane]
+            self.tool_names[curr_tool] = name
+
+        # notify lane assigned
+        self.printer.send_event("trad_rack:assigned_lane", lane, tool, name, id)
 
     def _get_assigned_lanes(self, tool):
         lanes = []
@@ -1327,6 +1436,57 @@ class TradRack:
             if self.tool_map[lane] == tool:
                 lanes.append(lane)
         return lanes
+    
+    def _get_assigned_tool(self, name):
+        for tool in range(len(self.tool_names)):
+            if self.tool_names[tool] == name:
+                return tool
+        return None
+
+    def _select_lane(self, gcmd, lane=None, tool=None, name=None):
+        # return lane if it was passed
+        if lane is not None:
+            return lane
+        
+        # check name
+        name_tool = self._get_assigned_tool(name)
+        try:
+            # check the name's assigned tool
+            self._check_tool_valid(name_tool)
+
+            # return the tool's default lane if it exists
+            lane = self.default_lanes[name_tool]
+            if lane is not None:
+                return lane
+        except self.gcode.error:
+            pass
+
+        # check tool
+        self._check_tool_valid(tool)
+
+        # return the tool's default lane if it exists
+        lane = self.default_lanes[tool]
+        if lane is not None:
+            return lane
+
+        # tell user to assign a lane to the tool
+        gcmd.respond_info("Tool {tool} has no lanes assigned to it. Use "
+                          "TR_ASSIGN_LANE LANE=<lane index> TOOL={tool} to "
+                          "assign a lane to tool {tool}, then use TR_RESUME to "
+                          "continue.".format(tool=str(tool)))
+
+        # set up resume callback
+        resume_kwargs = {
+            "condition": lambda t=tool: self.default_lanes[t] is not None,
+            "action": lambda t=tool: self._resume_act_load_toolhead(t),
+            "fail_msg": "Cannot resume. Please use TR_ASSIGN_LANE to assign a "
+                        "lane to tool %d, then use TR_RESUME." % tool
+        }
+        self._set_up_resume("check condition", resume_kwargs)
+
+        # pause and wait for user to resume
+        self._send_pause()
+        return None
 
     def _runout_replace_filament(self, gcmd):
         # set up resume callback
