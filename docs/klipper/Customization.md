@@ -44,7 +44,7 @@ templates are currently available:
 [trad_rack_optional.cfg](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg)
 provides a recommended example implementation of `pre_unload_gcode`
 and `post_load_gcode`.[^1] It is highly recommended to include this file
-when getting starting with Trad Rack; it provides several useful
+when getting started with Trad Rack; it provides several useful
 features, and the [provided slicer profiles](/Slicer_Config/) (as well
 as the suggested
 [changes to make to existing slicer profiles](/docs/slicing/Slicing.md#changes-to-make-to-existing-profiles))
@@ -107,7 +107,7 @@ parameters they expect:
 - `Slicer_Unload`: Mimics the ramming and/or unload
   behavior of PrusaSlicer or SuperSlicer. Settings can be adjusted
   by directly adjusting the macro's variables or by using
-  `Set_Slicer_Unload_Preset`. Variable names match the "parameter
+  `Set_Slicer_Unload_Preset`. Most variable names match the "parameter
   names" used in the slicer.
 
 - `_Wait_for_Toolchange_Temp`: Helper macro for `Slicer_Unload`.
@@ -115,12 +115,14 @@ parameters they expect:
 - `Home_and_Wipe_Nozzle`: Used in `pre_unload_gcode` (if
   `variable_use_wiper` is set to `True` in
   `[gcode_macro TR_Variables]`). See the comment in
-  `[gcode_macro TR_Variables]` for more details.
+  `[gcode_macro TR_Variables]` next to `variable_use_wiper` for more
+  details.
 
 - `Save_Pressure_Advance`: Saves the current pressure advance value so
-  it can be restored after tip-shaping. See the [Slicing document](/docs/slicing/Slicing.md#print-settings) for how this macro is meant to be used.
-  This macro may be useful if you set pressure advance only at the
-  start of a print.
+  that it can be restored after tip-shaping. See the
+  [Slicing document](/docs/slicing/Slicing.md#print-settings) for how
+  this macro is meant to be used. This macro may be useful if you set
+  pressure advance only at the start of a print.
 
 - `Restore_Pressure_Advance`: Used by `post_load_gcode` to restore the
   pressure advance value saved by `Save_Pressure_Advance` after a
