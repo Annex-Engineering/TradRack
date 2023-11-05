@@ -2082,12 +2082,12 @@ class TradRackExtruderSyncManager:
     
     def set_fil_driver_multiplier(self, multiplier):
         if not self.is_fil_driver_synced():
-            raise Exception("Cannot set rotation distance multiplier when "
-                            "filament driver is not synced to extruder")
+            raise Exception("Cannot set stepper multiplier when filament "
+                            "driver is not synced to extruder")
         steppers = self.fil_driver_rail.get_steppers()
         for i in range(len(steppers)):
             steppers[i].set_rotation_distance(
-                self._prev_rotation_dists[i] * multiplier)
+                self._prev_rotation_dists[i] / multiplier)
 
 class RunIfNoActivity:
     def __init__(self, toolhead, reactor, callback, delay):
