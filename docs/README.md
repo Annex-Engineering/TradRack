@@ -28,6 +28,10 @@ quickly as possible with minimal reading, see the
   processes and information on how to tune them.
 - [Tool Mapping](Tool_Mapping.md): info on tool mapping/lane groups
   and how runouts are handled.
+- [Customization](Customization.md): info on how code is divided
+  between the trad_rack Klipper module and the config, how to
+  customize Trad Rack's behavior through gcode templates, and what the
+  trad_rack_optional config file does.
 
 ## Slicing
 - [Slicing](slicing/Slicing.md): Information on slicing multimaterial

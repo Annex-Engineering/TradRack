@@ -13,6 +13,7 @@ Each section should be completed before moving on to the next.
   - [Servo up angle](#servo-up-angle)
 - [Selector calibration](#selector-calibration)
 - [Slicing](#slicing)
+- [Change Slicer\_Unload macro settings](#change-slicer_unload-macro-settings)
 - [Further reading](#further-reading)
 
 ## Printing and assembly
@@ -175,6 +176,34 @@ for the following:
 ## Slicing
 
 See the [Slicing document](slicing/Slicing.md).
+
+## Change Slicer_Unload macro settings
+
+This section involves adjusting the settings of the
+[Slicer_Unload macro](klipper/Customization.md#tip-shaping) to match
+your slicer settings so that toolhead unloads performed outside of a
+print will closely match toolhead unloads performed during a print.
+
+Under `[gcode_macro Slicer_Unload]` in your copy of the
+[trad_rack_optional.cfg](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg),
+change the values of the following variables to match the values you
+set in the slicer profile. Variable names match the "parameter names"
+used in the slicer config files:
+
+- all variables under the comment `# printer settings`
+- all variables under the comment `# filament settings`
+
+In addition, if you are using SuperSlicer, do the same for all
+variables under the comment `# filament settings only in SuperSlicer`.
+
+Set `variable_superslicer` to `True` if you are using SuperSlicer. If
+you are using `PrusaSlicer`, set it to `False`.
+
+Optional: if you want to use different tip-shaping settings for
+different filaments (when unloading the toolhead outside of a print),
+you can define presets in `[gcode_macro Set_Slicer_Unload_Preset]` in
+the same file. See the comments in the macro and the example preset
+variables for reference.
 
 ## Further reading
 

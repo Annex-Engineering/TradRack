@@ -86,8 +86,9 @@ in your main printer config file:
     section
     - Change `run_current` to match your filament driver motor.
 - [trad_rack_optional.cfg](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg):
-  optional config file. This file is recommended but may be more or
-  less useful depending on your slicer setup.
+  optional config file. It is highly recommended to include this file
+  (see the [Customization document](Customization.md) for more
+  details).
 
 ### Modifying provided config files for a different board
 

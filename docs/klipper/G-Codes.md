@@ -31,6 +31,7 @@ contains items pertaining to Trad Rack.
   - [TR\_RESET\_TOOL\_MAP](#tr_reset_tool_map)
   - [TR\_PRINT\_TOOL\_MAP](#tr_print_tool_map)
   - [TR\_PRINT\_TOOL\_GROUPS](#tr_print_tool_groups)
+- [Macros](#macros)
 
 ## General commands
 
@@ -157,7 +158,7 @@ sync_to_extruder to True in the
 The following commands are used either for calibration or for testing
 settings without having to restart Klipper to reload the config.
 Calibration procedures that should be run before using Trad Rack are
-covered by the [Quick Start document](/docs/Quick_Start.md).
+covered by the [Quick Start document](/docs/Quick_Start.md):
 
 ### TR_SERVO_TEST
 `TR_SERVO_TEST [ANGLE=<degrees>]`: Moves the servo to the specified
@@ -215,3 +216,10 @@ lanes.
 `TR_PRINT_TOOL_GROUPS`: Prints a list of lanes assigned to each tool
 to the console. If a tool has multiple lanes assigned to it, the
 default lane will be indicated.
+
+## Macros
+
+In addition to the above gcode commands, the
+[trad_rack_optional config file](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg)
+adds several gcode macros (if you choose to include it). See the
+[Customization document](Customization.md#macros) for details.
