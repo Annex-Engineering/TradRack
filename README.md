@@ -14,7 +14,9 @@ Our discord server can be found here:
 
 ## Beta Signup
 
-Closed beta signups are currently closed. An open beta will be available in time.
+Closed beta signups are currently closed. An open beta will be available sometime
+before the end of the year. We have released the BOM/sourcing guide early in case
+you want to get a head start: [BOM/sourcing guide spreadsheet](https://docs.google.com/spreadsheets/d/1O3eyVuQ6M4F03MJSDs4Z71_XyNjXL5HFTZr1jsaAtRc/edit?usp=sharing)
 
 ## Stats
 
