@@ -76,14 +76,14 @@ the clamp.
 For this section, you will need the servo jig that has "HORN ANGLE"
 written on the side:
 
-![HORN ANGLE servo jig](images/horn_angle_jig.png?raw=true)
+![HORN ANGLE servo jig](images/servo_jigs/horn_angle_jig.png?raw=true)
 
 Insert the servo into the servo jig. You may need to rotate the
 servo horn around the servo spline by hand so that it is at the
 correct angle for the bearing to fit into the jig. The servo's wires
 should be exiting to the left to match the orientation in the image:
 
-![Servo in HORN ANGLE jig](images/servo_in_horn_angle_jig.png?raw=true)
+![Servo in HORN ANGLE jig](images/servo_jigs/servo_in_horn_angle_jig.png?raw=true)
 
 Tighten the two screws you loosened earlier. Then remove the servo
 jig.
@@ -93,12 +93,12 @@ jig.
 For this section, you will need the servo jig that has "UP ANGLE"
 written on the side:
 
-![UP ANGLE servo jig](images/up_angle_jig.png?raw=true)
+![UP ANGLE servo jig](images/servo_jigs/up_angle_jig.png?raw=true)
 
 Insert the servo into the servo jig. The servo's wires should be
 exiting to the left to match the orientation in the image:
 
-![Servo in UP ANGLE jig](images/servo_in_up_angle_jig.png?raw=true)
+![Servo in UP ANGLE jig](images/servo_jigs/servo_in_up_angle_jig.png?raw=true)
 
 Run the following gcode command. Observe the "commanded angle" that is
 reported in the console:
@@ -111,16 +111,16 @@ Look at the front of the servo jig and check the position of the screw
 in the bearing relative to the slots. The goal of this section is
 to get the screw close to lining up with the slots:
 
-![UP ANGLE servo jig slot check](images/up_angle_jig_slot_check.png?raw=true)
+![UP ANGLE servo jig slot check](images/servo_jigs/up_angle_jig_slot_check.png?raw=true)
 
 There is a range of acceptable angles, and the screw does not
 have to exactly align with the slots. If the servo angle is within the
 target range, the jig will be able to slide far enough over the servo
 that the screw protrudes from the front of the jig:
 
-| Wrong angle (screw can't protrude)                  | Angle within target range (screw protrudes)       |
-| ---                                                 | ---                                               |
-| ![](images/up_angle_jig_no_protrusion.png?raw=true) | ![](images/up_angle_jig_protrusion.png?raw=true)  |
+| Wrong angle (screw can't protrude)                              | Angle within target range (screw protrudes)       |
+| ---                                                             | ---                                               |
+| ![](images/servo_jigs/up_angle_jig_no_protrusion.png?raw=true)  | ![](images/servo_jigs/up_angle_jig_protrusion.png?raw=true)  |
 
 If the jig is blocked from being able to slide far enough for the
 screw to protrude, you will need to try another angle. Use the
