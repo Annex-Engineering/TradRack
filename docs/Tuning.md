@@ -111,11 +111,11 @@ length settings, and black labels in parentheses are references that
 are used to determine the starting or ending points of the length
 settings.
 
-| Sensor location             | Drawing                                 |
-| ---                         | ---                                     |
-| Sensor above extruder gears | ![](images/toolhead_lengths/above.png)  |
-| Sensing idler arm movement  | ![](images/toolhead_lengths/idler.png)  |
-| Sensor below extruder gears | ![](images/toolhead_lengths/below.png)  |
+| Sensor location             | Drawing                                         |
+| ---                         | ---                                             |
+| Sensor above extruder gears | ![](images/toolhead_lengths/above.png?raw=true) |
+| Sensing idler arm movement  | ![](images/toolhead_lengths/idler.png?raw=true) |
+| Sensor below extruder gears | ![](images/toolhead_lengths/below.png?raw=true) |
 
 Note: the bottom point of `hotend_load_length` is not drawn to scale
 and will depend on your specific hotend, tip shaping procedure, etc.
