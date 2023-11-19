@@ -2049,6 +2049,7 @@ class TradRackExtruderSyncManager:
 
     def sync_fil_driver_to_extruder(self):
         self._sync(FIL_DRIVER_TO_EXTRUDER)
+        self.printer.send_event("trad_rack:synced_to_extruder")
         
     def unsync(self):
         if self.sync_state is None:
@@ -2061,6 +2062,7 @@ class TradRackExtruderSyncManager:
             steppers = self._get_extruder_mcu_steppers()
             external_toolhead = self.tr_toolhead
         elif self.sync_state == FIL_DRIVER_TO_EXTRUDER:
+            self.printer.send_event("trad_rack:unsyncing_from_extruder")
             steppers = self.fil_driver_rail.get_steppers()
             external_toolhead = self.toolhead
         else:
