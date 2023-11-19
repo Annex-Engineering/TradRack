@@ -184,7 +184,7 @@ This section involves adjusting the settings of the
 your slicer settings so that toolhead unloads performed outside of a
 print will closely match toolhead unloads performed during a print.
 
-Under `[gcode_macro Slicer_Unload]` in your copy of the
+Under `[gcode_macro Slicer_Unload]` in your copy of
 [trad_rack_optional.cfg](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg),
 change the values of the following variables to match the values you
 set in the slicer profile. Variable names match the "parameter names"
