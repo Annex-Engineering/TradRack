@@ -93,7 +93,7 @@ class TradRackExtruderSyncSensor:
 
     def reset_multiplier(self):
         self.set_multiplier(1.)
-        if self.verbose:
+        if self.debug_level >= 1:
             self.gcode.respond_info("Reset filament driver multiplier")
 
     def update_direction(self, eventtime):
