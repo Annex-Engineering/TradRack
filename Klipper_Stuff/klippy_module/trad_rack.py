@@ -1453,10 +1453,9 @@ class TradRack:
         # process calibration and set new lane positions
         pos_endstop, lane_spacing, self.lane_positions = \
             self.lane_position_manager.process_selector_calibration(
-                endstop_to_lane0, endstop_to_last_lane)
+                endstop_to_lane0, endstop_to_last_lane, 6)
 
         # round new config values
-        lane_spacing = round(lane_spacing, 6)
         pos_endstop = round(pos_endstop, 3)
         pos_min = math.floor(min(pos_endstop, self.lane_positions[0]) \
             * 1000) / 1000
@@ -1955,7 +1954,8 @@ class TradRackLanePositionManager:
         return lane_positions
 
     def process_selector_calibration(self, endstop_to_lane0,
-                                     endstop_to_last_lane):
+                                     endstop_to_last_lane,
+                                     lane_spacing_ndigits=6):
         # account for lane offsets
         endstop_to_lane0 -= self.lane_offsets[0]
         endstop_to_last_lane -= self.lane_offsets[self.lane_count - 1]
@@ -1963,8 +1963,9 @@ class TradRackLanePositionManager:
         # calculate endstop position and lane settings
         pos_endstop = self.lane_spacing_mods[0] - endstop_to_lane0
         lane_span = endstop_to_last_lane - endstop_to_lane0
-        self.lane_spacing = (lane_span - self.lane_spacing_mod_internal) \
-                            / (self.lane_count - 1)
+        lane_spacing = (lane_span - self.lane_spacing_mod_internal) \
+                       / (self.lane_count - 1)
+        self.lane_spacing = round(lane_spacing, lane_spacing_ndigits)
         lane_positions = self.get_lane_positions()
 
         return pos_endstop, self.lane_spacing, lane_positions
