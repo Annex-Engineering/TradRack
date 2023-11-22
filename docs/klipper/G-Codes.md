@@ -208,7 +208,7 @@ mapped to a lane group consisting of a single lane with the same index
 as the tool.
 
 ### TR_PRINT_TOOL_MAP
-`TR_RESET_TOOL_MAP`: Prints a table of the lane/tool mapping to the
+`TR_PRINT_TOOL_MAP`: Prints a table of the lane/tool mapping to the
 console, with rows corresponding to tools and columns corresponding to
 lanes.
 
