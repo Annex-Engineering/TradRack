@@ -561,7 +561,7 @@ class TradRack:
                 
                 # set up resume callback
                 resume_kwargs = {
-                    "condition": lambda : self.active_lane \
+                    "condition": lambda : self.active_lane is not None \
                         or not self._query_selector_sensor(),
                     "action": self._resume_act_locate_selector,
                     "fail_msg": "Cannot resume. Please use either "
