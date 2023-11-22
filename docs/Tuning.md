@@ -7,6 +7,8 @@ processes and how to tune them.
 - [Loading process](#loading-process)
 - [Unloading process](#unloading-process)
 - [Tuning lengths](#tuning-lengths)
+  - [Bowden length](#bowden-length)
+  - [Toolhead-specific lengths](#toolhead-specific-lengths)
 - [Bowden lengths](#bowden-lengths)
   - [Relevant config options](#relevant-config-options)
   - [How calibration works](#how-calibration-works)
@@ -24,14 +26,19 @@ driver motor is involved, and whether the main extruder is involved.
 | Description                 | Distance (mm)                           | Speed (mm\s)                        | Trad Rack filament driver | Main extruder       |
 | ---                         | ---                                     | ---                                 | ---                       | ---                 |
 | move through bowden tube    | ["bowden_load_length"](#bowden-lengths) | see [bowden speeds](#bowden-speeds) | :white_check_mark:        | :x:                 |
-| toolhead sensor homing[^1]  | until sensor triggers                   | `toolhead_sense_speed`              | :white_check_mark:        | :white_check_mark:  |
+| toolhead sensor homing[^1]  | until sensor triggers[^2]               | `toolhead_sense_speed`              | :white_check_mark:        | :white_check_mark:  |
 | load extruder               | `extruder_load_length`                  | `extruder_load_speed`               | :white_check_mark:        | :white_check_mark:  |
-| load hotend                 | `hotend_load_length`                    | `hotend_load_speed`                 | :white_check_mark: [^2]   | :white_check_mark:  |
+| load hotend                 | `hotend_load_length`                    | `hotend_load_speed`                 | :white_check_mark:[^3]    | :white_check_mark:  |
 
 [^1]: This move only occurs if `toolhead_fil_sensor_pin` is specified
 and `load_with_toolhead_sensor` is True.
 
-[^2]: The servo will start disengaging Trad Rack's drive gear 
+[^2]: The maximum length of this move is defined by
+`bowden_load_homing_dist`. If the sensor is still not triggered after
+Trad Rack suposedly moved the filament this distance, the load will
+be halted and the print will be paused.
+
+[^3]: The servo will start disengaging Trad Rack's drive gear 
 `servo_wait_ms` before the move ends.
 
 ## Unloading process
@@ -41,13 +48,18 @@ filament from the toolhead back into Trad Rack.
 
 | Description                 | Distance (mm)                             | Speed (mm/s)            | Trad Rack filament driver | Main extruder       |
 | ---                         | ---                                       | ---                     | ---                       | ---                 |
-| toolhead sensor homing[^3]  | until sensor is untriggered               | `toolhead_sense_speed`  | :white_check_mark:        | :white_check_mark:  |
+| toolhead sensor homing[^4]  | until sensor is untriggered[^5]           | `toolhead_sense_speed`  | :white_check_mark:        | :white_check_mark:  |
 | unload toolhead             | `toolhead_unload_length`                  | `toolhead_unload_speed` | :white_check_mark:        | :white_check_mark:  |
 | move through bowden tube    | ["bowden_unload_length"](#bowden-lengths) | `buffer_pull_speed`     | :white_check_mark:        | :x:                 |
 | selector sensor homing      | until sensor is untriggered               | `selector_sense_speed`  | :white_check_mark:        | :x:                 |
 
-[^3]: This move only occurs if `toolhead_fil_sensor_pin` is specified
+[^4]: This move only occurs if `toolhead_fil_sensor_pin` is specified
 and `unload_with_toolhead_sensor` is True.
+
+[^5]: The maximum length of this move is defined by
+`bowden_unload_homing_dist`. If the sensor is still triggered after
+Trad Rack supposedly moved the filament this distance, the unload will
+be halted and the print will be paused.
 
 ## Tuning lengths
 
@@ -57,19 +69,18 @@ provided config file have been tuned for an Annex K3 toolhead running
 a Sherpa Micro extruder (with a sensor detecting its idler arm
 movement) and a Mosquito Magnum hotend.
 
+### Bowden length
+
 - `bowden_length` (mm): 
   - If you are using a toolhead filament sensor
     (`toolhead_fil_sensor_pin` is specified and
     `load_with_toolhead_sensor` is True):
-    - You can set this to any value that satisfies the following
-      equation, where "actual_length" is the length of the bowden tube
-      between Trad Rack and your toolhead:
-      
-      `(actual_length - 600) < bowden_length < actual_length`
-      
-      Knowing "actual_length" precisely is not necessary because the
-      bowden load and unload lengths will be calibrated automatically
-      (see [bowden lengths](#bowden-lengths) for details).
+    - You can set this to any value that is greater than half the
+      actual length of the bowden tube between Trad Rack and the
+      toolhead but less than the full actual length. Knowing the
+      actual length precisely is not necessary because the bowden load
+      and unload lengths will be calibrated automatically (see
+      [bowden lengths](#bowden-lengths) for details).
   - Else:
     - This value should be slightly smaller than the
       length of the bowden tube between Trad Rack and your toolhead.
@@ -78,21 +89,43 @@ movement) and a Mosquito Magnum hotend.
       Trad Rack's selector filament sensor is triggered. Make sure there
       is some distance between the filament tip and the drive gears for
       safety.
+
+### Toolhead-specific lengths
+
 - `extruder_load_length` (mm): this length should be tuned to bring
-  the filament tip slightly above the start of the meltzone, starting
-  from the point where the toolhead sensor is triggered. You can base
-  this length off of measurements of your toolhead from CAD. If you
-  are not using a toolhead sensor, then the position of the filament
-  tip after moving through the bowden tube would be your starting
-  point.
+  the filament tip from the point where the toolhead sensor is
+  triggered to a point slightly above the heatbreak throat. You can
+  base this length off of measurements of your toolhead from CAD. If
+  you are not using a toolhead sensor, then the position of the
+  filament tip after moving through the bowden tube would be your
+  starting point.
 - `hotend_load_length` (mm): this length is meant to bring the
-  filament tip into the meltzone so it is ready for printing. You may
+  filament tip from the ending point of `extruder_load_length` to a
+  point inside the meltzone so it is ready for printing. You may
   have to tune this parameter through trial and error to avoid extra
-  oozing during loading or gaps in your prime tower.
-- `toolhead_unload_length` (mm): this length is meant to retract the
-  filament tip from the toolhead so the extruder gears are not
-  touching it, starting from the point where the toolhead sensor is
-  untriggered.
+  oozing during loading or gaps in your wipe tower.
+- `toolhead_unload_length` (mm): this length is meant to bring the
+  filament tip from the point where the toolhead sensor is untriggered
+  to a point above the extruder gears (where the extruder gears will
+  not touch the filament). If your toolhead sensor is above the
+  extruder gears and you are confident that the filament will not be
+  touching the extruder gears at the point where it is untriggered,
+  this length can be as low as 0.
+
+See the drawings below for a visualization of the toolhead-specific
+lengths on toolheads with various sensor setups. Colorful labels are
+length settings, and black labels in parentheses are references that
+are used to determine the starting or ending points of the length
+settings.
+
+| Sensor location             | Drawing                                         |
+| ---                         | ---                                             |
+| Sensor above extruder gears | ![](images/toolhead_lengths/above.png?raw=true) |
+| Sensing idler arm movement  | ![](images/toolhead_lengths/idler.png?raw=true) |
+| Sensor below extruder gears | ![](images/toolhead_lengths/below.png?raw=true) |
+
+Note: the bottom point of `hotend_load_length` is not drawn to scale
+and will depend on your specific hotend, tip shaping procedure, etc.
 
 ## Bowden lengths
 
@@ -106,11 +139,12 @@ updated automatically and will remain equal to `bowden_length`.
 
 ### Relevant config options
 
-The following config options are relevant to moves through the bowden
-tube. See [how calibration works](#how-calibration-works) for an
-explanation of how these values are used. It is not mandatory to set
-these config options; they default to safe values but may be optimized
-further if you wish.
+The following config options are relevant to the calibration of moves
+through the bowden tube. See
+[how calibration works](#how-calibration-works) for an explanation of
+how these values are used. It is not mandatory to set these config
+options; they default to safe values but may be optimized further if
+you wish:
 
 - `fil_homing_retract_dist`
 - `target_toolhead_homing_dist`

@@ -18,6 +18,10 @@ quickly as possible with minimal reading, see the
   Trad Rack.
 - [G-Codes](klipper/G-Codes.md): commands added by the trad_rack
   Klipper module.
+- [Customization](klipper/Customization.md): info on how code is
+  divided between the trad_rack Klipper module and the config, how to
+  customize Trad Rack's behavior through gcode templates, and what the
+  trad_rack_optional config file does.
 - [Status Reference](klipper/Status_Reference.md): information
   available to macros (and similar) from the trad_rack Klipper module.
 - [Save Variables](klipper/Save_Variables.md): information on the

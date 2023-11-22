@@ -11,7 +11,7 @@ The following variables are used for storing bowden length data,
 which is used to set "bowden_load_length" and "bowden_unload_length"
 after a restart. See the
 [Tuning document](/docs/Tuning.md) for details on how
-"bowden_load_length" and "bowden_unload_length" are used.
+"bowden_load_length" and "bowden_unload_length" are used:
 
 - `calib_bowden_load_length`: Dict containing the following bowden
   load length data. This variable is saved each time the toolhead is
@@ -36,7 +36,7 @@ not be saved.
 
 ## Other variables
 
-The following miscellaneous variables are saved.
+The following miscellaneous variables are saved:
 
 - `tr_last_heater_target`: Extruder target temperature that was set by
 the user the last time the toolhead was loaded. This variable may be
