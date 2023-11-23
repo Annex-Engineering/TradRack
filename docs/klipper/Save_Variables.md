@@ -44,3 +44,14 @@ used by the
 [TR_LOAD_TOOLHEAD or TR_UNLOAD_TOOLHEAD gcode commands](G-Codes.md)
 for setting the extruder temperature before unloading/loading. This
 variable is saved each time the toolhead is loaded.
+- `tr_active_lane`: Last "active lane" (lane from which filament is
+  currently loaded in the toolhead). If `save_active_lane` is set to
+  True in the 
+  [trad_rack config section](Config_Reference.md#trad_rack),
+  then this variable is saved whenever the active lane is set (when
+  the toolhead is loaded or unloaded, when the active lane is manually
+  set or reset, etc.). If `save_active_lane` is True and this variable
+  is not None, the variable will be used by the
+  [TR_LOCATE_SELECTOR gcode command](G-Codes.md#tr_locate_selector) to
+  infer the active lane if the selector filament sensor is triggered
+  but no active lane was set since the last restart.
