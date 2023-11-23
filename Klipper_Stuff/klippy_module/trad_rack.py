@@ -20,6 +20,7 @@ class TradRack:
     VARS_CONFIG_BOWDEN_LENGTH = "config_bowden_length"
     VARS_TOOL_STATUS = "tr_state_tool_status"
     VARS_HEATER_TARGET = "tr_last_heater_target"
+    VARS_ACTIVE_LANE = "tr_active_lane"
 
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -164,6 +165,8 @@ class TradRack:
             'user_wait_time', default=15, minval=-1)
         register_toolchange_commands = config.getboolean(
             'register_toolchange_commands', default=True)
+        self.save_active_lane = config.getboolean(
+            'save_active_lane', False)
 
         # other variables
         self.toolhead = None
@@ -337,7 +340,7 @@ class TradRack:
         
         # note runout
         self.runout_lane = self.active_lane
-        self.active_lane = None
+        self._set_active_lane(None)
         self.lanes_unloaded[self.runout_lane] = False
         self.lanes_dead[self.runout_lane] = True
         self.gcode.respond_info("Runout detected at selector on lane {} "
@@ -520,7 +523,7 @@ class TradRack:
 
         # set current lane and active lane
         self.curr_lane = lane
-        self.active_lane = lane
+        self._set_active_lane(lane)
 
         # restore extruder sync
         self._restore_extruder_sync()
@@ -537,7 +540,7 @@ class TradRack:
     cmd_TR_RESET_ACTIVE_LANE_help = ("Resets active lane to None to indicate "
                                      "the toolhead is not loaded")
     def cmd_TR_RESET_ACTIVE_LANE(self, gcmd):
-        self.active_lane = None
+        self._set_active_lane(None)
         self._raise_servo()
         self.extruder_sync_manager.unsync()
         self.selector_sensor.set_active(False)
@@ -554,6 +557,15 @@ class TradRack:
                                    "a print")
     def cmd_TR_LOCATE_SELECTOR(self, gcmd):
         if self._query_selector_sensor():
+            if self.active_lane is None and self.save_active_lane:
+                # set active lane if a valid lane was saved
+                saved_active_lane = self.variables.get(self.VARS_ACTIVE_LANE)
+                try:
+                    self._check_lane_valid(saved_active_lane)
+                    self.active_lane = saved_active_lane
+                except self.gcode.error:
+                    pass
+                    
             if self.active_lane is None:
                 # ask user to set the active lane or unload the lane
                 gcmd.respond_info("Selector sensor is triggered but no active "
@@ -598,7 +610,7 @@ class TradRack:
                     gcmd.respond_info("Set lane %d as the active lane"
                                       % (self.active_lane))
         else:
-            self.active_lane = None
+            self._set_active_lane(None)
             self.selector_sensor.set_active(False)
             if not self._is_selector_homed():
                 self.cmd_TR_HOME(self.gcode.create_gcode_command(
@@ -1059,7 +1071,7 @@ class TradRack:
                 self.tr_toolhead.dwell(servo_delay)
 
         # set active lane
-        self.active_lane = lane
+        self._set_active_lane(lane)
         
         # unsync extruder from filament driver
         self.tr_toolhead.wait_moves()
@@ -1182,7 +1194,7 @@ class TradRack:
     def _unload_toolhead(self, gcmd, min_temp=0., exact_temp=0.,
                          force_unload=False, sync=False, eject=False):
         # reset active lane
-        self.active_lane = None
+        self._set_active_lane(None)
 
         # disable runout detection
         self.selector_sensor.set_active(False)
@@ -1295,6 +1307,13 @@ class TradRack:
 
     def _send_resume(self):
         self.resume_macro.run_gcode_from_command()
+
+    def _set_active_lane(self, lane):
+        self.active_lane = lane
+        if self.save_active_lane:
+            self.gcode.run_script_from_command(
+                "SAVE_VARIABLE VARIABLE=%s VALUE=\"%s\""
+                % (self.VARS_ACTIVE_LANE, lane))
 
     def _reset_tool_map(self):
         self.tool_map = list(range(self.lane_count))
@@ -1469,10 +1488,9 @@ class TradRack:
         # process calibration and set new lane positions
         pos_endstop, lane_spacing, self.lane_positions = \
             self.lane_position_manager.process_selector_calibration(
-                endstop_to_lane0, endstop_to_last_lane)
+                endstop_to_lane0, endstop_to_last_lane, 6)
 
         # round new config values
-        lane_spacing = round(lane_spacing, 6)
         pos_endstop = round(pos_endstop, 3)
         pos_min = math.floor(min(pos_endstop, self.lane_positions[0]) \
             * 1000) / 1000
@@ -1977,7 +1995,8 @@ class TradRackLanePositionManager:
         return lane_positions
 
     def process_selector_calibration(self, endstop_to_lane0,
-                                     endstop_to_last_lane):
+                                     endstop_to_last_lane,
+                                     lane_spacing_ndigits=6):
         # account for lane offsets
         endstop_to_lane0 -= self.lane_offsets[0]
         endstop_to_last_lane -= self.lane_offsets[self.lane_count - 1]
@@ -1985,8 +2004,9 @@ class TradRackLanePositionManager:
         # calculate endstop position and lane settings
         pos_endstop = self.lane_spacing_mods[0] - endstop_to_lane0
         lane_span = endstop_to_last_lane - endstop_to_lane0
-        self.lane_spacing = (lane_span - self.lane_spacing_mod_internal) \
-                            / (self.lane_count - 1)
+        lane_spacing = (lane_span - self.lane_spacing_mod_internal) \
+                       / (self.lane_count - 1)
+        self.lane_spacing = round(lane_spacing, lane_spacing_ndigits)
         lane_positions = self.get_lane_positions()
 
         return pos_endstop, self.lane_spacing, lane_positions

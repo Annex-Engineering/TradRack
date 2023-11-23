@@ -125,7 +125,14 @@ load or unload.
 known so that it is ready for a print. If the user needs to take an
 action, they will be prompted to do so and the print will be paused
 (for example if the selector sensor is triggered but no active lane is
-set). It is recommended to call this command in the print start gcode.
+set). The user_wait_time config option from the
+[trad_rack config section](Config_Reference.md#trad_rack) determines
+how long Trad Rack will wait for user action before automatically
+unloading the toolhead and resuming. In addition, the save_active_lane
+config option determines whether this command can infer the "active
+lane" from a value saved before the last restart if the selector
+filament sensor is triggered but no active lane is currently set.
+It is recommended to call this command in the print start gcode.
 
 ### TR_NEXT
 `TR_NEXT`: You will be prompted to use this command if Trad Rack

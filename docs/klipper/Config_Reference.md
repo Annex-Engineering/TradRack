@@ -194,8 +194,14 @@ toolhead_unload_length:
 #register_toolchange_commands: True
 #   Whether to register gcode commands T0, T1, T2, etc. so that they
 #   can be used to initiate toolchanges with Trad Rack. If set to
-#   false, the TR_LOAD_TOOLHEAD command can still be used as a
+#   False, the TR_LOAD_TOOLHEAD command can still be used as a
 #   substitute to initiate toolchanges. The default is True.
+#save_active_lane: False
+#   Whether to save the active lane to disk whenever it is set using
+#   save_variables. If set to True, the TR_LOCATE_SELECTOR gcode
+#   command will infer the active lane if the selector filament sensor
+#   is triggered and an active lane was saved previously.
+#   The default is False.
 #pre_unload_gcode:
 #   Gcode command template that is run before the toolhead is
 #   unloaded. The default is to run no extra commands.
