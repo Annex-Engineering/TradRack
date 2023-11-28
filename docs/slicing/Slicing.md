@@ -2,8 +2,8 @@
 
 This document explains how to get your slicer set up for multimaterial
 printing with Trad Rack. These instructions are mainly geared towards
-PrusaSlicer and SuperSlicer, but some notes on custom gcode may be
-applicable to other slicers too.
+PrusaSlicer and SuperSlicer, but some parts may be relevant to other slicers
+(such as OrcaSlicer) that are based on Slic3r and PrusaSlicer.
 
 **Table of Contents**
 - [Provided slicer profiles](#provided-slicer-profiles)
@@ -270,5 +270,5 @@ I recommend starting either with values from the
 [Prusa's MMU filament profiles](https://github.com/prusa3d/PrusaSlicer/blob/master/resources/profiles/PrusaResearch.ini). The optimal values for each of
 these parameters may depend on your hotend and/or filament.
 
-[^1]: In the slicer GUI, hover the mouse over a parameter's textbox to
-make the tooltip appear.
+[^1]: In the slicer GUI, hover the mouse cursor over a parameter's
+textbox/checkbox to make the tooltip appear.

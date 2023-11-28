@@ -4,6 +4,7 @@ This document provides an overview of how to get Trad Rack running.
 Each section should be completed before moving on to the next.
 
 **Table of Contents**
+- [BOM/sourcing and other required hardware](#bomsourcing-and-other-required-hardware)
 - [Printing and assembly](#printing-and-assembly)
 - [Wiring](#wiring)
 - [Klipper installation](#klipper-installation)
@@ -16,7 +17,17 @@ Each section should be completed before moving on to the next.
 - [Change Slicer\_Unload macro settings](#change-slicer_unload-macro-settings)
 - [Further reading](#further-reading)
 
+## BOM/sourcing and other required hardware
+
+The bill of materials/sourcing guide for Trad Rack can be found
+[here](https://docs.google.com/spreadsheets/d/1SKBtkgSVPqqGEjftI6v6i6T5Bh3Phx-4YXsJYH17ggs/edit?usp=sharing).
+
+Before placing any orders for parts for Trad Rack, it is recommended to read the
+[Printer and hardware requirements document](Printer_and_Hardware_Requirements.md)
+in case there are any other items you may want to combine into your orders.
+
 ## Printing and assembly
+
 - [Print Settings and File Key](/Print_Settings_and_File_Key.txt):
   print settings to use and info on reading the STL filenames.
 - [STLs folder](/STLs): contains all STL files.
@@ -197,7 +208,7 @@ In addition, if you are using SuperSlicer, do the same for all
 variables under the comment `# filament settings only in SuperSlicer`.
 
 Set `variable_superslicer` to `True` if you are using SuperSlicer. If
-you are using `PrusaSlicer`, set it to `False`.
+you are using PrusaSlicer or OrcaSlicer, set it to `False`.
 
 Optional: if you want to use different tip-shaping settings for
 different filaments (when unloading the toolhead outside of a print),
