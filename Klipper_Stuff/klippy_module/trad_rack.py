@@ -1415,7 +1415,7 @@ class TradRack:
         self._load_toolhead(self.replacement_lane, gcmd)
         
         # resume
-        gcmd.respond_info("Toolhead loaded succesfully. Resuming print")
+        gcmd.respond_info("Toolhead loaded successfully. Resuming print")
         self._send_resume()
 
     def _write_bowden_length_data(self, filename, length, old_set_length,
