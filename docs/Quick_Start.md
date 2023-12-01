@@ -5,7 +5,8 @@ Each section should be completed before moving on to the next.
 
 **Table of Contents**
 - [BOM/sourcing and other required hardware](#bomsourcing-and-other-required-hardware)
-- [Printing and assembly](#printing-and-assembly)
+- [Printing required parts](#printing-required-parts)
+- [Mechanical assembly](#mechanical-assembly)
 - [Wiring](#wiring)
 - [Klipper installation](#klipper-installation)
 - [Servo calibration](#servo-calibration)
@@ -26,14 +27,23 @@ Before placing any orders for parts for Trad Rack, it is recommended to read the
 [Printer and hardware requirements document](Printer_and_Hardware_Requirements.md)
 in case there are any other items you may want to combine into your orders.
 
-## Printing and assembly
+## Printing required parts
+
+See the following files/folders:
 
 - [Print Settings and File Key](/Print_Settings_and_File_Key.txt):
   print settings to use and info on reading the STL filenames.
 - [STLs folder](/STLs): contains all STL files.
-- [eDrawing](/eDrawings): 3D model for understanding how the parts
-  fit together and helping with assembly. You will need [eDrawings
-  Viewer](https://www.edrawingsviewer.com/) to open this file.
+
+## Mechanical assembly
+
+See the [build instructions](build_instructions) for guidance on
+assembling Trad Rack.
+
+Note: an [eDrawing](/eDrawings/) is also available if you want to view
+a 3D model of Trad Rack. You will need
+[eDrawings Viewer](https://www.edrawingsviewer.com/) to open this
+file.
 
 ## Wiring
 

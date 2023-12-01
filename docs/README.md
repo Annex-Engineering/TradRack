@@ -11,7 +11,9 @@ quickly as possible with minimal reading, see the
   prerequisites for your printer to work with Trad Rack, as well information on
   other hardware you might need/want to use with Trad Rack.
 
-## Wiring
+## Assembly and wiring
+- [Build Instructions](build_instructions): instructions for
+  assembling Trad Rack.
 - [Wiring](Wiring.md): information on wiring for Trad Rack.
 
 ## Klipper
