@@ -13,26 +13,27 @@ after a restart. See the
 [Tuning document](/docs/Tuning.md) for details on how
 "bowden_load_length" and "bowden_unload_length" are used:
 
-- `calib_bowden_load_length`: Dict containing the following bowden
+- `tr_calib_bowden_load_length`: Dict containing the following bowden
   load length data. This variable is saved each time the toolhead is
   loaded[^1]:
   - `new_set_length`: The last calibrated "bowden_load_length".
   - `sample_count`: The number of samples that were averaged to
     determine `new_set_length`.
-- `calib_bowden_unload_length`: Dict containing the following bowden
-  unload length data. This variable is saved each time the toolhead is
-  unloaded:
+- `tr_calib_bowden_unload_length`: Dict containing the following
+  bowden unload length data. This variable is saved each time the
+  toolhead is unloaded:
   - `new_set_length`: The last calibrated "bowden_unload_length".
   - `sample_count`: The number of samples that were averaged to
     determine `new_set_length`.
-- `config_bowden_length`: The value of `bowden_length` at the time
+- `tr_config_bowden_length`: The value of `bowden_length` at the time
   that bowden length data was last saved. On a restart, the saved
-  bowden length data will be ignored if `bowden_length` does not match `config_bowden_length`. This variable is saved each time Klipper
+  bowden length data will be ignored if `bowden_length` does not match
+  `tr_config_bowden_length`. This variable is saved each time Klipper
   starts.
 
 [^1]: If `toolhead_fil_sensor_pin` is not specified or
-`load_with_toolhead_sensor` is False, `calib_bowden_load_length` will
-not be saved.
+`load_with_toolhead_sensor` is False, `tr_calib_bowden_load_length`
+will not be saved.
 
 ## Other variables
 
