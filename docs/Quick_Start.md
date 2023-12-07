@@ -4,7 +4,9 @@ This document provides an overview of how to get Trad Rack running.
 Each section should be completed before moving on to the next.
 
 **Table of Contents**
-- [Printing and assembly](#printing-and-assembly)
+- [BOM/sourcing and other required hardware](#bomsourcing-and-other-required-hardware)
+- [Printing required parts](#printing-required-parts)
+- [Mechanical assembly](#mechanical-assembly)
 - [Wiring](#wiring)
 - [Klipper installation](#klipper-installation)
 - [Servo calibration](#servo-calibration)
@@ -16,13 +18,32 @@ Each section should be completed before moving on to the next.
 - [Change Slicer\_Unload macro settings](#change-slicer_unload-macro-settings)
 - [Further reading](#further-reading)
 
-## Printing and assembly
+## BOM/sourcing and other required hardware
+
+The bill of materials/sourcing guide for Trad Rack can be found
+[here](https://docs.google.com/spreadsheets/d/1SKBtkgSVPqqGEjftI6v6i6T5Bh3Phx-4YXsJYH17ggs/edit?usp=sharing).
+
+Before placing any orders for parts for Trad Rack, it is recommended to read the
+[Printer and hardware requirements document](Printer_and_Hardware_Requirements.md)
+in case there are any other items you may want to combine into your orders.
+
+## Printing required parts
+
+See the following files/folders:
+
 - [Print Settings and File Key](/Print_Settings_and_File_Key.txt):
   print settings to use and info on reading the STL filenames.
 - [STLs folder](/STLs): contains all STL files.
-- [eDrawing](/eDrawings): 3D model for understanding how the parts
-  fit together and helping with assembly. You will need [eDrawings
-  Viewer](https://www.edrawingsviewer.com/) to open this file.
+
+## Mechanical assembly
+
+See the [build instructions](build_instructions) for guidance on
+assembling Trad Rack.
+
+Note: an [eDrawing](/eDrawings/) is also available if you want to view
+a 3D model of Trad Rack. You will need
+[eDrawings Viewer](https://www.edrawingsviewer.com/) to open this
+file.
 
 ## Wiring
 
@@ -197,7 +218,7 @@ In addition, if you are using SuperSlicer, do the same for all
 variables under the comment `# filament settings only in SuperSlicer`.
 
 Set `variable_superslicer` to `True` if you are using SuperSlicer. If
-you are using `PrusaSlicer`, set it to `False`.
+you are using PrusaSlicer or OrcaSlicer, set it to `False`.
 
 Optional: if you want to use different tip-shaping settings for
 different filaments (when unloading the toolhead outside of a print),

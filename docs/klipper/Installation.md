@@ -57,7 +57,7 @@ Copy the following files into your Klipper config folder and
 in your main printer config file:
 
 - One of the files from the
-[base_config_options folder](/Klipper_Stuff/klipper_config/base_config_options/):
+  [base_config_options folder](/Klipper_Stuff/klipper_config/base_config_options/):
   base config file. Several options are provided for different boards
   or stepper drivers. This file is required. Make sure to complete the
   following changes:

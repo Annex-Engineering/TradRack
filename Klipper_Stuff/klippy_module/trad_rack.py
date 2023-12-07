@@ -15,9 +15,9 @@ FIL_DRIVER_STEPPER_NAME = 'stepper_tr_fil_driver'
 
 class TradRack:
 
-    VARS_CALIB_BOWDEN_LOAD_LENGTH   = "calib_bowden_load_length"
-    VARS_CALIB_BOWDEN_UNLOAD_LENGTH = "calib_bowden_unload_length"
-    VARS_CONFIG_BOWDEN_LENGTH = "config_bowden_length"
+    VARS_CALIB_BOWDEN_LOAD_LENGTH   = "tr_calib_bowden_load_length"
+    VARS_CALIB_BOWDEN_UNLOAD_LENGTH = "tr_calib_bowden_unload_length"
+    VARS_CONFIG_BOWDEN_LENGTH = "tr_config_bowden_length"
     VARS_TOOL_STATUS = "tr_state_tool_status"
     VARS_HEATER_TARGET = "tr_last_heater_target"
     VARS_ACTIVE_LANE = "tr_active_lane"
@@ -1431,7 +1431,7 @@ class TradRack:
         self._load_toolhead(self.replacement_lane, gcmd)
         
         # resume
-        gcmd.respond_info("Toolhead loaded succesfully. Resuming print")
+        gcmd.respond_info("Toolhead loaded successfully. Resuming print")
         self._send_resume()
 
     def _write_bowden_length_data(self, filename, length, old_set_length,
