@@ -26,42 +26,49 @@ class TradRackSpoolman:
         # other variables
         self.lane_count = None
         self.id_map = []
-        self.active = False
         self.webhooks = self.printer.lookup_object('webhooks')
         self.trad_rack = None
 
         # register gcode commands
-        gcode = self.printer.lookup_object('gcode')
-        gcode.register_command('TR_PRINT_LANE_IDS', self.cmd_TR_PRINT_LANE_IDS,
-                               self.cmd_TR_PRINT_LANE_IDS_help)
+        self.gcode = self.printer.lookup_object('gcode')
+        self.gcode.register_command('TR_PRINT_LANE_IDS',
+                                    self.cmd_TR_PRINT_LANE_IDS,
+                                    self.cmd_TR_PRINT_LANE_IDS_help)
 
-    def reset_id_map(self):
-        self.id_map = [None] * self.lane_count
-    
     def handle_connect(self):
         self.trad_rack = self.printer.lookup_object('trad_rack')
         self.lane_count = self.trad_rack.lane_count
-        self.reset_id_map()
+        self._reset_id_map()
 
     def handle_assign_id(self, lane, id):
-        if id is not None:
-            self.id_map[lane] = id
+        # check for ID conflict
+        curr_lane = self._get_assigned_lane(id)
+        if curr_lane is not None and lane != curr_lane:
+            raise self.gcode.error("ID {id} is already assigned to lane "
+                                   "{curr_lane}. To assign it to lane {lane}, "
+                                   "use TR_REMOVE_LANE_ID LANE={curr_lane} "
+                                   "before trying again."
+                                   .format(id=id, curr_lane=curr_lane,
+                                           lane=lane))
+        
+        # assign ID
+        self.id_map[lane] = id
 
     def handle_remove_id(self, lane):
         self.id_map[lane] = None
 
     def handle_reset_ids(self):
-        self.reset_id_map()
+        self._reset_id_map()
 
     def handle_set_active(self, lane):
         id = self.id_map[lane]
-        if id is not None:
-            self.webhooks.call_remote_method("spoolman_set_active_spool",
-                                             spool_id=id)
+        self._set_active_spool(id)
+        if id is None:
+            self.gcode.respond_info("WARNING: No spool ID assigned to lane %d"
+                                    % lane)
 
     def handle_set_inactive(self):
-        self.webhooks.call_remote_method("spoolman_set_active_spool",
-                                         spool_id=None)
+        self._set_active_spool(None)
         
     # gcode commands
     cmd_TR_PRINT_LANE_IDS_help = "Print Spoolman ID for each lane"
@@ -88,6 +95,20 @@ class TradRackSpoolman:
 
             msg += "Lane {}: {}{}{}\n".format(lane, id_msg, tool_msg, name_msg)
         gcmd.respond_info(msg)
+
+    # helper functions
+    def _reset_id_map(self):
+        self.id_map = [None] * self.lane_count
+
+    def _get_assigned_lane(self, id):
+        for lane in range(len(self.id_map)):
+            if self.id_map[lane] == id:
+                return lane
+        return None
+    
+    def _set_active_spool(self, id):
+        self.webhooks.call_remote_method("spoolman_set_active_spool",
+                                         spool_id=id)
 
 def load_config(config):
     return TradRackSpoolman(config)

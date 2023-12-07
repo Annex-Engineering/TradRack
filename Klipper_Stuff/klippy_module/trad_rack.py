@@ -1406,39 +1406,61 @@ class TradRack:
     
     def _assign_lane(self, lane, tool=None, name=None, id=None):
         # check lane
-        self._check_lane_valid()
-        
+        self._check_lane_valid(lane)
+
+        # check for name conflict
+        if tool is not None and name is not None:
+            curr_tool = self._get_assigned_tool(name)
+            if curr_tool is not None and tool != curr_tool:
+                raise self.gcode.error("Name \"{name}\" is already assigned to "
+                                       "tool {curr_tool}. To assign it to tool "
+                                       "{tool}, use TR_REMOVE_TOOL_NAME "
+                                       "TOOL={curr_tool} before trying again."
+                                       .format(name=name, curr_tool=curr_tool,
+                                               tool=tool))
+
         if tool is not None:
-            # check tool
-            self._check_tool_valid()
-
-            prev_tool = self.tool_map[lane]
-
-            # assign lane to tool
-            self.tool_map[lane] = tool
-
-            # reassign default lane for previous tool if needed
-            if self.default_lanes[prev_tool] == lane:
-                self._set_default_lane(prev_tool)
-
-            # ensure new tool has a default lane assigned
-            if self.default_lanes[tool] is None:
-                self.default_lanes[tool] = lane
-
-            # notify tool assigned
-            self.printer.send_event("trad_rack:assigned_tool", lane, tool)
+            self._assign_lane_to_tool(lane, tool)
 
         if name is not None:
-            # assign name to tool
-            curr_tool = self.tool_map[lane]
-            self.tool_names[curr_tool] = name
+            # check for an existing tool with the name
+            curr_tool = self._get_assigned_tool(name)
+            if curr_tool is not None:
+                self._assign_lane_to_tool(lane, curr_tool)
 
-            # notify name assigned
-            self.printer.send_event("trad_rack:assigned_name", curr_tool, name)
+            # assign name to tool
+            else:
+                curr_tool = self.tool_map[lane]
+                self.tool_names[curr_tool] = name
+
+                # notify name assigned
+                self.printer.send_event("trad_rack:assigned_name", curr_tool,
+                                        name)
 
         if id is not None:
             # notify ID assigned
             self.printer.send_event("trad_rack:assigned_id", lane, id)
+    
+    def _assign_lane_to_tool(self, lane, tool):
+        # check lane and tool
+        self._check_lane_valid(lane)
+        self._check_tool_valid(tool)
+
+        prev_tool = self.tool_map[lane]
+
+        # assign lane to tool
+        self.tool_map[lane] = tool
+
+        # reassign default lane for previous tool if needed
+        if self.default_lanes[prev_tool] == lane:
+            self._set_default_lane(prev_tool)
+
+        # ensure new tool has a default lane assigned
+        if self.default_lanes[tool] is None:
+            self.default_lanes[tool] = lane
+
+        # notify tool assigned
+        self.printer.send_event("trad_rack:assigned_tool", lane, tool)
 
     def _get_assigned_lanes(self, tool):
         lanes = []
