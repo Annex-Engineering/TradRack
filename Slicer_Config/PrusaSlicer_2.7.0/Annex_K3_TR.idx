@@ -1,3 +1,5 @@
+min_slic3r_version=2.7.0-alpha1
+0.1.8 Set gcode_label_objects to firmware. Updated thumbnails for 2.7.0. Removed extra whitespace in before_layer_gcode. Increased max_fan_speed for Frostbite.
 min_slic3r_version=2.6.0-beta1
 0.1.7 Deleted extra comment from end_filament_gcode
 0.1.6 Replaced TR_Print_Start with a toolchange command with MIN_TEMP parameter. Increased retract_before_travel to avoid retractions on Monotonic Lines top infill.
