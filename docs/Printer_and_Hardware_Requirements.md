@@ -78,7 +78,15 @@ to the tables in this document, feel free to submit pull requests to
 add them. Please only submit a pull request once you have tested the
 design with Trad Rack and confirmed that it works well for you.
 
-(TODO: insert table here)
+| Board         | Name/link                                                       | Comments  |
+| ---           | ---                                                             | ---       |
+| BTT SKR Pico  | [Ender 3 SKR Pico Mount (for Voron Switchwire Conversion)][1.1] |           |
+| Fysetc R4     | [Fysetc R4 board case mount][1.2]                               |           |
+| EASY BRD      | [ERCF EasyBrd/CAN Brd mount for TR][1.3]                        |           |
+
+[1.1]: https://www.printables.com/model/244991-ender-3-skr-pico-mount-for-voron-switchwire-conver
+[1.2]: https://www.printables.com/model/457707-fysetc-r4-board-case-mount/files
+[1.3]: https://www.printables.com/model/481199-ercf-easybrdcan-brd-mount-for-tr
 
 ## Toolhead filament sensor
 
@@ -88,7 +96,21 @@ extruder gears, below the extruder gears, or at the extruder gears
 (e.g. by sensing the idler arm movement). See the table below for
 some example recommended sensors[^4]:
 
-(TODO: insert table here)
+| Designed for (printer/toolhead/extruder)  | Name/link                                                       | Trigger location      | Comments  |
+| ---                                       | ---                                                             | ---                   | ---       |
+| All	                                      | [Inline Filament Sensor][2.1]                                   | Above extruder gears  | Meant as a universal fallback option if you can't find a sensor designed for your setup. Requires that the toolhead/extruder has a bowden coupling/collet.  |
+| Sherpa Mini	                              | [Sherpa Mini Idler Filament Sensor and Collet][2.2]             |	At extruder gears     |           |
+| Sherpa Micro	                            | [Sherpa Micro Idler Filament Sensor and Collet][2.3]            | At extruder gears     |           | 
+| Clockwork 2 (Voron Stealthburner)	        | [CW2 with sensor, magnet, and ECAS][2.4]		                    | Below extruder gears  |           |
+| EVA 3	                                    | [EVA 3 Toolhead Filament Sensor (Mechanical and Reliable)][2.5] |	Below extruder gears  |           |
+| E34M1	                                    | [E34M1 Toolhead Filament Sensor][2.6]		                        | Below extruder gears  |           |
+
+[2.1]: https://github.com/Annex-Engineering/Annex-Engineering_User_Mods/tree/main/Printers/All_Printers/Ryan_G-Inline_Filament_Sensor
+[2.2]: https://github.com/Annex-Engineering/Annex-Engineering_User_Mods/tree/main/Extruders/Sherpa_Mini/Extruder_Mods/Ryan_G-Idler_Filament_Sensor_and_Collet
+[2.3]: https://github.com/Annex-Engineering/Annex-Engineering_User_Mods/tree/main/Extruders/Sherpa_Micro/Extruder_Mods/Ryan_G-Idler_Filament_Sensor_and_Collet
+[2.4]: https://www.printables.com/model/530705-cw2-with-sensor-magnet-and-ecas
+[2.5]: https://www.printables.com/model/442650-eva-3-toolhead-filament-sensor-mechanical-and-reli
+[2.6]: https://www.printables.com/model/655548-e34m1-toolhead-filament-sensor
 
 ## Buffers
 
@@ -147,7 +169,19 @@ when selecting a buffer design:
 
 See the table below for some example recommended buffers[^4]:
 
-(TODO: insert table here)
+| Filament capacity                   | Name/link                         | Comments  |
+| ---                                 | ---                               | ---       |
+| 3 sizes: 640mm, 1068mm, or 1294mm   | [Stern-Wheeler][3.1]              |           |
+| 900mm                               |	[MMU Filament Buffer ~900mm][3.2] |	          |
+| 550mm	                              | [Bigger 6 Bay Slot Buffer][3.3]   |	          |
+| depends on acrylic/cardboard length |	[Simple Slot Buffer][3.4]	        |           |
+| 300-1800mm (see table in readme)	  | [piKa][3.5]	                      |           |
+
+[3.1]: https://www.printables.com/model/472316-stern-wheeler
+[3.2]: https://www.printables.com/model/377512-mmu-filament-buffer-900mm
+[3.3]: https://www.printables.com/model/381882-bigger-6-bay-slot-buffer
+[3.4]: https://www.printables.com/model/672453-simple-slot-buffer
+[3.5]: https://github.com/geoffrey-young/pika-filament-buffer
 
 ## Mounting
 
@@ -165,7 +199,15 @@ Annex K3 printer; these brackets can be found in the
 
 The following community-designed mounts are also recommended[^4]:
 
-(TODO: insert table here)
+| Designed for        | Name/link                                           | Comments                          |
+| ---                 | ---                                                 | ---                               |
+| Voron Trident/V2.4  |	[Offset 2020 mount for Voron's][4.1]                | Requires an extra-long extrusion  |
+| Voron Trident/V2.4	| [BYOLE teookie's Offset 2020 mount for Vorons][4.2] | Requires an extra-long extrusion  |
+| Voron Trident/V2.4  | [Tradrack "beta" 45 angle mount voron][4.3]         |	Requires K3 side mount brackets as well. May require an extra-long extrusion. |
+
+[4.1]: https://www.printables.com/model/530709-offset-2020-mount-for-vorons
+[4.2]: https://www.printables.com/model/647797-teookies-byole-offset-2020-mount-for-vorons
+[4.3]: https://www.printables.com/model/462561-tradrack-beta-45-angle-mount-voron
 
 ### Designing your own mounts
 

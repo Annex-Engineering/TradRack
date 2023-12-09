@@ -19,6 +19,11 @@ Place [trad_rack.py](/Klipper_Stuff/klippy_module/trad_rack.py)
 in `~/klipper/klippy/extras` and restart the Klipper service to load
 the module.
 
+Note: if you are using an older version of Klipper before
+[commit bafb126](https://github.com/Klipper3d/klipper/commit/bafb126abd77edd0cb2e5ae3b5d99ff83272594c), you will need to use
+[this older version of trad_rack.py](https://github.com/Annex-Engineering-Trad-Rack-Test/TradRack_Beta/blob/cd5385d536fbfd0bd46d850f5da289858e9c73f8/Klipper_Stuff/klippy_module/trad_rack.py)
+instead due to changes to the Toolhead class.
+
 ## Config files
 
 Complete the following changes/additions to your Klipper config:
