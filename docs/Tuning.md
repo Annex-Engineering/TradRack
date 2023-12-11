@@ -17,11 +17,11 @@ processes and how to tune them.
 
 ## Loading process
 
-The following table shows which actions are taken when loading
-filament to the toolhead from Trad Rack, going from the top of the
-table to the bottom, as well as some details about each action:
-distance of each move, speed of the move, whether Trad Rack's filament
-driver motor is involved, and whether the main extruder is involved.
+The following table shows the actions taken in sequential order when
+loading filament from Trad Rack into the toolhead, as well as some
+details about each action: distance of each move, speed of the move,
+whether Trad Rack's filament driver motor is involved, and whether the
+printer's main extruder is involved.
 
 | Description                 | Distance (mm)                           | Speed (mm\s)                        | Trad Rack filament driver | Main extruder       |
 | ---                         | ---                                     | ---                                 | ---                       | ---                 |
@@ -35,11 +35,12 @@ and `load_with_toolhead_sensor` is True.
 
 [^2]: The maximum length of this move is defined by
 `bowden_load_homing_dist`. If the sensor is still not triggered after
-Trad Rack suposedly moved the filament this distance, the load will
+Trad Rack supposedly moved the filament this distance, the load will
 be halted and the print will be paused.
 
 [^3]: The servo will start disengaging Trad Rack's drive gear 
-`servo_wait_ms` before the move ends.
+`servo_wait_ms` before the move ends, unless `sync_to_extruder` is
+True (in which case the drive gear will stay engaged).
 
 ## Unloading process
 

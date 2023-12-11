@@ -15,7 +15,7 @@ Each section should be completed before moving on to the next.
   - [Servo up angle](#servo-up-angle)
 - [Selector calibration](#selector-calibration)
 - [Slicing](#slicing)
-- [Change Slicer\_Unload macro settings](#change-slicer_unload-macro-settings)
+- [Changing Slicer\_Unload macro settings](#changing-slicer_unload-macro-settings)
 - [Further reading](#further-reading)
 
 ## BOM/sourcing and other required hardware
@@ -198,7 +198,7 @@ for the following:
 
 See the [Slicing document](slicing/Slicing.md).
 
-## Change Slicer_Unload macro settings
+## Changing Slicer_Unload macro settings
 
 This section involves adjusting the settings of the
 [Slicer_Unload macro](klipper/Customization.md#tip-shaping) to match

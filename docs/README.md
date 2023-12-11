@@ -5,11 +5,12 @@ quickly as possible with minimal reading, see the
 [Quick Start document](Quick_Start.md).
 
 ## Getting started
-- [Quick Start](Quick_Start.md): information on how to get
-  Trad Rack running.
+- [Quick Start](Quick_Start.md): a step-by-step guide on how to get
+  running with Trad Rack.
 - [Printer and Hardware Requirements](Printer_and_Hardware_Requirements.md):
-  prerequisites for your printer to work with Trad Rack, as well information on
-  other hardware you might need/want to use with Trad Rack.
+  prerequisites for your printer to work with Trad Rack, as well as
+  information on other hardware you might need/want to use with Trad
+  Rack.
 
 ## Assembly and wiring
 - [Build Instructions](build_instructions): instructions for
@@ -37,10 +38,19 @@ quickly as possible with minimal reading, see the
   processes and information on how to tune them.
 - [Tool Mapping](Tool_Mapping.md): info on tool mapping/lane groups
   and how runouts are handled.
-- [Extruder Syncing](Extruder_Syncing.md): info on how to use Trad Rack as a
-  secondary extruder to reduce load on the printer's main extruder, including
-  methods for avoiding error buildup due to mismatched extrusion rates.
+- [Extruder Syncing](Extruder_Syncing.md): info on how to use Trad
+  Rack as a secondary extruder to reduce load on the printer's main
+  extruder, including methods for avoiding error buildup due to
+  mismatched extrusion rates.
 
 ## Slicing
 - [Slicing](slicing/Slicing.md): information on slicing multimaterial
   prints for use with Trad Rack.
+- [PrusaSlicer Setup](slicing/PrusaSlicer_Setup.md): instructions for
+  using the provided PrusaSlicer profiles, as well as other
+  PrusaSlicer-specific slicing info. Make sure to look at the main
+  Slicing document first for prerequisites and other info.
+- [SuperSlicer Setup](slicing/SuperSlicer_Setup.md): instructions for
+  using the provided SuperSlicer profiles, as well as other
+  SuperSlicer-specific slicing info. Make sure to look at the main
+  Slicing document first for prerequisites and other info.

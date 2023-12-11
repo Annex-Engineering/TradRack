@@ -207,10 +207,12 @@ Print Settings tab:
 
 - `wipe_tower`: set to `true` (`1` in the config) unless you are using
   an alternative way of purging material.
+- `single_extruder_multi_material_priming`: set to `false` (`0` in the
+  config).
 - `only_retract_when_crossing_perimeters`: set to `false` (`0` in the
   config) to avoid colors bleeding into each other when the nozzle
   moves over the print.
-- `gcode_substitutions`:
+- `gcode_substitutions`[^2]:
   - PrusaSlicer:
     - in the config file:
 
@@ -242,6 +244,12 @@ Print Settings tab:
       - Replace with: `Save_Pressure_Advance\n${1}\n`
       - Notes: `See: https://github.com/supermerill/SuperSlicer/issues/2934 (3073 too)`
       - Make sure "Regular expression" is checked!
+
+[^2]: These substitutions are required if you only set the pressure
+advance value at the start of the print. If you set the pressure
+advance value in your `start_filament_gcode` for each filament, then
+the substitutions are unnecessary (but there is no harm in having
+both).
 
 ### Filament settings
 
