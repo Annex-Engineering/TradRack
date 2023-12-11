@@ -31,6 +31,7 @@ contains items pertaining to Trad Rack.
   - [TR\_RESET\_TOOL\_MAP](#tr_reset_tool_map)
   - [TR\_PRINT\_TOOL\_MAP](#tr_print_tool_map)
   - [TR\_PRINT\_TOOL\_GROUPS](#tr_print_tool_groups)
+- [Macros](#macros)
 
 ## General commands
 
@@ -124,7 +125,14 @@ load or unload.
 known so that it is ready for a print. If the user needs to take an
 action, they will be prompted to do so and the print will be paused
 (for example if the selector sensor is triggered but no active lane is
-set). It is recommended to call this command in the print start gcode.
+set). The user_wait_time config option from the
+[trad_rack config section](Config_Reference.md#trad_rack) determines
+how long Trad Rack will wait for user action before automatically
+unloading the toolhead and resuming. In addition, the save_active_lane
+config option determines whether this command can infer the "active
+lane" from a value saved before the last restart if the selector
+filament sensor is triggered but no active lane is currently set.
+It is recommended to call this command in the print start gcode.
 
 ### TR_NEXT
 `TR_NEXT`: You will be prompted to use this command if Trad Rack
@@ -157,7 +165,7 @@ sync_to_extruder to True in the
 The following commands are used either for calibration or for testing
 settings without having to restart Klipper to reload the config.
 Calibration procedures that should be run before using Trad Rack are
-covered by the [Quick Start document](/docs/Quick_Start.md).
+covered by the [Quick Start document](/docs/Quick_Start.md):
 
 ### TR_SERVO_TEST
 `TR_SERVO_TEST [ANGLE=<degrees>]`: Moves the servo to the specified
@@ -207,7 +215,7 @@ mapped to a lane group consisting of a single lane with the same index
 as the tool.
 
 ### TR_PRINT_TOOL_MAP
-`TR_RESET_TOOL_MAP`: Prints a table of the lane/tool mapping to the
+`TR_PRINT_TOOL_MAP`: Prints a table of the lane/tool mapping to the
 console, with rows corresponding to tools and columns corresponding to
 lanes.
 
@@ -215,3 +223,10 @@ lanes.
 `TR_PRINT_TOOL_GROUPS`: Prints a list of lanes assigned to each tool
 to the console. If a tool has multiple lanes assigned to it, the
 default lane will be indicated.
+
+## Macros
+
+In addition to the above gcode commands, the
+[trad_rack_optional config file](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg)
+adds several gcode macros (if you choose to include it). See the
+[Customization document](Customization.md#macros) for details.

@@ -19,6 +19,11 @@ Place [trad_rack.py](/Klipper_Stuff/klippy_module/trad_rack.py)
 in `~/klipper/klippy/extras` and restart the Klipper service to load
 the module.
 
+Note: if you are using an older version of Klipper before
+[commit bafb126](https://github.com/Klipper3d/klipper/commit/bafb126abd77edd0cb2e5ae3b5d99ff83272594c), you will need to use
+[this older version of trad_rack.py](https://github.com/Annex-Engineering-Trad-Rack-Test/TradRack_Beta/blob/cd5385d536fbfd0bd46d850f5da289858e9c73f8/Klipper_Stuff/klippy_module/trad_rack.py)
+instead due to changes to the Toolhead class.
+
 ## Config files
 
 Complete the following changes/additions to your Klipper config:
@@ -57,7 +62,7 @@ Copy the following files into your Klipper config folder and
 in your main printer config file:
 
 - One of the files from the
-[base_config_options folder](/Klipper_Stuff/klipper_config/base_config_options/):
+  [base_config_options folder](/Klipper_Stuff/klipper_config/base_config_options/):
   base config file. Several options are provided for different boards
   or stepper drivers. This file is required. Make sure to complete the
   following changes:
@@ -86,8 +91,9 @@ in your main printer config file:
     section
     - Change `run_current` to match your filament driver motor.
 - [trad_rack_optional.cfg](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg):
-  optional config file. This file is recommended but may be more or
-  less useful depending on your slicer setup.
+  optional config file. It is highly recommended to include this file
+  (see the [Customization document](Customization.md) for more
+  details).
 
 ### Modifying provided config files for a different board
 

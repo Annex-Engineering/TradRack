@@ -4,7 +4,9 @@ This document provides an overview of how to get Trad Rack running.
 Each section should be completed before moving on to the next.
 
 **Table of Contents**
-- [Printing and assembly](#printing-and-assembly)
+- [BOM/sourcing and other required hardware](#bomsourcing-and-other-required-hardware)
+- [Printing required parts](#printing-required-parts)
+- [Mechanical assembly](#mechanical-assembly)
 - [Wiring](#wiring)
 - [Klipper installation](#klipper-installation)
 - [Servo calibration](#servo-calibration)
@@ -13,15 +15,35 @@ Each section should be completed before moving on to the next.
   - [Servo up angle](#servo-up-angle)
 - [Selector calibration](#selector-calibration)
 - [Slicing](#slicing)
+- [Change Slicer\_Unload macro settings](#change-slicer_unload-macro-settings)
 - [Further reading](#further-reading)
 
-## Printing and assembly
+## BOM/sourcing and other required hardware
+
+The bill of materials/sourcing guide for Trad Rack can be found
+[here](https://docs.google.com/spreadsheets/d/1SKBtkgSVPqqGEjftI6v6i6T5Bh3Phx-4YXsJYH17ggs/edit?usp=sharing).
+
+Before placing any orders for parts for Trad Rack, it is recommended to read the
+[Printer and hardware requirements document](Printer_and_Hardware_Requirements.md)
+in case there are any other items you may want to combine into your orders.
+
+## Printing required parts
+
+See the following files/folders:
+
 - [Print Settings and File Key](/Print_Settings_and_File_Key.txt):
   print settings to use and info on reading the STL filenames.
 - [STLs folder](/STLs): contains all STL files.
-- [eDrawing](/eDrawings): 3D model for understanding how the parts
-  fit together and helping with assembly. You will need [eDrawings
-  Viewer](https://www.edrawingsviewer.com/) to open this file.
+
+## Mechanical assembly
+
+See the [build instructions](build_instructions) for guidance on
+assembling Trad Rack.
+
+Note: an [eDrawing](/eDrawings/) is also available if you want to view
+a 3D model of Trad Rack. You will need
+[eDrawings Viewer](https://www.edrawingsviewer.com/) to open this
+file.
 
 ## Wiring
 
@@ -75,14 +97,14 @@ the clamp.
 For this section, you will need the servo jig that has "HORN ANGLE"
 written on the side:
 
-![HORN ANGLE servo jig](images/horn_angle_jig.png?raw=true)
+![HORN ANGLE servo jig](images/servo_jigs/horn_angle_jig.png?raw=true)
 
 Insert the servo into the servo jig. You may need to rotate the
 servo horn around the servo spline by hand so that it is at the
 correct angle for the bearing to fit into the jig. The servo's wires
 should be exiting to the left to match the orientation in the image:
 
-![Servo in HORN ANGLE jig](images/servo_in_horn_angle_jig.png?raw=true)
+![Servo in HORN ANGLE jig](images/servo_jigs/servo_in_horn_angle_jig.png?raw=true)
 
 Tighten the two screws you loosened earlier. Then remove the servo
 jig.
@@ -92,12 +114,12 @@ jig.
 For this section, you will need the servo jig that has "UP ANGLE"
 written on the side:
 
-![UP ANGLE servo jig](images/up_angle_jig.png?raw=true)
+![UP ANGLE servo jig](images/servo_jigs/up_angle_jig.png?raw=true)
 
 Insert the servo into the servo jig. The servo's wires should be
 exiting to the left to match the orientation in the image:
 
-![Servo in UP ANGLE jig](images/servo_in_up_angle_jig.png?raw=true)
+![Servo in UP ANGLE jig](images/servo_jigs/servo_in_up_angle_jig.png?raw=true)
 
 Run the following gcode command. Observe the "commanded angle" that is
 reported in the console:
@@ -110,16 +132,16 @@ Look at the front of the servo jig and check the position of the screw
 in the bearing relative to the slots. The goal of this section is
 to get the screw close to lining up with the slots:
 
-![UP ANGLE servo jig slot check](images/up_angle_jig_slot_check.png?raw=true)
+![UP ANGLE servo jig slot check](images/servo_jigs/up_angle_jig_slot_check.png?raw=true)
 
 There is a range of acceptable angles, and the screw does not
 have to exactly align with the slots. If the servo angle is within the
 target range, the jig will be able to slide far enough over the servo
 that the screw protrudes from the front of the jig:
 
-| Wrong angle (screw can't protrude)                  | Angle within target range (screw protrudes)       |
-| ---                                                 | ---                                               |
-| ![](images/up_angle_jig_no_protrusion.png?raw=true) | ![](images/up_angle_jig_protrusion.png?raw=true)  |
+| Wrong angle (screw can't protrude)                              | Angle within target range (screw protrudes)       |
+| ---                                                             | ---                                               |
+| ![](images/servo_jigs/up_angle_jig_no_protrusion.png?raw=true)  | ![](images/servo_jigs/up_angle_jig_protrusion.png?raw=true)  |
 
 If the jig is blocked from being able to slide far enough for the
 screw to protrude, you will need to try another angle. Use the
@@ -175,6 +197,34 @@ for the following:
 ## Slicing
 
 See the [Slicing document](slicing/Slicing.md).
+
+## Change Slicer_Unload macro settings
+
+This section involves adjusting the settings of the
+[Slicer_Unload macro](klipper/Customization.md#tip-shaping) to match
+your slicer settings so that toolhead unloads performed outside of a
+print will closely match toolhead unloads performed during a print.
+
+Under `[gcode_macro Slicer_Unload]` in your copy of
+[trad_rack_optional.cfg](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg),
+change the values of the following variables to match the values you
+set in the slicer profile. Variable names match the "parameter names"
+used in the slicer config files:
+
+- all variables under the comment `# printer settings`
+- all variables under the comment `# filament settings`
+
+In addition, if you are using SuperSlicer, do the same for all
+variables under the comment `# filament settings only in SuperSlicer`.
+
+Set `variable_superslicer` to `True` if you are using SuperSlicer. If
+you are using PrusaSlicer or OrcaSlicer, set it to `False`.
+
+Optional: if you want to use different tip-shaping settings for
+different filaments (when unloading the toolhead outside of a print),
+you can define presets in `[gcode_macro Set_Slicer_Unload_Preset]` in
+the same file. See the comments in the macro and the example preset
+variables for reference.
 
 ## Further reading
 

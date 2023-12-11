@@ -2,8 +2,8 @@
 
 This document explains how to get your slicer set up for multimaterial
 printing with Trad Rack. These instructions are mainly geared towards
-PrusaSlicer and SuperSlicer, but some notes on custom gcode may be
-applicable to other slicers too.
+PrusaSlicer and SuperSlicer, but some parts may be relevant to other slicers
+(such as OrcaSlicer) that are based on Slic3r and PrusaSlicer.
 
 **Table of Contents**
 - [Provided slicer profiles](#provided-slicer-profiles)
@@ -88,7 +88,7 @@ If the above command doesn't work, try using `python3` instead of
 The script requires the following slicer settings in your filament
 profile(s) to work:
 - set `filament_unloading_speed_start` to `100`
-- make sure your `end_filament_gcode` contains the comment
+- make sure your `end_filament_gcode` starts with the comment
   `; Filament-specific end gcode`
 
 With the ramming and/or unload gcode removed, you will need to have
@@ -110,7 +110,7 @@ function to see which settings these correspond to in the GUI.
 ### Printer settings
 
 The following changes should be made to the printer config file in the
-Printer Settings tab.
+Printer Settings tab:
 
 #### Common settings
 
@@ -193,7 +193,7 @@ Printer Settings tab.
 - Advanced wipe tower purge volume calculs:
   - In SuperSlicer, one of the options for purge volume calculations
     is to have the slicer calculate volumes based on each filament's
-    pigment percentage. See the tooltips for more details on these
+    pigment percentage. See the tooltips[^1] for more details on these
     settings:
     - `wipe_advanced`
     - `wipe_advanced_nozzle_melted_volume`
@@ -203,7 +203,7 @@ Printer Settings tab.
 ### Print settings
 
 The following changes should be made to the print config file in the
-Print Settings tab.
+Print Settings tab:
 
 - `wipe_tower`: set to `true` (`1` in the config) unless you are using
   an alternative way of purging material.
@@ -245,10 +245,30 @@ Print Settings tab.
 
 ### Filament settings
 
-The following changes should be made to each filament config file in
-the Filament Settings tab.
+The following filament parameters are relevant to multimaterial
+printing. See the tooltips[^1] for more details on these settings:
 
-(this section is not done yet; everything you might need to change
-that is specific to multimaterial or Trad Rack should be located
-in Multimaterial > Toolchange parameters with single extruder MM
-printers. I recommend looking at the provided example config files.)
+- `filament_loading_speed_start`
+- `filament_loading_speed`
+- `filament_unloading_speed_start`
+- `filament_unloading_speed`
+- `filament_load_time`
+- `filament_unload_time`
+- `filament_toolchange_delay`
+- `filament_cooling_moves`
+- `filament_cooling_initial_speed`
+- `filament_cooling_final_speed`
+- `filament_ramming_parameters`
+
+With the toolhead-specific printer parameters set as described in
+[toolhead-specific settings](#toolhead-specific-settings),
+`filament_loading_speed` has no effect and
+`filament_loading_speed_start` has almost no effect since it is only
+used for a move with close to 0 length. For the rest of the settings,
+I recommend starting either with values from the
+[provided slicer profiles](/Slicer_Config/) or with values from
+[Prusa's MMU filament profiles](https://github.com/prusa3d/PrusaSlicer/blob/master/resources/profiles/PrusaResearch.ini). The optimal values for each of
+these parameters may depend on your hotend and/or filament.
+
+[^1]: In the slicer GUI, hover the mouse cursor over a parameter's
+textbox/checkbox to make the tooltip appear.

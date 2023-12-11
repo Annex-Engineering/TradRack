@@ -156,6 +156,31 @@ toolhead_unload_length:
 #   Maximum number of samples that are averaged to set bowden lengths
 #   for loading and unloading. See Tuning.md for details. The default
 #   is 10.
+#load_lane_time: 15
+#   Approximate maximum time (in seconds) to wait for filament to
+#   reach the selector filament sensor when loading a lane with the
+#   TR_LOAD_LANE gcode command. This time starts when the user is
+#   prompted to insert filament and determines when the command will
+#   be halted early if no filament is detected. The default is 15.
+#load_selector_homing_dist:
+#   Maximum distance to try to move filament when loading from a lane
+#   module to the selector filament sensor before halting the homing
+#   move. This value is not used by the TR_LOAD_LANE command but is
+#   used in similar scenarios that do not involve user interaction.
+#   Defaults to selector_unload_length * 2.
+#bowden_load_homing_dist:
+#   Maximum distance to try to move filament near the end of a
+#   toolhead load (during the slow homing move to the toolhead sensor)
+#   before halting the homing move. Defaults to bowden_length.
+#bowden_unload_homing_dist:
+#   Maximum distance to try to move filament near the end of a
+#   toolhead unload (during the slow homing move to the selector
+#   sensor) before halting the homing move. Defaults to bowden_length.
+#unload_toolhead_homing_dist:
+#   Maximum distance to try to move filament near the beginning of a
+#   toolhead unload (during the homing move to the toolhead sensor)
+#   before halting the homing move.
+#   Defaults to (extruder_load_length + hotend_load_length) * 2.
 #sync_to_extruder: False
 #   Syncs Trad Rack's filament driver to the extruder during printing,
 #   as well as during any extrusion moves within toolhead loading or
@@ -169,8 +194,14 @@ toolhead_unload_length:
 #register_toolchange_commands: True
 #   Whether to register gcode commands T0, T1, T2, etc. so that they
 #   can be used to initiate toolchanges with Trad Rack. If set to
-#   false, the TR_LOAD_TOOLHEAD command can still be used as a
+#   False, the TR_LOAD_TOOLHEAD command can still be used as a
 #   substitute to initiate toolchanges. The default is True.
+#save_active_lane: False
+#   Whether to save the active lane to disk whenever it is set using
+#   save_variables. If set to True, the TR_LOCATE_SELECTOR gcode
+#   command will infer the active lane if the selector filament sensor
+#   is triggered and an active lane was saved previously.
+#   The default is False.
 #pre_unload_gcode:
 #   Gcode command template that is run before the toolhead is
 #   unloaded. The default is to run no extra commands.
