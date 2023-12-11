@@ -792,10 +792,11 @@ class TradRack:
         
         # tell user to assign name to a tool
         gcmd.respond_info("There is no tool with the name {name} assigned to "
-                          "it. Use TR_ASSIGN_TOOL_NAME TOOL=<tool index> "
+                          "it. Use TR_ASSIGN_TOOL_NAME TOOL=&lt;tool index&gt; "
                           "NAME={name} to assign by tool or TR_ASSIGN_LANE "
-                          "LANE=<lane index> NAME={name} to assign by lane, "
-                          "then use TR_RESUME to continue.".format(name=name))
+                          "LANE=&lt;lane index&gt; NAME={name} to assign by "
+                          "lane, then use TR_RESUME to continue."
+                          .format(name=name))
         
         # set up resume callback
         resume_kwargs = {
@@ -1547,9 +1548,9 @@ class TradRack:
 
         # tell user to assign a lane to the tool
         gcmd.respond_info("Tool {tool} has no lanes assigned to it. Use "
-                          "TR_ASSIGN_LANE LANE=<lane index> TOOL={tool} to "
-                          "assign a lane to tool {tool}, then use TR_RESUME to "
-                          "continue.".format(tool=str(tool)))
+                          "TR_ASSIGN_LANE LANE=&lt;lane index&gt; TOOL={tool} "
+                          "to assign a lane to tool {tool}, then use TR_RESUME "
+                          "to continue.".format(tool=str(tool)))
 
         # set up resume callback
         resume_kwargs = {
