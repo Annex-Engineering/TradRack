@@ -403,7 +403,7 @@ class TradRack:
             lane = self.default_lanes[tool]
             if lane is None:
                 gcmd.respond_info("Tool {tool} has no lanes assigned to it. "
-                                  "Use TR_ASSIGN_LANE LANE=<lane index> "
+                                  "Use TR_ASSIGN_LANE LANE=&lt;lane index&gt; "
                                   "TOOL={tool} to assign a lane to tool "
                                   "{tool}, then use TR_RESUME to continue."
                                   .format(tool=str(tool)))
@@ -566,9 +566,10 @@ class TradRack:
                 # ask user to set the active lane or unload the lane
                 gcmd.respond_info("Selector sensor is triggered but no active "
                                   "lane is set. Please use TR_SET_ACTIVE_LANE "
-                                  "if the toolhead is already loaded, else use "
-                                  "TR_UNLOAD_TOOLHEAD to unload the filament. "
-                                  "Then use TR_RESUME to resume the print.")
+                                  "LANE=&lt;lane index&gt; if the toolhead is "
+                                  "already loaded, else use TR_UNLOAD_TOOLHEAD "
+                                  "to unload the filament. Then use TR_RESUME "
+                                  "to resume the print.")
                 self.ignore_next_unload_length = True
                 
                 # set up resume callback
@@ -1400,10 +1401,11 @@ class TradRack:
                 gcmd.respond_info("No replacement lane found for tool {tool}. "
                                   "The following lanes are assigned to tool "
                                   "{tool}: {lanes}. Use TR_LOAD_LANE "
-                                  "LANE=<lane index> to load one of these "
-                                  "lanes, or use TR_ASSIGN_LANE TOOL={tool} "
-                                  "to assign another lane. Then use TR_RESUME "
-                                  "to continue."
+                                  "LANE=&lt;lane index&gt; to load one of "
+                                  "these lanes, or use TR_ASSIGN_LANE "
+                                  "LANE=&lt;lane index&gt; TOOL={tool} to "
+                                  "assign another lane. Then use TR_RESUME to "
+                                  "continue."
                                   .format(tool=str(runout_tool), 
                                           lanes=str(assigned_lanes)))
                 return
