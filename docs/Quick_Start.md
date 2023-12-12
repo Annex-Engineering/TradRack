@@ -34,6 +34,7 @@ See the following files/folders:
 - [Print Settings and File Key](/Print_Settings_and_File_Key.txt):
   print settings to use and info on reading the STL filenames.
 - [STLs folder](/STLs): contains all STL files.
+- [STLs README](/STLs/README.md): information on what parts to print.
 
 ## Mechanical assembly
 
@@ -43,7 +44,8 @@ assembling Trad Rack.
 Note: an [eDrawing](/eDrawings/) is also available if you want to view
 a 3D model of Trad Rack. You will need
 [eDrawings Viewer](https://www.edrawingsviewer.com/) to open this
-file.
+file. If you are using the Nebula control board, a separate eDrawing
+is also available for help on assembling its enclosure.
 
 ## Wiring
 
