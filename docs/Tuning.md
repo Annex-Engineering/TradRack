@@ -111,7 +111,16 @@ movement) and a Mosquito Magnum hotend.
   not touch the filament). If your toolhead sensor is above the
   extruder gears and you are confident that the filament will not be
   touching the extruder gears at the point where it is untriggered,
-  this length can be as low as 0.
+  this length can be as low as 0. If you are not using a toolhead
+  sensor, the starting point of this move would be wherever the
+  filament is when the toolchange command gets executed[^6].
+
+[^6]: If following the instructions in the Slicing document, the
+starting point of this move (if you are not using a toolhead sensor)
+will be the top of the "cooling tube." See the Slicing document for
+more details. It is also okay to leave `toolhead_unload_length` at its
+default value if you are not using a toolhead sensor; the toolchange
+will just take a little longer.
 
 See the drawings below for a visualization of the toolhead-specific
 lengths on toolheads with various sensor setups. Colorful labels are

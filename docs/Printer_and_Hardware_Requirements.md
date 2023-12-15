@@ -14,7 +14,7 @@ Rack.
   - [Other recommended mounts](#other-recommended-mounts)
   - [Designing your own mounts](#designing-your-own-mounts)
 - [Optional add-ons](#optional-add-ons)
-  - [Extruder sync sensor](#extruder-sync-sensor)
+  - [Belay (extruder sync sensor)](#belay-extruder-sync-sensor)
   - [Toolhead filament cutter](#toolhead-filament-cutter)
   - [Nozzle wiper and purge bucket](#nozzle-wiper-and-purge-bucket)
 
@@ -25,8 +25,8 @@ Rack:
 
 - Must use 1.75mm filament.
 - Must run [Klipper firmware](https://github.com/Klipper3d/klipper/)[^1].
-- The toolhead or extruder must have a collet/bowden coupling to
-  secure a 4mm bowden tube at the inlet[^2].
+- The toolhead or extruder must have a collet/coupling to secure a 4mm
+  bowden tube at the inlet[^2].
   
 [^1]: We only provide software for using Trad Rack with Klipper.
 However, Trad Rack's hardware is not inherently reliant on Klipper, so
@@ -35,7 +35,7 @@ software for making Trad Rack work with that firmware.
 
 [^2]: If you are adding a mod to your toolhead in order to add a
 filament sensor, it is likely that the mod also includes support for a
-collet/bowden coupling. See the table in the
+bowden collet/coupling. See the table in the
 [toolhead filament sensor section](#toolhead-filament-sensor) for
 example recommended sensors.
 
@@ -230,7 +230,7 @@ underside of the extrusion.
 The following are optional items that can be added to your printer for
 use with Trad Rack.
 
-### Extruder sync sensor
+### Belay (extruder sync sensor)
 
 See the [Extruder Syncing document](Extruder_Syncing.md).
 

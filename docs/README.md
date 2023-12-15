@@ -38,6 +38,8 @@ quickly as possible with minimal reading, see the
   processes and information on how to tune them.
 - [Tool Mapping](Tool_Mapping.md): info on tool mapping/lane groups
   and how runouts are handled.
+- [Tool Naming](Tool_Naming.md): (coming soon)
+- [Spoolman Support](Spoolman_Support.md): (coming soon)
 - [Extruder Syncing](Extruder_Syncing.md): info on how to use Trad
   Rack as a secondary extruder to reduce load on the printer's main
   extruder, including methods for avoiding error buildup due to

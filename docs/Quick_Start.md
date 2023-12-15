@@ -16,6 +16,11 @@ Each section should be completed before moving on to the next.
 - [Selector calibration](#selector-calibration)
 - [Slicing](#slicing)
 - [Changing Slicer\_Unload macro settings](#changing-slicer_unload-macro-settings)
+- [First load and unload](#first-load-and-unload)
+  - [Setup](#setup)
+  - [Loading the toolhead](#loading-the-toolhead)
+  - [Unloading the toolhead](#unloading-the-toolhead)
+  - [Relevance to print setup](#relevance-to-print-setup)
 - [Further reading](#further-reading)
 
 ## BOM/sourcing and other required hardware
@@ -227,6 +232,94 @@ different filaments (when unloading the toolhead outside of a print),
 you can define presets in `[gcode_macro Set_Slicer_Unload_Preset]` in
 the same file. See the comments in the macro and the example preset
 variables for reference.
+
+## First load and unload
+
+This section goes through the process of running your first toolhead
+load and unload to test Trad Rack.
+
+### Setup
+
+Run the following command to home Trad Rack's selector:
+
+```
+TR_HOME
+```
+
+Get a filament spool ready to feed into Trad Rack. Then run the
+following command, and insert the filament into lane module 0 when
+prompted to do so in the console:
+
+```
+TR_LOAD_LANE LANE=0
+```
+
+Trad Rack should now have a filament loaded into lane module 0.
+
+### Loading the toolhead
+
+To load the toolhead from tool 0 (which starts with lane 0 as its
+default lane*), run the following command:
+
+```
+T0
+```
+
+\* see the [Gcode reference document](klipper/G-Codes.md#tr_load_toolhead)
+for more details on the available parameters for the `TR_LOAD_TOOLHEAD`
+and `T<tool index>` toolchange commands.
+
+Depending on your `hotend_load_length` value, filament may or may not
+come out of the nozzle[^1]. For the sake of this test, run the
+following commands to ensure filament comes out of the nozzle:
+
+```
+M83
+G1 E10
+```
+
+[^1]: It is recommended to set `hotend_load_length` to a value small
+enough that filament does not ooze out directly after calling the
+toolchange command so that you do not get a blob on the wipe tower.
+However, it should not be so small that there are large gaps in the
+wipe tower.
+
+### Unloading the toolhead
+
+Run the following command to unload the toolhead. Trad Rack
+should retract the filament back into lane module 0:
+
+```
+TR_UNLOAD_TOOLHEAD
+```
+
+### Relevance to print setup
+
+Congrats, you have completed your first load and unload with Trad
+Rack!
+
+When printing with Trad Rack, make sure to load all the filaments you
+might need into their lane modules beforehand using the `TR_LOAD_LANE`
+command (after ensuring Trad Rack's selector is homed using `TR_HOME`
+as needed). It is also possible to load filaments into the lane
+modules completely by hand without any gcode commands, but this is
+generally not recommended since you will need to make sure the
+filament tip is pushed far enough forward that Trad Rack can grab it
+but not so far that it blocks selector movement.
+
+It is up to you whether or not to load the first filament to the
+toolhead (using `T<tool index>` or `TR_LOAD_TOOLHEAD` commands)
+before starting a print. Either way works, as the start gcode in the
+slicer will ensure that the first filament gets loaded if it isn't
+already.
+
+Whenever you need to unload filament from the toolhead, you can use
+the `TR_UNLOAD_TOOLHEAD` command. If a filament is currently loaded
+and you want to load a different one, you do not have to call
+`TR_UNLOAD_TOOLHEAD` before calling a toolchange command (either
+`T<tool index>` or `TR_LOAD_TOOLHEAD`) to load the next filament since
+the toolchange command will automatically include the unload as
+needed.
 
 ## Further reading
 
