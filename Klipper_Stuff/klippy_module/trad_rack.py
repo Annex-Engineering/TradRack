@@ -536,7 +536,7 @@ class TradRack:
         self.selector_sensor.set_active(True)
 
         # notify active lane was set without loading the toolhead
-        self.printer.send_event("trad_rack:forced_active_lane")
+        self.printer.send_event("trad_rack:forced_active_lane", lane)
 
     cmd_TR_RESET_ACTIVE_LANE_help = ("Resets active lane to None to indicate "
                                      "the toolhead is not loaded")
