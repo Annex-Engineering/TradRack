@@ -1,5 +1,7 @@
 # Trad Rack
 
+![Open Beta](https://img.shields.io/badge/Open%20Beta-blue)
+
 Trad Rack is a multimaterial system for FFF printers with a focus on scalability at low cost, developed by Ryan G and the team at Annex Engineering.
 
 Videos of it in action can be found here: 
@@ -10,13 +12,12 @@ Our discord server can be found here:
 
 [![Join me on Discord](https://discord.com/api/guilds/641407187004030997/widget.png?style=banner2)](https://discord.gg/MzTR3zE)
 
-![Image of TradRack](Images/render2.png?raw=true)
+![Image of TradRack](Images/render3.png?raw=true)
 
-## Beta Signup
+## Getting started
 
-Closed beta signups are currently closed. An open beta will be available sometime
-before the end of the year. We have released the BOM/sourcing guide early in case
-you want to get a head start: [BOM/sourcing guide spreadsheet](https://docs.google.com/spreadsheets/d/1O3eyVuQ6M4F03MJSDs4Z71_XyNjXL5HFTZr1jsaAtRc/edit?usp=sharing)
+See the [Quick Start document](/docs/Quick_Start.md) to get started, or continue
+reading below for more general info on Trad Rack.
 
 ## Stats
 
