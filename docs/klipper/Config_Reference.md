@@ -205,6 +205,12 @@ toolhead_unload_length:
 #pre_unload_gcode:
 #   Gcode command template that is run before the toolhead is
 #   unloaded. The default is to run no extra commands.
+#post_unload_gcode:
+#   Gcode command template that is run after the toolhead is
+#   unloaded. The default is to run no extra commands.
+#pre_load_gcode:
+#   Gcode command template that is run before the toolhead is
+#   loaded. The default is to run no extra commands.
 #post_load_gcode:
 #   Gcode command template that is run after the toolhead is
 #   loaded. The default is to run no extra commands.

@@ -113,7 +113,7 @@ movement) and a Mosquito Magnum hotend.
   touching the extruder gears at the point where it is untriggered,
   this length can be as low as 0. If you are not using a toolhead
   sensor, the starting point of this move would be wherever the
-  filament is when the toolchange command gets executed[^6].
+  filament is when the toolchange command gets executed.[^6]
 
 [^6]: If following the instructions in the Slicing document, the
 starting point of this move (if you are not using a toolhead sensor)

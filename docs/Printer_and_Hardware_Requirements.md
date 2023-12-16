@@ -24,9 +24,9 @@ Your 3D printer must meet the following requirements to work with Trad
 Rack:
 
 - Must use 1.75mm filament.
-- Must run [Klipper firmware](https://github.com/Klipper3d/klipper/)[^1].
+- Must run [Klipper firmware](https://github.com/Klipper3d/klipper/).[^1]
 - The toolhead or extruder must have a collet/coupling to secure a 4mm
-  bowden tube at the inlet[^2].
+  bowden tube at the inlet.[^2]
   
 [^1]: We only provide software for using Trad Rack with Klipper.
 However, Trad Rack's hardware is not inherently reliant on Klipper, so
@@ -58,7 +58,7 @@ connect/disconnect Trad Rack from the rest of your printer with only
 USB and power cables.
 
 **In addition to the ports listed above, you will need a port for a
-toolhead filament sensor[^3].** This will likely be a simple endstop
+toolhead filament sensor.**[^3] This will likely be a simple endstop
 input port, but it may depend on the type of sensor you use. It is
 recommended to use a port either on your printer's main control board
 or on a toolhead board (rather than on a separate control board
@@ -93,7 +93,7 @@ design with Trad Rack and confirmed that it works well for you.
 ## Toolhead filament sensor
 
 Using a filament sensor on your printer's toolhead is highly
-recommended[^3]. This sensor can have its trigger point be above the
+recommended.[^3] This sensor can have its trigger point be above the
 extruder gears, below the extruder gears, or at the extruder gears
 (e.g. by sensing the idler arm movement). See the table below for
 some example recommended sensors[^4]:
@@ -116,7 +116,7 @@ some example recommended sensors[^4]:
 
 ## Buffers
 
-Trad Rack requires a buffer for each filament[^5]. The buffer provides
+Trad Rack requires a buffer for each filament.[^5] The buffer provides
 a place for filament to collect when it is retracted from the toolhead
 back into Trad Rack, while ensuring that the filament does not get
 tangled when it needs to be used again.

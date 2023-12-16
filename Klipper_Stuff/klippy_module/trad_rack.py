@@ -210,6 +210,10 @@ class TradRack:
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
         self.pre_unload_macro = gcode_macro.load_template(
             config, 'pre_unload_gcode', '')
+        self.post_unload_macro = gcode_macro.load_template(
+            config, 'post_unload_gcode', '')
+        self.pre_load_macro = gcode_macro.load_template(
+            config, 'pre_load_gcode', '')
         self.post_load_macro = gcode_macro.load_template(
             config, 'post_load_gcode', '')
         self.pause_macro = gcode_macro.load_template(
@@ -953,6 +957,11 @@ class TradRack:
                             exc_info=True)
             raise TradRackLoadError("Failed to load toolhead. Could not unload "
                                     "toolhead before load")
+        
+        # run pre-load custom gcode
+        self.pre_load_macro.run_gcode_from_command()
+        self.toolhead.wait_moves()
+        self.tr_toolhead.wait_moves()
 
         # load filament into the selector
         try:
@@ -1286,6 +1295,11 @@ class TradRack:
 
         # reset ignore_next_unload_length
         self.ignore_next_unload_length = False
+
+        # run post-unload custom gcode
+        self.post_unload_macro.run_gcode_from_command()
+        self.toolhead.wait_moves()
+        self.tr_toolhead.wait_moves()
 
     def _send_pause(self):
         self.pause_macro.run_gcode_from_command()

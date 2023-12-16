@@ -270,7 +270,7 @@ for more details on the available parameters for the `TR_LOAD_TOOLHEAD`
 and `T<tool index>` toolchange commands.
 
 Depending on your `hotend_load_length` value, filament may or may not
-come out of the nozzle[^1]. For the sake of this test, run the
+come out of the nozzle.[^1] For the sake of this test, run the
 following commands to ensure filament comes out of the nozzle:
 
 ```
