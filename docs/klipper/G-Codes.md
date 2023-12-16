@@ -142,12 +142,9 @@ requires user confirmation before continuing an action.
 `TR_SYNC_TO_EXTRUDER`: Syncs Trad Rack's filament driver to the
 extruder during printing, as well as during any extrusion moves within
 toolhead loading or unloading that would normally involve only the
-extruder. This is an experimental feature and is not recommended
-unless you have the rotation_distance for the extruder and filament
-driver very closely matched. Even with a small error, the
-filament driver and extruder may gradually drift out of sync during a
-long print with no toolchanges, leading to slipping or grinding of the
-filament. If you want the filament driver to be synced to the extruder
+extruder. See the
+[Extruder syncing document](/docs/Extruder_Syncing.md) for more
+details. If you want the filament driver to be synced to the extruder
 on every startup without having to call this command, you can set
 sync_to_extruder to True in the
 [trad_rack config section](Config_Reference.md#trad_rack).

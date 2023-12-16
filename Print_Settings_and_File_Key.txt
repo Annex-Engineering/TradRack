@@ -1,14 +1,17 @@
 Primary Color: nothing at start of file name
 Accent Color: [a]_ at start of file name
 Quantity Required: _x# near end of file name
-File Revision: _Rev# at end of file name
+File Revision: _rev# at end of file name
 
-Do not use XY compensation, hole shrinking compensation, or any similar slicer setting that modifies the geometry to try to account for shrinkage. Elephant foot compensation (also known as XY first layer compensation) is okay.
+Do not use XY compensation, hole shrinking compensation, or any
+similar slicer setting that modifies the geometry to try to account
+for shrinkage. Elephant foot compensation (also known as XY first
+layer compensation) is okay.
 
 Nozzle Size: 0.5mm 
 Recommended FDM Materials: ASA, Polymaker or 3DXTech Recommended
 Alternate Approved FDM Materials: PC, 3DXTech Recommended
-Layer Height: 0.25mm
+Layer Height: 0.20mm to 0.25mm
 Extrusion Width: Forced 0.5mm
 Infill Percentage: 40% minimum (at 0.8mm Width)
 Infill Type: Grid, Gyroid, Honeycomb, Triangle or Cubic
@@ -18,8 +21,8 @@ Solid Top/Bottom Layers: 4 minimum (at 0.5mm Height)
 Nozzle Size: 0.4mm 
 Recommended FDM Materials: ASA, Polymaker or 3DXTech Recommended
 Alternate Approved FDM Materials: PC, 3DXTech Recommended
-Layer Height: 0.20mm or 0.25mm
-Extrusion Width: Forced 0.4mm
+Layer Height: 0.20mm to 0.25mm
+Extrusion Width: 0.40 to 0.45mm
 Infill Percentage: 40% minimum (at 0.6mm Width)
 Infill Type: Grid, Gyroid, Honeycomb, Triangle or Cubic
 Wall Count: 4 minimum (at 0.4mm Width)

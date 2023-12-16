@@ -15,8 +15,8 @@ function to see which settings these correspond to in the GUI.
 
 ## Adding provided profiles
 
-A vendor bundle for PrusaSlicer 2.6.0 can be found in the
-[PrusaSlicer_2.6.0 folder](/Slicer_Config/PrusaSlicer_2.6.0). To use
+A vendor bundle for PrusaSlicer 2.7.0 can be found in the
+[PrusaSlicer_2.7.0 folder](/Slicer_Config/PrusaSlicer_2.7.0). To use
 the included profiles, first copy the contents of the folder to the
 `vendor` folder located in:
 
