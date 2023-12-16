@@ -21,7 +21,7 @@ the module.
 
 Note: if you are using an older version of Klipper before
 [commit bafb126](https://github.com/Klipper3d/klipper/commit/bafb126abd77edd0cb2e5ae3b5d99ff83272594c), you will need to use
-[this version of trad_rack.py](https://github.com/Annex-Engineering-Trad-Rack-Test/TradRack_Beta/blob/pre_toolhead_changes/Klipper_Stuff/klippy_module/trad_rack.py)
+[this version of trad_rack.py](https://github.com/Annex-Engineering/TradRack/blob/pre_toolhead_changes/Klipper_Stuff/klippy_module/trad_rack.py)
 instead due to changes to the Toolhead class.
 
 ## Config files
