@@ -212,6 +212,10 @@ class TradRack:
         gcode_macro = self.printer.load_object(config, 'gcode_macro')
         self.pre_unload_macro = gcode_macro.load_template(
             config, 'pre_unload_gcode', '')
+        self.post_unload_macro = gcode_macro.load_template(
+            config, 'post_unload_gcode', '')
+        self.pre_load_macro = gcode_macro.load_template(
+            config, 'pre_load_gcode', '')
         self.post_load_macro = gcode_macro.load_template(
             config, 'post_load_gcode', '')
         self.pause_macro = gcode_macro.load_template(
@@ -541,6 +545,7 @@ class TradRack:
         self._raise_servo()
         self.extruder_sync_manager.unsync()
         self.selector_sensor.set_active(False)
+        self.printer.send_event("trad_rack:reset_active_lane")
 
     cmd_TR_RESUME_help = ("Resume after a failed load or unload")
     def cmd_TR_RESUME(self, gcmd):
@@ -1039,6 +1044,11 @@ class TradRack:
 
         # notify toolhead load started
         self.printer.send_event("trad_rack:load_started")
+        
+        # run pre-load custom gcode
+        self.pre_load_macro.run_gcode_from_command()
+        self.toolhead.wait_moves()
+        self.tr_toolhead.wait_moves()
 
         # load filament into the selector
         try:
@@ -1378,6 +1388,11 @@ class TradRack:
 
         # reset ignore_next_unload_length
         self.ignore_next_unload_length = False
+
+        # run post-unload custom gcode
+        self.post_unload_macro.run_gcode_from_command()
+        self.toolhead.wait_moves()
+        self.tr_toolhead.wait_moves()
 
         # notify toolhead unload complete
         self.printer.send_event("trad_rack:unload_complete")
@@ -1844,6 +1859,12 @@ class TradRack:
             "TR_LOAD_TOOLHEAD", "TR_LOAD_TOOLHEAD", {"TOOL": tool}))
 
     # other functions
+    def set_fil_driver_multiplier(self, multiplier):
+        self.extruder_sync_manager.set_fil_driver_multiplier(multiplier)
+
+    def is_fil_driver_synced(self):
+        return self.extruder_sync_manager.is_fil_driver_synced()
+
     def get_status(self, eventtime):
         return {
             'curr_lane': self.curr_lane,
@@ -2193,6 +2214,7 @@ class TradRackExtruderSyncManager:
         self.sync_state = None
         self._prev_sks = None
         self._prev_trapq = None
+        self._prev_rotation_dists = None
 
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object('toolhead')
@@ -2245,8 +2267,10 @@ class TradRackExtruderSyncManager:
             raise Exception("Invalid sync_type: %d" % sync_type)
         
         self._prev_sks = []
+        self._prev_rotation_dists = []
         for stepper in steppers:
             stepper_kinematics = ffi_main.gc(stepper_alloc, ffi_lib.free)
+            self._prev_rotation_dists.append(stepper.get_rotation_distance()[0])
             self._prev_sks.append(
                 stepper.set_stepper_kinematics(stepper_kinematics))
             stepper.set_trapq(external_trapq)
@@ -2260,6 +2284,7 @@ class TradRackExtruderSyncManager:
 
     def sync_fil_driver_to_extruder(self):
         self._sync(FIL_DRIVER_TO_EXTRUDER)
+        self.printer.send_event("trad_rack:synced_to_extruder")
         
     def unsync(self):
         if self.sync_state is None:
@@ -2273,6 +2298,7 @@ class TradRackExtruderSyncManager:
             prev_toolhead = self.toolhead
             external_toolhead = self.tr_toolhead
         elif self.sync_state == FIL_DRIVER_TO_EXTRUDER:
+            self.printer.send_event("trad_rack:unsyncing_from_extruder")
             steppers = self.fil_driver_rail.get_steppers()
             prev_toolhead = self.tr_toolhead
             external_toolhead = self.toolhead
@@ -2285,6 +2311,7 @@ class TradRackExtruderSyncManager:
             prev_toolhead.register_step_generator(stepper.generate_steps)
             stepper.set_trapq(self._prev_trapq)
             stepper.set_stepper_kinematics(self._prev_sks[i])
+            stepper.set_rotation_distance(self._prev_rotation_dists[i])
         self.sync_state = None
     
     def is_extruder_synced(self):
@@ -2292,6 +2319,15 @@ class TradRackExtruderSyncManager:
     
     def is_fil_driver_synced(self):
         return self.sync_state == FIL_DRIVER_TO_EXTRUDER
+    
+    def set_fil_driver_multiplier(self, multiplier):
+        if not self.is_fil_driver_synced():
+            raise Exception("Cannot set stepper multiplier when filament "
+                            "driver is not synced to extruder")
+        steppers = self.fil_driver_rail.get_steppers()
+        for i in range(len(steppers)):
+            steppers[i].set_rotation_distance(
+                self._prev_rotation_dists[i] / multiplier)
 
 class RunIfNoActivity:
     def __init__(self, toolhead, reactor, callback, delay):

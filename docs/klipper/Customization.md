@@ -30,6 +30,10 @@ templates are currently available:
 
 - `pre_unload_gcode`: Gcode command template that is run before the
   toolhead is unloaded. The default is to run no extra commands.
+- `post_unload_gcode`: Gcode command template that is run after the
+  toolhead is unloaded. The default is to run no extra commands.
+- `pre_load_gcode`: Gcode command template that is run before the
+  toolhead is loaded. The default is to run no extra commands.
 - `post_load_gcode`: Gcode command template that is run after the
   toolhead is loaded. The default is to run no extra commands.
 - `pause_gcode`: Gcode command template that is run whenever Trad Rack
@@ -50,6 +54,9 @@ as the suggested
 [changes to make to existing slicer profiles](/docs/slicing/Slicing.md#changes-to-make-to-existing-profiles))
 were made with the assumption that this file is being used. However,
 you are encouraged to modify or replace this file to fit your needs.
+
+[^1]: `post_unload_gcode`, `pre_load_gcode`, `pause_gcode`, and
+`resume_gcode` are left at their default values.
 
 ### Main settings
 
@@ -127,6 +134,3 @@ parameters they expect:
 - `Restore_Pressure_Advance`: Used by `post_load_gcode` to restore the
   pressure advance value saved by `Save_Pressure_Advance` after a
   toolchange.
-
-[^1]: `pause_gcode` and `resume_gcode` are left at their default
-values of `PAUSE` and `RESUME` respectively.

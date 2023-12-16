@@ -45,7 +45,7 @@ the right carriage printed part at the location marked in red.
 ![Selector harness](images/wiring/selector_harness.png?raw=true)
 
 The length of cable between each plug and the near drag chain end
-should be about 120-140mm[^1]. The overall length of the cable will
+should be about 120-140mm.[^1] The overall length of the cable will
 also depend on the length of your drag chain and the distance between
 the fixed end of the drag chain and your control board.
 
@@ -77,7 +77,7 @@ attach a 3-pin Microfit receptacle.
 
 It is recommended to loop the servo cable around the servo as shown
 above to leave some extra length in case of future changes. The length
-of the cable should be about 170mm[^1]. Wiring info is shown below:
+of the cable should be about 170mm.[^1] Wiring info is shown below:
 
 | Wire          | Color | From  | From pin  | To                        | To pin    |
 | ---           | ---   | ---   | ---       | ---                       | ---       |
@@ -98,7 +98,7 @@ stretched when the motor pivots to lower the drive gear.
 
 ![Stepper cable](images/wiring/stepper_cable.png?raw=true)
 
-The length of the cable should be about 210mm[^1]. Wiring info is
+The length of the cable should be about 210mm.[^1] Wiring info is
 shown below:
 
 | Wire          | Color | From      | From pin  | To                        | To pin    |
@@ -124,7 +124,7 @@ zip-tied to the Microfit holder at the location marked in red.
 
 ![Filament sensor cable](images/wiring/filament_sensor_cable.png?raw=true)
 
-The length of the cable should be about 155mm[^1]. Wiring info is
+The length of the cable should be about 155mm.[^1] Wiring info is
 shown below. It does not matter which of the 2 wires goes to which
 pin in the Microfit receptacle:
 

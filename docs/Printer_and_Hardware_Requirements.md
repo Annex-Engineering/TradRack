@@ -14,7 +14,7 @@ Rack.
   - [Other recommended mounts](#other-recommended-mounts)
   - [Designing your own mounts](#designing-your-own-mounts)
 - [Optional add-ons](#optional-add-ons)
-  - [Extruder sync sensor](#extruder-sync-sensor)
+  - [Belay (extruder sync sensor)](#belay-extruder-sync-sensor)
   - [Toolhead filament cutter](#toolhead-filament-cutter)
   - [Nozzle wiper and purge bucket](#nozzle-wiper-and-purge-bucket)
 
@@ -24,9 +24,9 @@ Your 3D printer must meet the following requirements to work with Trad
 Rack:
 
 - Must use 1.75mm filament.
-- Must run [Klipper firmware](https://github.com/Klipper3d/klipper/)[^1].
-- The toolhead or extruder must have a collet/bowden coupling to
-  secure a 4mm bowden tube at the inlet[^2].
+- Must run [Klipper firmware](https://github.com/Klipper3d/klipper/).[^1]
+- The toolhead or extruder must have a collet/coupling to secure a 4mm
+  bowden tube at the inlet.[^2]
   
 [^1]: We only provide software for using Trad Rack with Klipper.
 However, Trad Rack's hardware is not inherently reliant on Klipper, so
@@ -35,7 +35,7 @@ software for making Trad Rack work with that firmware.
 
 [^2]: If you are adding a mod to your toolhead in order to add a
 filament sensor, it is likely that the mod also includes support for a
-collet/bowden coupling. See the table in the
+bowden collet/coupling. See the table in the
 [toolhead filament sensor section](#toolhead-filament-sensor) for
 example recommended sensors.
 
@@ -58,7 +58,7 @@ connect/disconnect Trad Rack from the rest of your printer with only
 USB and power cables.
 
 **In addition to the ports listed above, you will need a port for a
-toolhead filament sensor[^3].** This will likely be a simple endstop
+toolhead filament sensor.**[^3] This will likely be a simple endstop
 input port, but it may depend on the type of sensor you use. It is
 recommended to use a port either on your printer's main control board
 or on a toolhead board (rather than on a separate control board
@@ -80,18 +80,20 @@ design with Trad Rack and confirmed that it works well for you.
 
 | Board         | Name/link                                                       | Comments  |
 | ---           | ---                                                             | ---       |
-| BTT SKR Pico  | [Ender 3 SKR Pico Mount (for Voron Switchwire Conversion)][1.1] |           |
-| Fysetc R4     | [Fysetc R4 board case mount][1.2]                               |           |
-| EASY BRD      | [ERCF EasyBrd/CAN Brd mount for TR][1.3]                        |           |
+| Annex Nebula  | [(provided enclosure)][1.1]                                       |           |
+| BTT SKR Pico  | [Ender 3 SKR Pico Mount (for Voron Switchwire Conversion)][1.2] |           |
+| Fysetc R4     | [Fysetc R4 board case mount][1.3]                               |           |
+| EASY BRD      | [ERCF EasyBrd/CAN Brd mount for TR][1.4]                        |           |
 
-[1.1]: https://www.printables.com/model/244991-ender-3-skr-pico-mount-for-voron-switchwire-conver
-[1.2]: https://www.printables.com/model/457707-fysetc-r4-board-case-mount/files
-[1.3]: https://www.printables.com/model/481199-ercf-easybrdcan-brd-mount-for-tr
+[1.1]: /STLs/Electronics%20Mounts/Nebula%20Enclosure/
+[1.2]: https://www.printables.com/model/244991-ender-3-skr-pico-mount-for-voron-switchwire-conver
+[1.3]: https://www.printables.com/model/457707-fysetc-r4-board-case-mount/files
+[1.4]: https://www.printables.com/model/481199-ercf-easybrdcan-brd-mount-for-tr
 
 ## Toolhead filament sensor
 
 Using a filament sensor on your printer's toolhead is highly
-recommended[^3]. This sensor can have its trigger point be above the
+recommended.[^3] This sensor can have its trigger point be above the
 extruder gears, below the extruder gears, or at the extruder gears
 (e.g. by sensing the idler arm movement). See the table below for
 some example recommended sensors[^4]:
@@ -114,7 +116,7 @@ some example recommended sensors[^4]:
 
 ## Buffers
 
-Trad Rack requires a buffer for each filament[^5]. The buffer provides
+Trad Rack requires a buffer for each filament.[^5] The buffer provides
 a place for filament to collect when it is retracted from the toolhead
 back into Trad Rack, while ensuring that the filament does not get
 tangled when it needs to be used again.
@@ -228,7 +230,7 @@ underside of the extrusion.
 The following are optional items that can be added to your printer for
 use with Trad Rack.
 
-### Extruder sync sensor
+### Belay (extruder sync sensor)
 
 See the [Extruder Syncing document](Extruder_Syncing.md).
 
