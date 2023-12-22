@@ -40,6 +40,7 @@ module(s):
 ```
 cd ~
 curl -LJO https://raw.githubusercontent.com/Annex-Engineering/TradRack/main/Klipper_Stuff/klippy_module/install.sh
+chmod +x install.sh
 ./install.sh
 ```
 <details>
@@ -48,6 +49,7 @@ curl -LJO https://raw.githubusercontent.com/Annex-Engineering/TradRack/main/Klip
   ```
   cd ~
   curl -LJO https://raw.githubusercontent.com/Annex-Engineering/TradRack/main/Klipper_Stuff/klippy_module/install.sh
+  chmod +x install.sh
   ./install.sh pre_toolhead_changes
   ```
 </details>
