@@ -5,6 +5,8 @@ Klipper.
 
 **Table of Contents**
 - [Klippy module](#klippy-module)
+  - [Klippy module installation](#klippy-module-installation)
+  - [Enabling Moonraker updates](#enabling-moonraker-updates)
 - [Config files](#config-files)
   - [Preliminary changes](#preliminary-changes)
     - [\[idle\_timeout\]](#idle_timeout)
@@ -15,14 +17,96 @@ Klipper.
 
 ## Klippy module
 
-Place [trad_rack.py](/Klipper_Stuff/klippy_module/trad_rack.py)
-in `~/klipper/klippy/extras` and restart the Klipper service to load
-the module.
+This section involves adding the Trad Rack Klippy module(s) to Klipper
+and enabling updates through Moonraker.
 
-Note: if you are using an older version of Klipper before
-[commit bafb126](https://github.com/Klipper3d/klipper/commit/bafb126abd77edd0cb2e5ae3b5d99ff83272594c), you will need to use
-[this version of trad_rack.py](https://github.com/Annex-Engineering/TradRack/blob/pre_toolhead_changes/Klipper_Stuff/klippy_module/trad_rack.py)
-instead due to changes to the Toolhead class.
+The installation procedure differs slightly depending on whether
+you are using a recent version of Klipper or an older version from
+before
+[commit bafb126](https://github.com/Klipper3d/klipper/commit/bafb126abd77edd0cb2e5ae3b5d99ff83272594c).
+
+For parts of the installation procedure that differ depending on the
+version of Klipper you are using, there will be an "Old" dropdown
+below the commands/text that you would use with a recent
+installation. In such cases, if you are using an old version of
+Klipper from before commit bafb126, use the commands/text in the
+dropdown instead of what is directly above.
+
+### Klippy module installation
+
+Run the following commands to download and install the Klippy
+module(s):
+
+```
+cd ~
+curl -LJO https://raw.githubusercontent.com/Annex-Engineering/TradRack/main/Klipper_Stuff/klippy_module/install.sh
+./install.sh
+```
+<details>
+  <summary>Old</summary>
+  
+  ```
+  cd ~
+  curl -LJO https://raw.githubusercontent.com/Annex-Engineering/TradRack/main/Klipper_Stuff/klippy_module/install.sh
+  ./install.sh pre_toolhead_changes
+  ```
+</details>
+
+Then remove the install script with the following command:
+
+```
+rm install.sh
+```
+
+Finally, restart the klipper service using the following command:
+
+```
+sudo systemctl restart klipper
+```
+
+> [!TIP]
+> If you ever need to run the install script again in the future (for
+> example if additional Klippy modules get added), you can do so
+> without recreating the `trad_rack_klippy_module` directory using the
+> following commands:
+> ```
+> cd ~
+> ./trad_rack_klippy_module/Klipper_Stuff/klippy_module/install.sh <branch_name>
+> ```
+> If unspecified, `branch_name` defaults to `main`.
+
+### Enabling Moonraker updates
+
+To enable updates of the Trad Rack Klippy module(s) through Moonraker,
+add the following to your `moonraker.conf` file. This file is usually
+located in `~/printer_data/config/`:
+
+```
+[update_manager trad_rack]
+type: git_repo
+path: ~/trad_rack_klippy_module
+origin: https://github.com/Annex-Engineering/TradRack.git
+primary_branch: main
+managed_services: klipper
+```
+<details>
+  <summary>Old</summary>
+
+  ```
+  [update_manager trad_rack]
+  type: git_repo
+  path: ~/trad_rack_klippy_module
+  origin: https://github.com/Annex-Engineering/TradRack.git
+  primary_branch: pre_toolhead_changes
+  managed_services: klipper
+  ```
+</details>
+
+Then restart the moonraker service using the following command:
+
+```
+sudo systemctl restart moonraker
+```
 
 ## Config files
 

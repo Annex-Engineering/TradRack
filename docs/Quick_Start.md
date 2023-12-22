@@ -46,11 +46,12 @@ See the following files/folders:
 See the [build instructions](build_instructions) for guidance on
 assembling Trad Rack.
 
-Note: an [eDrawing](/eDrawings/) is also available if you want to view
-a 3D model of Trad Rack. You will need
-[eDrawings Viewer](https://www.edrawingsviewer.com/) to open this
-file. If you are using the Nebula control board, a separate eDrawing
-is also available for help on assembling its enclosure.
+> [!TIP]
+> An [eDrawing](/eDrawings/) is also available if you want to view a
+> 3D model of Trad Rack. You will need
+> [eDrawings Viewer](https://www.edrawingsviewer.com/) to open this
+> file. If you are using the Nebula control board, a separate eDrawing
+> is also available for help on assembling its enclosure.
 
 ## Wiring
 
