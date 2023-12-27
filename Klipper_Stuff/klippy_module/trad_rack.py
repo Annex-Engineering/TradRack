@@ -1419,7 +1419,7 @@ class TradRack:
                                   .format(self.runout_lane))
                 logging.warning("trad_rack: Failed to unload toolhead",
                                 exc_info=True)
-                return
+                return False
             self.runout_steps_done = 1
 
         # find a new lane to use
@@ -1438,7 +1438,7 @@ class TradRack:
                                   "continue."
                                   .format(tool=str(runout_tool), 
                                           lanes=str(assigned_lanes)))
-                return
+                return False
             self.replacement_lane = lane
             self.runout_lane = None
             self.runout_steps_done = 2
@@ -1449,6 +1449,7 @@ class TradRack:
         # resume
         gcmd.respond_info("Toolhead loaded successfully. Resuming print")
         self._send_resume()
+        return True
 
     def _write_bowden_length_data(self, filename, length, old_set_length,
                                   new_set_length, samples):
@@ -1652,8 +1653,8 @@ class TradRack:
         return False
     
     def _resume_runout(self, gcmd):
-        self._runout_replace_filament(gcmd)
-        self.resume_callback = None
+        if self._runout_replace_filament(gcmd):
+            self.resume_callback = None
         return False
 
     # other resume helper functions

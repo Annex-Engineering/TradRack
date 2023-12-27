@@ -134,8 +134,9 @@ settings.
 | Sensing idler arm movement  | ![](images/toolhead_lengths/idler.png?raw=true) |
 | Sensor below extruder gears | ![](images/toolhead_lengths/below.png?raw=true) |
 
-Note: the bottom point of `hotend_load_length` is not drawn to scale
-and will depend on your specific hotend, tip shaping procedure, etc.
+> [!NOTE]
+> The bottom point of `hotend_load_length` is not drawn to scale and
+> will depend on your specific hotend, tip shaping procedure, etc.
 
 ## Bowden lengths
 
@@ -143,9 +144,10 @@ and will depend on your specific hotend, tip shaping procedure, etc.
 set to `bowden_length`, but they are each updated automatically
 on every load and unload respectively.
 
-Note: if `toolhead_fil_sensor_pin` is not specified or
-`load_with_toolhead_sensor` is False, "bowden_load_length" will not be
-updated automatically and will remain equal to `bowden_length`.
+> [!NOTE]
+> If `toolhead_fil_sensor_pin` is not specified or
+> `load_with_toolhead_sensor` is False, "bowden_load_length" will not be
+> updated automatically and will remain equal to `bowden_length`.
 
 ### Relevant config options
 
