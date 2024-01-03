@@ -7,6 +7,7 @@
 import logging, math, os, time
 from collections import deque
 from extras.homing import Homing, HomingMove
+from gcode import CommandError
 import stepper, chelper, toolhead, kinematics.extruder
 
 SERVO_NAME = 'servo tr_servo'
@@ -2187,7 +2188,7 @@ class MovingAverageFilter:
     def get_entry_count(self):
         return len(self.queue)
 
-class TradRackLoadError(Exception):
+class TradRackLoadError(CommandError):
     pass
 
 class TradRackRunoutSensor:
