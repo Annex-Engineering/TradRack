@@ -1694,7 +1694,8 @@ class TradRack:
             'curr_lane': self.curr_lane,
             'active_lane': self.active_lane,
             'retry_lane': self.retry_lane,
-            'next_lane': self.next_lane
+            'next_lane': self.next_lane,
+            'selector_homed': self._is_selector_homed()
         }
 
 class TradRackToolHead(toolhead.ToolHead, object):

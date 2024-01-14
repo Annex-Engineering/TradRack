@@ -13,6 +13,7 @@ The following information is available in the `trad_rack` object:
   paused the print due to a failed load or unload).
 - `next_lane`: The next lane to load in the toolhead if resuming (if
   Trad Rack has paused the print due to a failed load or unload).
+- `selector_homed`: Whether or not the selector axis is homed.
 
 ## save_variables
 
