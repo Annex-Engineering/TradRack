@@ -80,15 +80,17 @@ design with Trad Rack and confirmed that it works well for you.
 
 | Board         | Name/link                                                       | Comments  |
 | ---           | ---                                                             | ---       |
-| Annex Nebula  | [(provided enclosure)][1.1]                                       |           |
-| BTT SKR Pico  | [Ender 3 SKR Pico Mount (for Voron Switchwire Conversion)][1.2] |           |
-| Fysetc R4     | [Fysetc R4 board case mount][1.3]                               |           |
-| EASY BRD      | [ERCF EasyBrd/CAN Brd mount for TR][1.4]                        |           |
+| Annex Nebula  | [(provided enclosure)][1.1]                                     |           |
+| BTT SKR Pico  | [Skr Pico mount for Annex tradrack][1.2]                        |           |
+| BTT SKR Pico  | [Ender 3 SKR Pico Mount (for Voron Switchwire Conversion)][1.3] |           |
+| Fysetc R4     | [Fysetc R4 board case mount][1.4]                               |           |
+| EASY BRD      | [ERCF EasyBrd/CAN Brd mount for TR][1.5]                        |           |
 
 [1.1]: /STLs/Electronics%20Mounts/Nebula%20Enclosure/
-[1.2]: https://www.printables.com/model/244991-ender-3-skr-pico-mount-for-voron-switchwire-conver
-[1.3]: https://www.printables.com/model/457707-fysetc-r4-board-case-mount/files
-[1.4]: https://www.printables.com/model/481199-ercf-easybrdcan-brd-mount-for-tr
+[1.2]: https://github.com/v6cl/MyDIYthings/tree/main/3Dprinters/AnnexEngineeringMOD/Tradrack/PicoMount
+[1.3]: https://www.printables.com/model/244991-ender-3-skr-pico-mount-for-voron-switchwire-conver
+[1.4]: https://www.printables.com/model/457707-fysetc-r4-board-case-mount/files
+[1.5]: https://www.printables.com/model/481199-ercf-easybrdcan-brd-mount-for-tr
 
 ## Toolhead filament sensor
 
