@@ -11,7 +11,3 @@ The parts in this folder replace the following parts:
     - `microfit_holder_x1`
     - `carriage_right_x1`
     - `servo_horn_x1`
-
-## Servo horn sizes
-
-Several servo horn STLs are included with different internal diameters around the servo spline to see which fits best. If you try these parts, please report back on Discord on which size worked best for you.
