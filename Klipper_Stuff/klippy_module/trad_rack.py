@@ -951,13 +951,20 @@ class TradRack:
             self._unload_toolhead(gcmd)
         except:
             self._raise_servo()
-            gcmd.respond_info("Failed to unload. Please pull the filament in "
-                              "lane {lane} out of the toolhead and selector, "
-                              "then use TR_RESUME to reload lane {lane} and "
-                              "continue."
-                              .format(lane=str(self.curr_lane)))
+            if self.curr_lane is None:
+                gcmd.respond_info("Failed to unload. Please either pull the "
+                                  "filament out of the toolhead and selector "
+                                  "or retry with TR_UNLOAD_TOOLHEAD, then use "
+                                  "TR_RESUME to continue.")
+            else:
+                gcmd.respond_info("Failed to unload. Please either pull the "
+                                  "filament in lane {lane} out of the toolhead "
+                                  "and selector or retry with "
+                                  "TR_UNLOAD_TOOLHEAD, then use TR_RESUME to "
+                                  "reload lane {lane} and continue."
+                                  .format(lane=str(self.curr_lane)))
+                self.lanes_unloaded[self.curr_lane] = False
             self.retry_lane = self.curr_lane
-            self.lanes_unloaded[self.curr_lane] = False
             logging.warning("trad_rack: Failed to unload toolhead",
                             exc_info=True)
             raise TradRackLoadError("Failed to load toolhead. Could not unload "
@@ -1210,14 +1217,26 @@ class TradRack:
         # disable runout detection
         self.selector_sensor.set_active(False)
 
+        selector_sensor_state = self._query_selector_sensor()
+        toolhead_sensor_state = self._query_toolhead_sensor()
+
         # check for filament
         self.toolhead.wait_moves()
-        if not (force_unload or self._query_selector_sensor()
-                or self._query_toolhead_sensor()):
+        if not (force_unload or selector_sensor_state or toolhead_sensor_state):
             # reset ignore_next_unload_length
             self.ignore_next_unload_length = False
             
             return
+        
+        # check for faulty toolhead or selector sensor
+        if not force_unload:
+            if toolhead_sensor_state and not selector_sensor_state:
+                gcmd.respond_info("WARNING: The toolhead filament sensor is "
+                                  "triggered but the selector sensor is not. "
+                                  "This may indicate that one of the sensors "
+                                  "is faulty or that there is a short piece of "
+                                  "filament in the bowden tube that does not "
+                                  "reach the selector.")
 
         # check that the selector is at a lane
         if not self._can_lower_servo():
@@ -1634,7 +1653,8 @@ class TradRack:
     # resume callbacks
     def _resume_load_toolhead(self, gcmd):
         # retry loading lane
-        self._load_lane(self.retry_lane, gcmd, user_load=True)
+        if self.retry_lane is not None:
+            self._load_lane(self.retry_lane, gcmd, user_load=True)
 
         # load next filament into toolhead
         self._load_toolhead(self.next_lane, gcmd)
