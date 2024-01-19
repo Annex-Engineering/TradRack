@@ -1072,7 +1072,10 @@ class TradRack:
 
         # check whether servo move might overlap extruder loading move
         if hotend_load_length:
-            hotend_load_time = self.tr_toolhead.move_queue.get_last().min_move_t
+            if hasattr(toolhead, 'LookAheadQueue'):
+                hotend_load_time = self.tr_toolhead.lookahead.get_last().min_move_t
+            else:
+                hotend_load_time = self.tr_toolhead.move_queue.get_last().min_move_t
         else:
             hotend_load_time = 0.
         servo_delay = max(0., self.servo_wait - hotend_load_time)
