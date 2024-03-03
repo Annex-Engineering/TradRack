@@ -9,10 +9,11 @@ def main():
     belt_safety = 30.
     chain_pitch = 15
     chain_base_len = 120
-    m3x8_base_count = 20
+    m3x8_base_count = 25
     m3x8_safety = 10
     m3x8_rail_pitch = 40.
     m3x8_rail_end = 4.5
+    m3_t_nut_base_count = 3
 
     # get lane count
     lane_count = int(input("Enter the number of lanes: "))
@@ -80,7 +81,7 @@ def main():
         / m3x8_rail_pitch) + 1
     m3x8_count = m3x8_base_count + lane_count + rail_screw_count
     m3x8_count_rec = m3x8_count + m3x8_safety
-    t_nut_count = rail_screw_count + 1
+    t_nut_count = rail_screw_count + m3_t_nut_base_count
     print("Quantity of M3 x 8mm Socket Head Cap Screws: {} recommended "
         "({} expected)".format(m3x8_count_rec, m3x8_count))
     print("Quantity of M3 Ball Spring T-Nuts: {}".format(t_nut_count))

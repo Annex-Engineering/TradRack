@@ -21,6 +21,9 @@ need to print:
   board. See the
   [Printer and hardware requirements document](/docs/Printer_and_Hardware_Requirements.md#electronics)
   for recommended mounts for other control board options.
+- [Electronics Mounts/Base Distribution Board](Electronics%20Mounts/Base%20Distribution%20Board/):
+  these files are only required if you are using the optional Trad
+  Rack wiring kit.
 - [Experimental](Experimental/): experimental parts. These are not
   recommended at this time.
 - [Stationary Parts/Numbered Collet Clips](Stationary%20Parts/Numbered%20Collet%20Clips/):
