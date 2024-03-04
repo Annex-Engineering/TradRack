@@ -7,8 +7,11 @@ def main():
     extrusion_extra_len = 30.
     belt_base_len = 199.1
     belt_safety = 30.
-    chain_pitch = 15
-    chain_base_len = 120
+    chain_base_lens = {
+        15.:    120,
+        16.7:   124,
+        20.:    130
+    }
     m3x8_base_count = 25
     m3x8_safety = 10
     m3x8_rail_pitch = 40.
@@ -49,6 +52,15 @@ def main():
             lane_count = max_lane_count
             lane_span = get_lane_span(lane_count, lane_spacing)
 
+    # get cable chain pitch
+    print("\nCable chain pitch options:"
+          "\n\t15\t(e.g. JFLO J10Q.1.10B)"
+          "\n\t16.7\t(e.g. JFLO J10Q.1.10W)"
+          "\n\t20\t(e.g. IGUS E2-10-10-028-0)\n")
+    chain_pitch = 0.
+    while(not chain_pitch in chain_base_lens):
+        chain_pitch = float(input("Enter selected cable chain pitch: "))
+
     print()
 
     # lane count
@@ -70,7 +82,7 @@ def main():
                                                                 belt_len))
 
     # cable chain
-    chain_length = lane_span / 2 + chain_base_len
+    chain_length = lane_span / 2 + chain_base_lens[chain_pitch]
     chain_link_count = math.ceil(chain_length / chain_pitch)
     print("Approximate cable chain length: {}mm".format(chain_length))
     print("Quantity of cable chain links (not including the ends): {}" \
