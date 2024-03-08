@@ -1363,7 +1363,7 @@ class TradRack:
 
         # 1st pass - check lanes not marked as dead
         lane = (runout_lane + 1) % self.lane_count
-        while lane != runout_lane:
+        while True:
             if self.tool_map[lane] == tool:
                 if self.lanes_dead[lane]:
                     pre_dead_lanes.append(lane)
@@ -1374,6 +1374,8 @@ class TradRack:
                         return lane
                     except:
                         self.lanes_dead[lane] = True
+            if lane == runout_lane:
+                break
             lane = (lane + 1) % self.lane_count
 
         # 2nd pass - check lanes previously marked as dead
