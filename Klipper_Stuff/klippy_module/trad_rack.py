@@ -443,6 +443,23 @@ class TradRack:
             logging.warning("trad_rack: Toolchange from lane {} to {} failed"
                             .format(start_lane, lane), exc_info=True)
             self._send_pause()
+        except SelectorNotHomedError:
+            gcmd.respond_info("Selector not homed. Use TR_LOCATE_SELECTOR (or "
+                              "TR_HOME to home the selector directly), then "
+                              "use TR_RESUME to continue.")
+            
+            # set up resume callback
+            resume_kwargs = {
+                "condition": self._is_selector_homed,
+                "action": lambda g=gcmd: self.cmd_TR_LOAD_TOOLHEAD(g),
+                "fail_msg": "Cannot resume. Please use either "
+                            "TR_LOCATE_SELECTOR or TR_HOME to home the "
+                            "selector, then use TR_RESUME."
+            }
+            self._set_up_resume("check condition", resume_kwargs)
+
+            # pause and wait for user to resume
+            self._send_pause()
 
     cmd_TR_UNLOAD_TOOLHEAD_help = "Unload filament from the toolhead"
     def cmd_TR_UNLOAD_TOOLHEAD(self, gcmd):
@@ -791,6 +808,10 @@ class TradRack:
             self._check_lane_valid(tool)
         except:
             raise self.gcode.error("Invalid TOOL")
+    
+    def _check_selector_homed(self):
+        if not self._is_selector_homed():
+            raise SelectorNotHomedError("Must home selector first")
 
     def _can_lower_servo(self):
         return (self._is_selector_homed() and self.curr_lane is not None) \
@@ -810,8 +831,7 @@ class TradRack:
 
     def _go_to_lane(self, lane):
         # check if homed
-        if not self._is_selector_homed():
-            raise self.gcode.error("Must home selector first")
+        self._check_selector_homed()
 
         # check lane
         self._check_lane_valid(lane)
@@ -925,8 +945,7 @@ class TradRack:
             return
         
         # check if homed
-        if not self._is_selector_homed():
-            raise self.gcode.error("Must home selector first")
+        self._check_selector_homed()
 
         # check and set lengths
         if bowden_length is None:
@@ -1664,7 +1683,7 @@ class TradRack:
         # load next filament into toolhead
         self._load_toolhead(self.next_lane, gcmd)
 
-        gcmd.respond_info("Toolhead loaded succesfully. Resuming print")
+        gcmd.respond_info("Toolhead loaded successfully. Resuming print")
         return True
 
     def _resume_check_condition(self, gcmd, condition, action=None,
@@ -2215,6 +2234,9 @@ class MovingAverageFilter:
         return len(self.queue)
 
 class TradRackLoadError(CommandError):
+    pass
+
+class SelectorNotHomedError(CommandError):
     pass
 
 class TradRackRunoutSensor:
