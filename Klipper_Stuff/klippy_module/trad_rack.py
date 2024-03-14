@@ -174,6 +174,7 @@ class TradRack:
         self.curr_lane = None       # which lane the selector is positioned at
         self.active_lane = None     # lane currently loaded in the toolhead
         self.retry_lane = None      # lane to reload before resuming
+        self.retry_tool = None      # tool to load a lane from before resuming
         self.next_lane = None       # next lane to load to toolhead if resuming
         self.servo_raised = None
         self.lanes_unloaded = [False] * self.lane_count
@@ -430,7 +431,7 @@ class TradRack:
         
         # load toolhead
         try:
-            self._load_toolhead(lane, gcmd,
+            self._load_toolhead(lane, gcmd, tool,
                                 gcmd.get_float('MIN_TEMP', 0., minval=0.),
                                 gcmd.get_float('EXACT_TEMP', 0., minval=0.),
                                 gcmd.get_float('BOWDEN_LENGTH', None,
@@ -910,7 +911,7 @@ class TradRack:
             % (self.VARS_HEATER_TARGET, target_temp))
         self.last_heater_target = target_temp
 
-    def _load_toolhead(self, lane, gcmd, min_temp=0., exact_temp=0.,
+    def _load_toolhead(self, lane, gcmd, tool=None, min_temp=0., exact_temp=0.,
                        bowden_length=None, extruder_load_length=None,
                        hotend_load_length=None):
         # set up resume callback
@@ -980,17 +981,31 @@ class TradRack:
 
         # load filament into the selector
         try:
-            self._load_selector(lane)
+            self._load_selector(lane, tool=tool)
         except:
             self._raise_servo()
-            gcmd.respond_info("Failed to load selector from lane {lane}. "
-                              "Use TR_RESUME to reload lane {lane} and retry."
-                              .format(lane=str(lane)))
+            if tool is None:
+                gcmd.respond_info("Failed to load selector from lane {lane}. "
+                                  "Use TR_RESUME to reload lane {lane} and retry."
+                                  .format(lane=str(lane)))
+            else:
+                assigned_lanes = self._get_assigned_lanes(tool)
+                gcmd.respond_info("Failed to load selector from any of the "
+                                  "lanes assigned to tool {tool}: {lanes}. "
+                                  "Use TR_LOAD_LANE LANE=&lt;lane index&gt to "
+                                  "reload one of these lanes, then use "
+                                  "TR_RESUME to retry. (If you want to use a "
+                                  "different lane, use TR_ASSIGN_LANE "
+                                  "LANE=&lt;lane index&gt TOOL={tool} "
+                                  "beforehand.)"
+                                  .format(tool=tool, lanes=assigned_lanes))
             self.retry_lane = lane
+            self.retry_tool = tool
             logging.warning("trad_rack: Failed to load selector",
                             exc_info=True)
             raise TradRackLoadError("Failed to load toolhead. Could not load "
                                     "selector from lane %d" % lane)
+        self.retry_tool = None
 
         # move filament through the bowden tube
         self._reset_fil_driver()
@@ -1124,7 +1139,18 @@ class TradRack:
         # notify toolhead load complete
         self.printer.send_event("trad_rack:load_complete")
 
-    def _load_selector(self, lane, user_load=False):
+    def _load_selector(self, lane, tool=None, user_load=False):
+        try:
+            self._do_load_selector(lane, user_load=user_load)
+        except self.gcode.error:
+            if tool is None:
+                raise
+            elif self._find_replacement_lane(lane) is None:
+                raise self.gcode.error("Failed to load filament into selector "
+                                       "from any of the lanes assigned to tool "
+                                       "{}".format(tool))
+    
+    def _do_load_selector(self, lane, user_load=False):
         # move selector
         self._go_to_lane(lane)
 
@@ -1373,7 +1399,7 @@ class TradRack:
                     pre_dead_lanes.append(lane)
                 else:
                     try:
-                        self._load_lane(lane, self.gcode)
+                        self._load_selector(lane)
                         self.default_lanes[tool] = lane
                         return lane
                     except:
@@ -1385,7 +1411,7 @@ class TradRack:
         # 2nd pass - check lanes previously marked as dead
         for lane in pre_dead_lanes:
             try:
-                self._load_lane(lane, self.gcode)
+                self._load_selector(lane)
                 self.lanes_dead[lane] = False
                 self.default_lanes[tool] = lane
                 return lane
@@ -1661,8 +1687,15 @@ class TradRack:
     
     # resume callbacks
     def _resume_load_toolhead(self, gcmd):
+        # load any of the tool's assigned lanes to selector
+        if self.retry_tool is not None:
+            if self._find_replacement_lane(self.retry_lane) is None:
+                raise self.gcode.error("Failed to load filament into selector "
+                                       "from any of the lanes assigned to tool "
+                                       "{}".format(self.retry_tool))
+        
         # retry loading lane
-        if self.retry_lane is not None:
+        elif self.retry_lane is not None:
             self._load_lane(self.retry_lane, gcmd, user_load=True)
 
         # load next filament into toolhead
@@ -1723,6 +1756,7 @@ class TradRack:
             'curr_lane': self.curr_lane,
             'active_lane': self.active_lane,
             'retry_lane': self.retry_lane,
+            'retry_tool': self.retry_tool,
             'next_lane': self.next_lane,
             'selector_homed': self._is_selector_homed()
         }
