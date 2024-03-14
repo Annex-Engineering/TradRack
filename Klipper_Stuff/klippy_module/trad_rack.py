@@ -1,6 +1,6 @@
 # Trad Rack multimaterial system support
 #
-# Copyright (C) 2022-2023 Ryan Ghosh <rghosh776@gmail.com>
+# Copyright (C) 2022-2024 Ryan Ghosh <rghosh776@gmail.com>
 # based on code by Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
@@ -1041,9 +1041,13 @@ class TradRack:
             except:
                 self._raise_servo()
                 self.extruder_sync_manager.unsync()
-                gcmd.respond_info("Failed to load toolhead from lane {lane}. "
-                                  "Use TR_RESUME to reload lane {lane} and "
-                                  "retry.".format(lane=str(lane)))
+                gcmd.respond_info("Failed to load toolhead from lane {lane} "
+                                  "(no trigger on toolhead sensor). Please "
+                                  "either pull the filament in lane {lane} out "
+                                  "of the toolhead and selector or use "
+                                  "TR_UNLOAD_TOOLHEAD. Then use TR_RESUME to "
+                                  "reload lane {lane} and retry."
+                                  .format(lane=str(lane)))
                 self.retry_lane = lane
                 logging.warning("trad_rack: Toolhead sensor homing move failed",
                                 exc_info=True)
