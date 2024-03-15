@@ -1,6 +1,6 @@
 # Trad Rack multimaterial system support
 #
-# Copyright (C) 2022-2023 Ryan Ghosh <rghosh776@gmail.com>
+# Copyright (C) 2022-2024 Ryan Ghosh <rghosh776@gmail.com>
 # based on code by Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
@@ -1053,9 +1053,13 @@ class TradRack:
             except:
                 self._raise_servo()
                 self.extruder_sync_manager.unsync()
-                gcmd.respond_info("Failed to load toolhead from lane {lane}. "
-                                  "Use TR_RESUME to reload lane {lane} and "
-                                  "retry.".format(lane=str(lane)))
+                gcmd.respond_info("Failed to load toolhead from lane {lane} "
+                                  "(no trigger on toolhead sensor). Please "
+                                  "either pull the filament in lane {lane} out "
+                                  "of the toolhead and selector or use "
+                                  "TR_UNLOAD_TOOLHEAD. Then use TR_RESUME to "
+                                  "reload lane {lane} and retry."
+                                  .format(lane=str(lane)))
                 self.retry_lane = lane
                 logging.warning("trad_rack: Toolhead sensor homing move failed",
                                 exc_info=True)
@@ -1767,12 +1771,20 @@ class TradRackToolHead(toolhead.ToolHead, object):
         self.fil_max_accel = tr_config.getfloat('filament_max_accel',
             default=1500., above=0.)
         self.max_accel = max(self.sel_max_accel, self.fil_max_accel)
-        self.requested_accel_to_decel = config.getfloat(
-            'max_accel_to_decel', self.max_accel * 0.5, above=0.)
-        self.max_accel_to_decel = self.requested_accel_to_decel
+        self.min_cruise_ratio = config.getfloat('minimum_cruise_ratio', None,
+                                                below=1., minval=0.)
+        if self.min_cruise_ratio is None:
+            self.min_cruise_ratio = 0.5
+            req_accel_to_decel = config.getfloat('max_accel_to_decel', None,
+                                                 above=0.)
+            if req_accel_to_decel is not None:
+                config.deprecate('max_accel_to_decel')
+                self.min_cruise_ratio = 1. - min(1., (req_accel_to_decel
+                                                      / self.max_accel))
+        self.requested_accel_to_decel = self.min_cruise_ratio * self.max_accel
         self.square_corner_velocity = config.getfloat(
             'square_corner_velocity', 5., minval=0.)
-        self.junction_deviation = 0.
+        self.junction_deviation = self.max_accel_to_decel = 0.
         self._calc_junction_deviation()
         # Input stall detection
         self.check_stall_time = 0.
