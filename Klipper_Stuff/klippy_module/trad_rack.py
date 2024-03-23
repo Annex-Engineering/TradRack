@@ -932,8 +932,8 @@ class TradRack:
         self.last_heater_target = target_temp
 
     def _load_toolhead(self, lane, gcmd, tool=None, min_temp=0., exact_temp=0.,
-                       bowden_length=None, extruder_load_length=None,
-                       hotend_load_length=None):
+                       selector_already_loaded=False, bowden_length=None,
+                       extruder_load_length=None, hotend_load_length=None):
         # set up resume callback
         self._set_up_resume("load toolhead", {})
 
@@ -967,28 +967,30 @@ class TradRack:
         self.selector_sensor.set_active(False)
 
         # unload current lane (if filament is detected)
-        try:
-            self._unload_toolhead(gcmd)
-        except:
-            self._raise_servo()
-            if self.curr_lane is None:
-                gcmd.respond_info("Failed to unload. Please either pull the "
-                                  "filament out of the toolhead and selector "
-                                  "or retry with TR_UNLOAD_TOOLHEAD, then use "
-                                  "TR_RESUME to continue.")
-            else:
-                gcmd.respond_info("Failed to unload. Please either pull the "
-                                  "filament in lane {lane} out of the toolhead "
-                                  "and selector or retry with "
-                                  "TR_UNLOAD_TOOLHEAD, then use TR_RESUME to "
-                                  "reload lane {lane} and continue."
-                                  .format(lane=str(self.curr_lane)))
-                self.lanes_unloaded[self.curr_lane] = False
-            self.retry_lane = self.curr_lane
-            logging.warning("trad_rack: Failed to unload toolhead",
-                            exc_info=True)
-            raise TradRackLoadError("Failed to load toolhead. Could not unload "
-                                    "toolhead before load")
+        if not (selector_already_loaded and self.curr_lane == lane):
+            try:
+                self._unload_toolhead(gcmd)
+            except:
+                self._raise_servo()
+                if self.curr_lane is None:
+                    gcmd.respond_info("Failed to unload. Please either pull "
+                                      "the filament out of the toolhead and "
+                                      "selector or retry with "
+                                      "TR_UNLOAD_TOOLHEAD, then use TR_RESUME "
+                                      "to continue.")
+                else:
+                    gcmd.respond_info("Failed to unload. Please either pull "
+                                      "the filament in lane {lane} out of the "
+                                      "toolhead and selector or retry with "
+                                      "TR_UNLOAD_TOOLHEAD, then use TR_RESUME "
+                                      "to reload lane {lane} and continue."
+                                      .format(lane=str(self.curr_lane)))
+                    self.lanes_unloaded[self.curr_lane] = False
+                self.retry_lane = self.curr_lane
+                logging.warning("trad_rack: Failed to unload toolhead",
+                                exc_info=True)
+                raise TradRackLoadError("Failed to load toolhead. Could not "
+                                        "unload toolhead before load")
         
         # notify toolhead load started
         self.printer.send_event("trad_rack:load_started")
@@ -1497,6 +1499,7 @@ class TradRack:
             self.runout_steps_done = 1
 
         # find a new lane to use
+        selector_already_loaded = False
         if self.runout_steps_done < 2:
             lane = self._find_replacement_lane(self.runout_lane)
             if lane is None:
@@ -1514,11 +1517,13 @@ class TradRack:
                                           lanes=str(assigned_lanes)))
                 return False
             self.replacement_lane = lane
+            selector_already_loaded = True
             self.runout_lane = None
             self.runout_steps_done = 2
         
         # load toolhead
-        self._load_toolhead(self.replacement_lane, gcmd)
+        self._load_toolhead(self.replacement_lane, gcmd,
+                            selector_already_loaded=selector_already_loaded)
         
         # resume
         gcmd.respond_info("Toolhead loaded successfully. Resuming print")
@@ -1707,18 +1712,23 @@ class TradRack:
     # resume callbacks
     def _resume_load_toolhead(self, gcmd):
         # load any of the tool's assigned lanes to selector
+        selector_already_loaded = False
         if self.retry_tool is not None:
-            if self._find_replacement_lane(self.retry_lane) is None:
+            replacement_lane = self._find_replacement_lane(self.retry_lane)
+            if replacement_lane is None:
                 raise self.gcode.error("Failed to load filament into selector "
                                        "from any of the lanes assigned to tool "
                                        "{}".format(self.retry_tool))
+            self.next_lane = replacement_lane
+            selector_already_loaded = True
         
         # retry loading lane
         elif self.retry_lane is not None:
             self._load_lane(self.retry_lane, gcmd, user_load=True)
 
         # load next filament into toolhead
-        self._load_toolhead(self.next_lane, gcmd)
+        self._load_toolhead(self.next_lane, gcmd,
+                            selector_already_loaded=selector_already_loaded)
 
         gcmd.respond_info("Toolhead loaded successfully. Resuming print")
         return True
