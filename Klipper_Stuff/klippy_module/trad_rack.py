@@ -193,8 +193,7 @@ class TradRack:
             "check condition": self._resume_check_condition,
             "runout": self._resume_runout
         }
-        self.resume_callback = None
-        self.resume_kwargs = None
+        self.resume_stack = deque()
 
         # tool mapping
         self.lanes_dead = [False] * self.lane_count
@@ -342,6 +341,9 @@ class TradRack:
         pause_resume.send_pause_command()
         # self.printer.get_reactor().pause(eventtime + self.pause_delay)
         self._send_pause()
+
+        # set up resume callback
+        self._set_up_resume("runout", {})
         
         # note runout
         self.runout_lane = self.active_lane
@@ -352,10 +354,11 @@ class TradRack:
                                 "(tool {})"
                                 .format(self.runout_lane, 
                                         self.tool_map[self.runout_lane]))
-        
+
         # unload filament and reload from a new lane
         self.runout_steps_done = 0
-        self._runout_replace_filament(self.gcode)
+        self.cmd_TR_RESUME(self.gcode.create_gcode_command(
+            "TR_RESUME", "TR_RESUME", {}))
 
     # gcode commands
     cmd_TR_HOME_help = "Home Trad Rack's selector"
@@ -442,6 +445,10 @@ class TradRack:
         except TradRackLoadError:
             logging.warning("trad_rack: Toolchange from lane {} to {} failed"
                             .format(start_lane, lane), exc_info=True)
+            # set up resume callback
+            self._set_up_resume("load toolhead", {})
+
+            # pause and wait for user to resume
             self._send_pause()
         except SelectorNotHomedError:
             gcmd.respond_info("Selector not homed. Use TR_LOCATE_SELECTOR (or "
@@ -570,9 +577,40 @@ class TradRack:
 
     cmd_TR_RESUME_help = ("Resume after a failed load or unload")
     def cmd_TR_RESUME(self, gcmd):
-        if self.resume_callback(gcmd, **self.resume_kwargs):
-            self.resume_callback = None
-            self._send_resume()
+        resume_msg = None
+
+        # loop through all resumes in the stack
+        while True:
+            # pop the last resume
+            try:
+                resume_callback, resume_kwargs = self.resume_stack.pop()
+            except IndexError:
+                break
+            curr_stack_size = len(self.resume_stack)
+
+            # run the resume callback
+            try:
+                retry_resume, resume_msg = resume_callback(gcmd,
+                                                           **resume_kwargs)
+            except:
+                # if the resume callback raised an error, add the resume back to
+                # the stack
+                self.resume_stack.append((resume_callback, resume_kwargs))
+                raise
+
+            # if a new resume was set up by the callback, return since the user
+            # needs to handle that and call TR_RESUME again
+            if len(self.resume_stack) > curr_stack_size:
+                return
+            
+            # if the resume needs to be retried, add it back to the stack and
+            # wait for the user to call TR_RESUME again 
+            if retry_resume:    
+                self.resume_stack.append((resume_callback, resume_kwargs))
+                return
+
+        # resume the print
+        self._send_resume(resume_msg)
 
     cmd_TR_LOCATE_SELECTOR_help = ("Ensures the position of Trad Rack's "
                                    "selector is known so that it is ready for "
@@ -933,9 +971,6 @@ class TradRack:
     def _load_toolhead(self, lane, gcmd, min_temp=0., exact_temp=0.,
                        bowden_length=None, extruder_load_length=None,
                        hotend_load_length=None):
-        # set up resume callback
-        self._set_up_resume("load toolhead", {})
-
         # keep track of lane in case of an error
         self.next_lane = lane
 
@@ -1364,9 +1399,16 @@ class TradRack:
         self.printer.send_event("trad_rack:unload_complete")
 
     def _send_pause(self):
-        self.pause_macro.run_gcode_from_command()
+        pause_resume = self.printer.lookup_object('pause_resume')
+        if not pause_resume.get_status(self.reactor.monotonic())['is_paused']:
+            self.pause_macro.run_gcode_from_command()
 
-    def _send_resume(self):
+    def _send_resume(self, resume_msg=None):
+        pause_resume = self.printer.lookup_object('pause_resume')
+        if not pause_resume.get_status(self.reactor.monotonic())['is_paused']:
+            return
+        if resume_msg:
+            self.gcode.respond_info(resume_msg)
         self.resume_macro.run_gcode_from_command()
 
     def _set_active_lane(self, lane):
@@ -1451,9 +1493,6 @@ class TradRack:
         return lanes
 
     def _runout_replace_filament(self, gcmd):
-        # set up resume callback
-        self._set_up_resume("runout", {})
-
         # unload
         if self.runout_steps_done < 1:
             try:
@@ -1493,10 +1532,6 @@ class TradRack:
         
         # load toolhead
         self._load_toolhead(self.replacement_lane, gcmd)
-        
-        # resume
-        gcmd.respond_info("Toolhead loaded successfully. Resuming print")
-        self._send_resume()
         return True
 
     def _write_bowden_length_data(self, filename, length, old_set_length,
@@ -1687,8 +1722,7 @@ class TradRack:
         # load next filament into toolhead
         self._load_toolhead(self.next_lane, gcmd)
 
-        gcmd.respond_info("Toolhead loaded successfully. Resuming print")
-        return True
+        return False, "Toolhead loaded successfully. Resuming print"
 
     def _resume_check_condition(self, gcmd, condition, action=None,
                                 resume_msg="Resuming print",
@@ -1696,20 +1730,19 @@ class TradRack:
         if condition():
             if action is not None:
                 action()
-            gcmd.respond_info(resume_msg)
-            return True
+            return False, resume_msg
         gcmd.respond_info(fail_msg)
-        return False
-    
+        return True, None
+
     def _resume_runout(self, gcmd):
         if self._runout_replace_filament(gcmd):
-            self.resume_callback = None
-        return False
+            return False, "Toolhead loaded successfully. Resuming print"
+        return True, None
 
     # other resume helper functions
     def _set_up_resume(self, resume_type, resume_kwargs):
-        self.resume_callback = self.resume_callbacks[resume_type]
-        self.resume_kwargs = resume_kwargs
+        self.resume_stack.append((self.resume_callbacks[resume_type],
+                                  resume_kwargs))
     
     def _unload_toolhead_and_resume(self):
         pause_resume = self.printer.lookup_object('pause_resume')
