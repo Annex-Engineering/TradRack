@@ -1818,7 +1818,6 @@ class TradRack:
             'curr_lane': self.curr_lane,
             'active_lane': self.active_lane,
             'retry_lane': self.retry_lane,
-            'retry_tool': self.retry_tool,
             'next_lane': self.next_lane,
             'selector_homed': self._is_selector_homed()
         }
