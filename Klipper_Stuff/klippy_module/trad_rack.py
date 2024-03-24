@@ -421,7 +421,7 @@ class TradRack:
                 resume_kwargs = {
                     "condition": lambda t=tool: self.default_lanes[t] \
                         is not None,
-                    "action": lambda t=tool: self._resume_act_load_toolhead(t),
+                    "action": lambda g=gcmd: self.cmd_TR_LOAD_TOOLHEAD(g),
                     "fail_msg": "Cannot resume. Please use TR_ASSIGN_LANE to "
                                 "assign a lane to tool %d, then use TR_RESUME."
                                 % tool
@@ -1801,10 +1801,6 @@ class TradRack:
             self.cmd_TR_HOME(self.gcode.create_gcode_command(
                 "TR_HOME", "TR_HOME", {}))
         self.ignore_next_unload_length = False
-
-    def _resume_act_load_toolhead(self, tool):
-        self.cmd_TR_LOAD_TOOLHEAD(self.gcode.create_gcode_command(
-            "TR_LOAD_TOOLHEAD", "TR_LOAD_TOOLHEAD", {"TOOL": tool}))
 
     # other functions
     def set_fil_driver_multiplier(self, multiplier):
