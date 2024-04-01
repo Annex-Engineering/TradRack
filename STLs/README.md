@@ -10,6 +10,7 @@ from depending on what hardware you are using.
 - [STL variants](#stl-variants)
   - [Rail cart variants](#rail-cart-variants)
   - [Belt width variants](#belt-width-variants)
+  - [Cable drag chain variants](#cable-drag-chain-variants)
 
 ## Subfolders that may not be needed
 
@@ -21,6 +22,9 @@ need to print:
   board. See the
   [Printer and hardware requirements document](/docs/Printer_and_Hardware_Requirements.md#electronics)
   for recommended mounts for other control board options.
+- [Electronics Mounts/Base Distribution Board](Electronics%20Mounts/Base%20Distribution%20Board/):
+  these files are only required if you are using the optional Trad
+  Rack wiring kit.
 - [Experimental](Experimental/): experimental parts. These are not
   recommended at this time.
 - [Stationary Parts/Numbered Collet Clips](Stationary%20Parts/Numbered%20Collet%20Clips/):
@@ -55,3 +59,13 @@ pulleys sized for each). Files with `(6mm_belt)` in the filename are
 only required if using 6mm wide belts and pulleys/idlers sized for 6mm
 belts. Files with `(9mm_belt)` in the filename are only required if
 using 9mm wide belts and pulleys/idlers sized for 9mm belts.
+
+### Cable drag chain variants
+
+Cable chains with 10x10mm internal dimensions generally have a 2-hole
+mounting pattern for each end, while chains with 10x11mm internal
+dimensions generally have a 3-hole mounting pattern. Files with
+`(10x10_cable_chain)` in the filename are only required if
+using a cable chain with a 2-hole mounting pattern. Files with
+`(10x11_cable_chain)` in the filename are only required if using a
+cable chain with a 3-hole mounting pattern.

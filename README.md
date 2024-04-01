@@ -1,6 +1,6 @@
 # Trad Rack
 
-![Open Beta](https://img.shields.io/badge/Open%20Beta-blue)
+![GitHub Release](https://img.shields.io/github/v/release/Annex-Engineering/TradRack)
 
 Trad Rack is a multimaterial system for FFF printers with a focus on scalability at low cost, developed by Ryan G and the team at Annex Engineering.
 
