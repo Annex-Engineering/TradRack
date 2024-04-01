@@ -2152,7 +2152,9 @@ class TradRack:
             "selector_homed": self._is_selector_homed(),
         }
 
-SDS_CHECK_TIME = 0.001 # step+dir+step filter in stepcompress.c
+
+SDS_CHECK_TIME = 0.001  # step+dir+step filter in stepcompress.c
+
 
 class TradRackToolHead(toolhead.ToolHead, object):
     def __init__(self, config, buffer_pull_speed, is_extruder_synced):
@@ -2166,9 +2168,10 @@ class TradRackToolHead(toolhead.ToolHead, object):
         if self.mcu.is_fileoutput():
             self.can_pause = False
         self.move_queue = toolhead.MoveQueue(self)
-        self.commanded_pos = [0., 0., 0., 0.]
-        self.printer.register_event_handler("klippy:shutdown",
-                                            self._handle_shutdown)
+        self.commanded_pos = [0.0, 0.0, 0.0, 0.0]
+        self.printer.register_event_handler(
+            "klippy:shutdown", self._handle_shutdown
+        )
         # Velocity and acceleration control
         tr_config = config.getsection("trad_rack")
         self.sel_max_velocity = tr_config.getfloat(
@@ -2204,26 +2207,31 @@ class TradRackToolHead(toolhead.ToolHead, object):
         self._calc_junction_deviation()
         # Print time tracking
         self.buffer_time_low = config.getfloat(
-            'buffer_time_low', 1.000, above=0.)
+            "buffer_time_low", 1.000, above=0.0
+        )
         self.buffer_time_high = config.getfloat(
-            'buffer_time_high', 2.000, above=self.buffer_time_low)
+            "buffer_time_high", 2.000, above=self.buffer_time_low
+        )
         self.buffer_time_start = config.getfloat(
-            'buffer_time_start', 0.250, above=0.)
+            "buffer_time_start", 0.250, above=0.0
+        )
         self.move_flush_time = config.getfloat(
-            'move_flush_time', 0.050, above=0.)
-        self.print_time = 0.
+            "move_flush_time", 0.050, above=0.0
+        )
+        self.print_time = 0.0
         self.special_queuing_state = "Flushed"
-        self.need_check_stall = -1.
+        self.need_check_stall = -1.0
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.move_queue.set_flush_time(self.buffer_time_high)
-        self.idle_flush_print_time = 0.
+        self.idle_flush_print_time = 0.0
         self.print_stall = 0
         self.drip_completion = None
         # Kinematic step generation scan window time tracking
         self.kin_flush_delay = SDS_CHECK_TIME
         self.kin_flush_times = []
-        self.force_flush_time = self.last_kin_flush_time \
-                              = self.last_kin_move_time = 0.
+        self.force_flush_time = self.last_kin_flush_time = (
+            self.last_kin_move_time
+        ) = 0.0
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
