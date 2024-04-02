@@ -196,12 +196,12 @@ toolhead_unload_length:
 #   can be used to initiate toolchanges with Trad Rack. If set to
 #   False, the TR_LOAD_TOOLHEAD command can still be used as a
 #   substitute to initiate toolchanges. The default is True.
-#save_active_lane: False
+#save_active_lane: True
 #   Whether to save the active lane to disk whenever it is set using
 #   save_variables. If set to True, the TR_LOCATE_SELECTOR gcode
 #   command will infer the active lane if the selector filament sensor
 #   is triggered and an active lane was saved previously.
-#   The default is False.
+#   The default is True.
 #log_bowden_lengths: False
 #   Whether to log bowden load length data and bowden unload length
 #   data (to ~/bowden_load_lengths.csv and ~/bowden_unload_lengths.csv

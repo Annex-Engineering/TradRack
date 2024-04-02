@@ -212,7 +212,7 @@ class TradRack:
         register_toolchange_commands = config.getboolean(
             "register_toolchange_commands", default=True
         )
-        self.save_active_lane = config.getboolean("save_active_lane", False)
+        self.save_active_lane = config.getboolean("save_active_lane", True)
         self.log_bowden_lengths = config.getboolean("log_bowden_lengths", False)
 
         # other variables
