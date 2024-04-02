@@ -213,6 +213,7 @@ class TradRack:
             "register_toolchange_commands", default=True
         )
         self.save_active_lane = config.getboolean("save_active_lane", False)
+        self.log_bowden_lengths = config.getboolean("log_bowden_lengths", False)
 
         # other variables
         self.toolhead = None
@@ -1382,13 +1383,14 @@ class TradRack:
                 length
             )
             samples = self.bowden_load_length_filter.get_entry_count()
-            self._write_bowden_length_data(
-                self.bowden_load_lengths_filename,
-                length,
-                old_set_length,
-                self.bowden_load_length,
-                samples,
-            )
+            if self.log_bowden_lengths:
+                self._write_bowden_length_data(
+                    self.bowden_load_lengths_filename,
+                    length,
+                    old_set_length,
+                    self.bowden_load_length,
+                    samples,
+                )
             self._save_bowden_length("load", self.bowden_load_length, samples)
             if not (self.bowden_load_calibrated or reached_sensor_early):
                 self.bowden_load_calibrated = True
@@ -1562,13 +1564,14 @@ class TradRack:
                     self.bowden_unload_length_filter.update(length)
                 )
                 samples = self.bowden_unload_length_filter.get_entry_count()
-                self._write_bowden_length_data(
-                    self.bowden_unload_lengths_filename,
-                    length,
-                    old_set_length,
-                    self.bowden_unload_length,
-                    samples,
-                )
+                if self.log_bowden_lengths:
+                    self._write_bowden_length_data(
+                        self.bowden_unload_lengths_filename,
+                        length,
+                        old_set_length,
+                        self.bowden_unload_length,
+                        samples,
+                    )
                 self._save_bowden_length(
                     "unload", self.bowden_unload_length, samples
                 )

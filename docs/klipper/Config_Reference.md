@@ -202,6 +202,10 @@ toolhead_unload_length:
 #   command will infer the active lane if the selector filament sensor
 #   is triggered and an active lane was saved previously.
 #   The default is False.
+#log_bowden_lengths: False
+#   Whether to log bowden load length data and bowden unload length
+#   data (to ~/bowden_load_lengths.csv and ~/bowden_unload_lengths.csv
+#   respectively). The default is False.
 #pre_unload_gcode:
 #   Gcode command template that is run before the toolhead is
 #   unloaded. The default is to run no extra commands.
