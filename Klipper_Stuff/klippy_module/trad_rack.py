@@ -345,6 +345,11 @@ class TradRack:
             desc=self.cmd_TR_SET_HOTEND_LOAD_LENGTH_help,
         )
         self.gcode.register_command(
+            "TR_DISCARD_BOWDEN_LENGTHS",
+            self.cmd_TR_DISCARD_BOWDEN_LENGTHS,
+            desc=self.cmd_TR_DISCARD_BOWDEN_LENGTHS_help,
+        )
+        self.gcode.register_command(
             "TR_SYNC_TO_EXTRUDER",
             self.cmd_TR_SYNC_TO_EXTRUDER,
             desc=self.cmd_TR_SYNC_TO_EXTRUDER_help,
@@ -877,6 +882,34 @@ class TradRack:
             value = max(0.0, self.hotend_load_length + adjust)
         self.hotend_load_length = value
         gcmd.respond_info("hotend_load_length: %f" % (self.hotend_load_length))
+
+    cmd_TR_DISCARD_BOWDEN_LENGTHS_help = (
+        "Discards saved bowden lengths and reverts them to the bowden_length"
+        " config value"
+    )
+
+    def cmd_TR_DISCARD_BOWDEN_LENGTHS(self, gcmd):
+        mode = gcmd.get("MODE", "ALL").upper()
+        if mode not in ["ALL", "LOAD", "UNLOAD"]:
+            raise gcmd.error("Invalid MODE: %s" % mode)
+
+        # discard load length
+        if mode in ["ALL", "LOAD"]:
+            self.bowden_load_length = self.config_bowden_length
+            self.bowden_load_length_filter.reset()
+            self.gcode.run_script_from_command(
+                'SAVE_VARIABLE VARIABLE=%s VALUE="%s"'
+                % (self.VARS_CALIB_BOWDEN_LOAD_LENGTH, {})
+            )
+
+        # discard unload length
+        if mode in ["ALL", "UNLOAD"]:
+            self.bowden_unload_length = self.config_bowden_length
+            self.bowden_unload_length_filter.reset()
+            self.gcode.run_script_from_command(
+                'SAVE_VARIABLE VARIABLE=%s VALUE="%s"'
+                % (self.VARS_CALIB_BOWDEN_UNLOAD_LENGTH, {})
+            )
 
     cmd_TR_SYNC_TO_EXTRUDER_help = (
         "Sync Trad Rack's filament driver to the extruder"
@@ -2699,6 +2732,10 @@ class MovingAverageFilter:
         self.total += value
         self.queue.append(value)
         return self.total / len(self.queue)
+
+    def reset(self):
+        self.queue.clear()
+        self.total = 0.0
 
     def get_entry_count(self):
         return len(self.queue)

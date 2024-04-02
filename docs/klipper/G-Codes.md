@@ -25,6 +25,7 @@ contains items pertaining to Trad Rack.
   - [TR\_SERVO\_TEST](#tr_servo_test)
   - [TR\_CALIBRATE\_SELECTOR](#tr_calibrate_selector)
   - [TR\_SET\_HOTEND\_LOAD\_LENGTH](#tr_set_hotend_load_length)
+  - [TR\_DISCARD\_BOWDEN\_LENGTHS](#tr_discard_bowden_lengths)
 - [Tool mapping](#tool-mapping)
   - [TR\_ASSIGN\_LANE](#tr_assign_lane)
   - [TR\_SET\_DEFAULT\_LANE](#tr_set_default_lane)
@@ -48,9 +49,11 @@ is loaded into the module for the specified lane by prompting the user
 to insert filament, loading filament from the module into the
 selector, and retracting the filament back into the module.
 If RESET_SPEED is 1, the bowden move speed used for the
-specified LANE will be reset to `spool_pull_speed`
-(see [bowden speeds](/docs/Tuning.md#bowden-speeds) for details).
-If not specified, RESET_SPEED defaults to 1.
+specified LANE will be reset to spool_pull_speed from the
+[trad_rack config section](Config_Reference.md#trad_rack)
+(see [bowden speeds](/docs/Tuning.md#bowden-speeds) for details on how
+the bowden speed settings are used). If not specified, RESET_SPEED
+defaults to 1.
 
 ### TR_LOAD_TOOLHEAD
 `TR_LOAD_TOOLHEAD LANE=<lane index>|TOOL=<tool index>
@@ -95,11 +98,11 @@ to `EXACT_TEMP` before unloading/loading, regardless of any other
 temperature setting.
 
 ### TR_SERVO_DOWN
-`TR_SERVO_DOWN [FORCE=<0|1>]`: Moves the servo to bring the drive gear down. The
-selector must be moved to a valid lane before using this command, unless FORCE
-is 1. If not specified, FORCE defaults to 0. The FORCE parameter is unsafe for
-normal use and should only be used when the servo is not attached to Trad Rack's
-carriage.
+`TR_SERVO_DOWN [FORCE=<0|1>]`: Moves the servo to bring the drive gear
+down. The selector must be moved to a valid lane before using this
+command, unless FORCE is 1. If not specified, FORCE defaults to 0. The
+FORCE parameter is unsafe for normal use and should only be used when
+the servo is not attached to Trad Rack's carriage.
 
 ### TR_SERVO_UP
 `TR_SERVO_UP`: Moves the servo to bring the drive gear up.
@@ -186,6 +189,21 @@ persist across restarts. If the VALUE parameter is used,
 hotend_load_length will be set to the value passed in. If the ADJUST
 parameter is used, the adjustment will be added to the current value
 of hotend_load_length.
+
+### TR_DISCARD_BOWDEN_LENGTHS
+`TR_DISCARD_BOWDEN_LENGTHS [MODE=[ALL|LOAD|UNLOAD]]`: Discards saved
+values for "bowden_load_length" and/or "bowden_unload_length" (see
+[bowden lengths](/docs/Tuning.md#bowden-lengths) for details on how
+these settings are used). These settings will each be reset to the
+value of `bowden_length` from the
+[trad_rack config section](Config_Reference.md#trad_rack), and empty
+dictionaries will be saved for
+[tr_calib_bowden_load_length and tr_calib_bowden_unload_length](Save_Variables.md).
+"bowden_load_length" and tr_calib_bowden_load_length will be
+affected if MODE=LOAD is specified, "bowden_unload_length" and
+tr_calib_bowden_unload_length will be affected if MODE=UNLOAD is
+specified, and all 4 will be affected if MODE=ALL is specified. If not
+specified, MODE defaults to ALL.
 
 ## Tool mapping
 
