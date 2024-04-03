@@ -113,6 +113,9 @@ class TradRack:
         self.selector_unload_length = config.getfloat(
             "selector_unload_length", above=0.0
         )
+        self.selector_unload_length_extra = config.getfloat(
+            "selector_unload_length_extra", default=0.0, minval=0.0
+        )
         self.eject_length = config.getfloat(
             "eject_length", default=30.0, above=0.0
         )
@@ -1144,7 +1147,13 @@ class TradRack:
         self._reset_fil_driver()
         self.tr_toolhead.get_last_move_time()
         pos = self.tr_toolhead.get_position()
-        pos[1] -= self.selector_unload_length
+        pos[1] -= (
+            self.selector_unload_length + self.selector_unload_length_extra
+        )
+        self.tr_toolhead.move(pos, self.selector_unload_speed)
+
+        # undo extra unload length offset
+        pos[1] += self.selector_unload_length_extra
         self.tr_toolhead.move(pos, self.selector_unload_speed)
 
         # reset filament driver position
@@ -1590,9 +1599,16 @@ class TradRack:
             pos[1] -= self.selector_unload_length + self.eject_length
             speed = self.eject_speed
         else:
-            pos[1] -= self.selector_unload_length
+            pos[1] -= (
+                self.selector_unload_length + self.selector_unload_length_extra
+            )
             speed = self.selector_unload_speed
         self.tr_toolhead.move(pos, speed)
+
+        if not eject:
+            # undo extra unload length offset
+            pos[1] += self.selector_unload_length_extra
+            self.tr_toolhead.move(pos, self.selector_unload_speed)
 
         # reset filament driver position
         self._reset_fil_driver()

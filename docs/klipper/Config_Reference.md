@@ -75,6 +75,20 @@ selector_unload_length:
 #   Length (in mm) to retract a piece of filament out of the selector
 #   and back into the lane module after the selector sensor has been
 #   triggered or untriggered. This parameter must be specified.
+#selector_unload_length_extra: 0.0
+#   Extra length (in mm) that is added to selector_unload_length when
+#   retracting a piece of filament out of the selector and back into
+#   the lane module. After the retraction, the filament is moved
+#   forward by this length as well (so this option's value has no
+#   effect on the final position of the filament). This option may be
+#   useful when using Trad Rack with a motorized spool rewinder that
+#   senses tension or compression in the filament between the spool
+#   and Trad Rack in order to determine when to rotate the spool. The
+#   extra forward movement of the filament after retracting is
+#   intended to force the rewinder's sensor to detect tension in the
+#   filament, causing rewinding to cease immediately so the filament
+#   tip is not moved out of position by excess spool movement. The
+#   default is 0.0.
 #eject_length: 10.0
 #   Length (in mm) to eject the filament into the lane module past the
 #   length defined by selector_unload_length. The filament is ejected
