@@ -113,6 +113,9 @@ class TradRack:
         self.selector_unload_length = config.getfloat(
             "selector_unload_length", above=0.0
         )
+        self.selector_unload_length_extra = config.getfloat(
+            "selector_unload_length_extra", default=0.0, minval=0.0
+        )
         self.eject_length = config.getfloat(
             "eject_length", default=30.0, above=0.0
         )
@@ -212,7 +215,8 @@ class TradRack:
         register_toolchange_commands = config.getboolean(
             "register_toolchange_commands", default=True
         )
-        self.save_active_lane = config.getboolean("save_active_lane", False)
+        self.save_active_lane = config.getboolean("save_active_lane", True)
+        self.log_bowden_lengths = config.getboolean("log_bowden_lengths", False)
 
         # other variables
         self.toolhead = None
@@ -1143,7 +1147,13 @@ class TradRack:
         self._reset_fil_driver()
         self.tr_toolhead.get_last_move_time()
         pos = self.tr_toolhead.get_position()
-        pos[1] -= self.selector_unload_length
+        pos[1] -= (
+            self.selector_unload_length + self.selector_unload_length_extra
+        )
+        self.tr_toolhead.move(pos, self.selector_unload_speed)
+
+        # undo extra unload length offset
+        pos[1] += self.selector_unload_length_extra
         self.tr_toolhead.move(pos, self.selector_unload_speed)
 
         # reset filament driver position
@@ -1382,13 +1392,14 @@ class TradRack:
                 length
             )
             samples = self.bowden_load_length_filter.get_entry_count()
-            self._write_bowden_length_data(
-                self.bowden_load_lengths_filename,
-                length,
-                old_set_length,
-                self.bowden_load_length,
-                samples,
-            )
+            if self.log_bowden_lengths:
+                self._write_bowden_length_data(
+                    self.bowden_load_lengths_filename,
+                    length,
+                    old_set_length,
+                    self.bowden_load_length,
+                    samples,
+                )
             self._save_bowden_length("load", self.bowden_load_length, samples)
             if not (self.bowden_load_calibrated or reached_sensor_early):
                 self.bowden_load_calibrated = True
@@ -1562,13 +1573,14 @@ class TradRack:
                     self.bowden_unload_length_filter.update(length)
                 )
                 samples = self.bowden_unload_length_filter.get_entry_count()
-                self._write_bowden_length_data(
-                    self.bowden_unload_lengths_filename,
-                    length,
-                    old_set_length,
-                    self.bowden_unload_length,
-                    samples,
-                )
+                if self.log_bowden_lengths:
+                    self._write_bowden_length_data(
+                        self.bowden_unload_lengths_filename,
+                        length,
+                        old_set_length,
+                        self.bowden_unload_length,
+                        samples,
+                    )
                 self._save_bowden_length(
                     "unload", self.bowden_unload_length, samples
                 )
@@ -1587,9 +1599,16 @@ class TradRack:
             pos[1] -= self.selector_unload_length + self.eject_length
             speed = self.eject_speed
         else:
-            pos[1] -= self.selector_unload_length
+            pos[1] -= (
+                self.selector_unload_length + self.selector_unload_length_extra
+            )
             speed = self.selector_unload_speed
         self.tr_toolhead.move(pos, speed)
+
+        if not eject:
+            # undo extra unload length offset
+            pos[1] += self.selector_unload_length_extra
+            self.tr_toolhead.move(pos, self.selector_unload_speed)
 
         # reset filament driver position
         self._reset_fil_driver()
