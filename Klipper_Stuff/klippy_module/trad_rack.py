@@ -8,7 +8,8 @@ import logging, math, os, time
 from collections import deque
 from extras.homing import Homing, HomingMove
 from gcode import CommandError
-import stepper, chelper, toolhead, kinematics.extruder
+from stepper import LookupMultiRail
+import chelper, toolhead, kinematics.extruder
 
 SERVO_NAME = "servo tr_servo"
 SELECTOR_STEPPER_NAME = "stepper_tr_selector"
@@ -644,10 +645,15 @@ class TradRack:
         )
         if self.servo_up_angle > self.servo_down_angle:
             raw_angle = self.servo_down_angle + cmd_angle
-            raw_to_cmd = lambda raw: raw - self.servo_down_angle
+
+            def raw_to_cmd(raw):
+                return raw - self.servo_down_angle
+
         else:
             raw_angle = self.servo_down_angle - cmd_angle
-            raw_to_cmd = lambda raw: self.servo_down_angle - raw
+
+            def raw_to_cmd(raw):
+                return self.servo_down_angle - raw
 
         # display angles
         gcmd.respond_info(
@@ -2323,8 +2329,8 @@ class TradRackKinematics:
         # Setup axis rails
         selector_stepper_section = config.getsection(SELECTOR_STEPPER_NAME)
         fil_driver_stepper_section = config.getsection(FIL_DRIVER_STEPPER_NAME)
-        selector_rail = stepper.LookupMultiRail(selector_stepper_section)
-        fil_driver_rail = stepper.LookupMultiRail(fil_driver_stepper_section)
+        selector_rail = LookupMultiRail(selector_stepper_section)
+        fil_driver_rail = LookupMultiRail(fil_driver_stepper_section)
         self.rails = [selector_rail, fil_driver_rail]
         for rail, axis in zip(self.rails, "xy"):
             rail.setup_itersolve("cartesian_stepper_alloc", axis.encode())
