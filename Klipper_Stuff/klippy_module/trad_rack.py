@@ -2214,7 +2214,10 @@ class TradRack:
 class TradRackToolHead(toolhead.ToolHead, object):
     def __init__(self, config, buffer_pull_speed, is_extruder_synced):
         self.printer = config.get_printer()
-        self.danger_options = self.printer.lookup_object("danger_options")
+        try:
+            self.danger_options = self.printer.lookup_object("danger_options")
+        except config.error:
+            pass
         self.reactor = self.printer.get_reactor()
         self.all_mcus = [
             m for n, m in self.printer.lookup_objects(module="mcu")
