@@ -239,6 +239,7 @@ class TradRack:
         self.ignore_next_unload_length = False
         self.last_heater_target = 0.0
         self.tr_next_generator = None
+        self.selector_pos_uncertain = False
 
         # resume variables
         self.resume_callbacks = {
@@ -509,6 +510,9 @@ class TradRack:
             self.printer.lookup_object("stepper_enable").motor_off()
             raise
 
+        # unmark selector position as uncertain
+        self.selector_pos_uncertain = False
+
     cmd_TR_GO_TO_LANE_help = "Move Trad Rack's selector to a filament lane"
 
     def cmd_TR_GO_TO_LANE(self, gcmd):
@@ -698,10 +702,18 @@ class TradRack:
                 "Cannot set active lane without filament in selector"
             )
 
-        # set selector position
+        # get current selector position and lane position
         print_time = self.tr_toolhead.get_last_move_time()
         pos = self.tr_toolhead.get_position()
-        pos[0] = self.lane_positions[lane]
+        lane_pos = self.lane_positions[lane]
+
+        # mark selector position as uncertain if not homed or current position
+        # doesn't match lane position
+        if (not self._is_selector_homed()) or pos[0] != lane_pos:
+            self.selector_pos_uncertain = True
+
+        # set selector position
+        pos[0] = lane_pos
         self.tr_toolhead.set_position(pos, homing_axes=(0,))
         stepper_enable = self.printer.lookup_object("stepper_enable")
         enable = stepper_enable.lookup_enable(SELECTOR_STEPPER_NAME)
@@ -1256,8 +1268,8 @@ class TradRack:
         # disable runout detection
         self.selector_sensor.set_active(False)
 
-        # unload current lane (if filament is detected)
         if not (selector_already_loaded and self.curr_lane == lane):
+            # unload current lane (if filament is detected)
             try:
                 self._unload_toolhead(gcmd)
             except:
@@ -1286,6 +1298,20 @@ class TradRack:
                     "Failed to load toolhead. Could not unload toolhead before"
                     " load"
                 )
+
+            # home if selector position is uncertain
+            if self.selector_pos_uncertain:
+                try:
+                    self.cmd_TR_HOME(
+                        self.gcode.create_gcode_command(
+                            "TR_HOME", "TR_HOME", {}
+                        )
+                    )
+                except:
+                    logging.warning(
+                        "trad_rack: Failed to home selector", exc_info=True
+                    )
+                    raise SelectorNotHomedError("Failed to home selector")
 
         # notify toolhead load started
         self.printer.send_event("trad_rack:load_started")
@@ -1795,6 +1821,12 @@ class TradRack:
     def _find_replacement_lane(self, runout_lane):
         tool = self.tool_map[runout_lane]
         pre_dead_lanes = []
+
+        # home if selector position is uncertain
+        if self.selector_pos_uncertain:
+            self.cmd_TR_HOME(
+                self.gcode.create_gcode_command("TR_HOME", "TR_HOME", {})
+            )
 
         # 1st pass - check lanes not marked as dead
         lane = (runout_lane + 1) % self.lane_count
