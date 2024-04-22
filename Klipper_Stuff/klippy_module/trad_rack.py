@@ -456,14 +456,13 @@ class TradRack:
         )
 
     def handle_runout(self, eventtime):
-        # pause
+        # send pause command
         pause_resume = self.printer.lookup_object("pause_resume")
         pause_resume.send_pause_command()
         # self.printer.get_reactor().pause(eventtime + self.pause_delay)
-        self._send_pause()
 
-        # set up resume callback
-        self._set_up_resume("runout", {})
+        # set up resume callback and run pause gcode
+        self._set_up_resume_and_pause("runout", {})
 
         # note runout
         self.runout_lane = self.active_lane
@@ -545,7 +544,8 @@ class TradRack:
                     " continue.".format(tool=str(tool))
                 )
 
-                # set up resume callback
+                # set up resume callback and pause the print
+                # (and wait for user to resume)
                 resume_kwargs = {
                     "condition": (
                         lambda t=tool: self.default_lanes[t] is not None
@@ -556,10 +556,7 @@ class TradRack:
                         " lane to tool %d, then use TR_RESUME." % tool
                     ),
                 }
-                self._set_up_resume("check condition", resume_kwargs)
-
-                # pause and wait for user to resume
-                self._send_pause()
+                self._set_up_resume_and_pause("check condition", resume_kwargs)
                 return
 
         # load toolhead
@@ -581,18 +578,18 @@ class TradRack:
                 ),
                 exc_info=True,
             )
-            # set up resume callback
-            self._set_up_resume("load toolhead", {})
 
-            # pause and wait for user to resume
-            self._send_pause()
+            # set up resume callback and pause the print
+            # (and wait for user to resume)
+            self._set_up_resume_and_pause("load toolhead", {})
         except SelectorNotHomedError:
             gcmd.respond_info(
                 "Selector not homed. Use TR_LOCATE_SELECTOR (or TR_HOME to home"
                 " the selector directly), then use TR_RESUME to continue."
             )
 
-            # set up resume callback
+            # set up resume callback and pause the print
+            # (and wait for user to resume)
             resume_kwargs = {
                 "condition": self._is_selector_homed,
                 "action": lambda g=gcmd: self.cmd_TR_LOAD_TOOLHEAD(g),
@@ -601,10 +598,7 @@ class TradRack:
                     " TR_HOME to home the selector, then use TR_RESUME."
                 ),
             }
-            self._set_up_resume("check condition", resume_kwargs)
-
-            # pause and wait for user to resume
-            self._send_pause()
+            self._set_up_resume_and_pause("check condition", resume_kwargs)
 
     cmd_TR_UNLOAD_TOOLHEAD_help = "Unload filament from the toolhead"
 
@@ -800,20 +794,6 @@ class TradRack:
                 )
                 self.ignore_next_unload_length = True
 
-                # set up resume callback
-                resume_kwargs = {
-                    "condition": (
-                        lambda: self.active_lane is not None
-                        or not self._query_selector_sensor()
-                    ),
-                    "action": self._resume_act_locate_selector,
-                    "fail_msg": (
-                        "Cannot resume. Please use either TR_SET_ACTIVE_LANE or"
-                        " TR_UNLOAD_TOOLHEAD, then use TR_RESUME."
-                    ),
-                }
-                self._set_up_resume("check condition", resume_kwargs)
-
                 # set up callback to run if user takes no action
                 if self.user_wait_time != -1:
                     gcmd.respond_info(
@@ -828,8 +808,20 @@ class TradRack:
                         self.user_wait_time,
                     )
 
-                # pause and wait for user to resume
-                self._send_pause()
+                # set up resume callback and pause the print
+                # (and wait for user to resume)
+                resume_kwargs = {
+                    "condition": (
+                        lambda: self.active_lane is not None
+                        or not self._query_selector_sensor()
+                    ),
+                    "action": self._resume_act_locate_selector,
+                    "fail_msg": (
+                        "Cannot resume. Please use either TR_SET_ACTIVE_LANE or"
+                        " TR_UNLOAD_TOOLHEAD, then use TR_RESUME."
+                    ),
+                }
+                self._set_up_resume_and_pause("check condition", resume_kwargs)
             else:
                 # (if the selector is homed, nothing needs to be done)
                 if not self._is_selector_homed():
@@ -2174,10 +2166,22 @@ class TradRack:
         return True, None
 
     # other resume helper functions
-    def _set_up_resume(self, resume_type, resume_kwargs):
+    def _set_up_resume_and_pause(self, resume_type, resume_kwargs):
+        # clear the resume stack if the print is not paused
+        # (if the stack is not already empty but the print is not paused, then
+        # the user likely resumed the print manually without using TR_RESUME, so
+        # the existing resume setup is no longer relevant)
+        pause_resume = self.printer.lookup_object("pause_resume")
+        if not pause_resume.get_status(self.reactor.monotonic())["is_paused"]:
+            self.resume_stack.clear()
+
+        # add resume callback and arguments
         self.resume_stack.append(
             (self.resume_callbacks[resume_type], resume_kwargs)
         )
+
+        # pause the print
+        self._send_pause()
 
     def _unload_toolhead_and_resume(self):
         pause_resume = self.printer.lookup_object("pause_resume")
