@@ -2042,7 +2042,7 @@ class TradRack:
         enable.motor_disable(print_time)
 
         # load filament into the selector
-        self._load_selector(lane)
+        self._load_selector(lane, user_load=True)
 
         # extend filament past the sensor
         self._reset_fil_driver()
