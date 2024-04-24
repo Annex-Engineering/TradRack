@@ -1289,7 +1289,7 @@ class TradRack:
 
         # load filament into the selector
         try:
-            self._load_selector(lane, tool=tool)
+            selected_lane = self._load_selector(lane, tool=tool)
         except:
             self._raise_servo()
             if tool is None:
@@ -1315,6 +1315,10 @@ class TradRack:
                 % lane
             )
         self.retry_tool = None
+
+        # update lane and next_lane in case the selector was loaded from a lane
+        # other than what was initially specified
+        lane = self.next_lane = selected_lane
 
         # move filament through the bowden tube
         self._reset_fil_driver()
@@ -1485,11 +1489,14 @@ class TradRack:
         except self.gcode.error:
             if tool is None:
                 raise
-            elif self._find_replacement_lane(lane) is None:
-                raise self.gcode.error(
-                    "Failed to load filament into selector from any of the"
-                    " lanes assigned to tool {}".format(tool)
-                )
+            else:
+                lane = self._find_replacement_lane(lane)
+                if lane is None:
+                    raise self.gcode.error(
+                        "Failed to load filament into selector from any of the"
+                        " lanes assigned to tool {}".format(tool)
+                    )
+        return lane
 
     def _do_load_selector(self, lane, user_load=False):
         # move selector
