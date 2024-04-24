@@ -225,7 +225,7 @@ class TradRack:
         self.active_lane = None  # lane currently loaded in the toolhead
         self.retry_lane = None  # lane to reload before resuming
         self.retry_tool = None  # tool to load a lane from before resuming
-        self.next_lane = None  # next lane to load to toolhead if resuming
+        self.next_lane = None  # next lane to load to toolhead
         self.servo_raised = None
         self.lanes_unloaded = [False] * self.lane_count
         self.bowden_load_calibrated = False
@@ -1226,7 +1226,7 @@ class TradRack:
         extruder_load_length=None,
         hotend_load_length=None,
     ):
-        # keep track of lane in case of an error
+        # keep track of lane in case of an error (and for status)
         self.next_lane = lane
 
         # check lane
@@ -1481,6 +1481,9 @@ class TradRack:
             "RESTORE_GCODE_STATE NAME=TR_TOOLCHANGE_STATE MOVE=1"
         )
 
+        # reset next lane
+        self.next_lane = None
+
         # notify toolhead load complete
         self.printer.send_event("trad_rack:load_complete")
 
@@ -1631,12 +1634,6 @@ class TradRack:
         sync=False,
         eject=False,
     ):
-        # reset active lane
-        self._set_active_lane(None)
-
-        # disable runout detection
-        self.selector_sensor.set_active(False)
-
         selector_sensor_state = self._query_selector_sensor()
         toolhead_sensor_state = self._query_toolhead_sensor()
 
@@ -1665,6 +1662,9 @@ class TradRack:
                 "Selector must be moved to a lane before unloading"
             )
 
+        # disable runout detection
+        self.selector_sensor.set_active(False)
+
         # notify toolhead unload started
         self.printer.send_event("trad_rack:unload_started")
 
@@ -1684,6 +1684,9 @@ class TradRack:
         finally:
             # unsync filament driver from extruder
             self.extruder_sync_manager.unsync()
+
+            # reset active lane
+            self._set_active_lane(None)
 
         # lower servo
         self._lower_servo(True)
@@ -2207,6 +2210,8 @@ class TradRack:
         return {
             "curr_lane": self.curr_lane,
             "active_lane": self.active_lane,
+            "next_lane": self.next_lane,
+            "tool_map": self.tool_map,
             "selector_homed": self._is_selector_homed(),
         }
 
