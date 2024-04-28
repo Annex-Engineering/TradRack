@@ -1965,7 +1965,8 @@ class TradRack:
             )
 
     def _calibrate_selector(self, gcmd):
-        extra_travel = 1.0
+        extra_travel_base = 1.0
+        extra_travel_per_lane = 0.3
 
         # prompt user to set the selector at lane 0
         self._prompt_selector_calibration(0, gcmd)
@@ -1977,7 +1978,7 @@ class TradRack:
             .get_homing_info()
             .position_endstop
         )
-        max_travel = self.lane_positions[0] - pos_endstop + extra_travel
+        max_travel = self.lane_positions[0] - pos_endstop + extra_travel_base
         endstop_to_lane0 = self._measure_selector_to_endstop(max_travel, gcmd)
 
         # prompt user to set the selector at the last lane
@@ -1989,7 +1990,8 @@ class TradRack:
             self.lane_positions[self.lane_count - 1]
             - self.lane_positions[0]
             + endstop_to_lane0
-            + extra_travel
+            + extra_travel_base
+            + (self.lane_count - 1) * extra_travel_per_lane
         )
         endstop_to_last_lane = self._measure_selector_to_endstop(
             max_travel, gcmd
