@@ -75,6 +75,20 @@ selector_unload_length:
 #   Length (in mm) to retract a piece of filament out of the selector
 #   and back into the lane module after the selector sensor has been
 #   triggered or untriggered. This parameter must be specified.
+#selector_unload_length_extra: 0.0
+#   Extra length (in mm) that is added to selector_unload_length when
+#   retracting a piece of filament out of the selector and back into
+#   the lane module. After the retraction, the filament is moved
+#   forward by this length as well (so this option's value has no
+#   effect on the final position of the filament). This option may be
+#   useful when using Trad Rack with a motorized spool rewinder that
+#   senses tension or compression in the filament between the spool
+#   and Trad Rack in order to determine when to rotate the spool. The
+#   extra forward movement of the filament after retracting is
+#   intended to force the rewinder's sensor to detect tension in the
+#   filament, causing rewinding to cease immediately so the filament
+#   tip is not moved out of position by excess spool movement. The
+#   default is 0.0.
 #eject_length: 10.0
 #   Length (in mm) to eject the filament into the lane module past the
 #   length defined by selector_unload_length. The filament is ejected
@@ -196,12 +210,16 @@ toolhead_unload_length:
 #   can be used to initiate toolchanges with Trad Rack. If set to
 #   False, the TR_LOAD_TOOLHEAD command can still be used as a
 #   substitute to initiate toolchanges. The default is True.
-#save_active_lane: False
+#save_active_lane: True
 #   Whether to save the active lane to disk whenever it is set using
 #   save_variables. If set to True, the TR_LOCATE_SELECTOR gcode
 #   command will infer the active lane if the selector filament sensor
 #   is triggered and an active lane was saved previously.
-#   The default is False.
+#   The default is True.
+#log_bowden_lengths: False
+#   Whether to log bowden load length data and bowden unload length
+#   data (to ~/bowden_load_lengths.csv and ~/bowden_unload_lengths.csv
+#   respectively). The default is False.
 #pre_unload_gcode:
 #   Gcode command template that is run before the toolhead is
 #   unloaded. The default is to run no extra commands.
