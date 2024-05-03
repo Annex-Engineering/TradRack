@@ -1394,7 +1394,10 @@ class TradRack:
         else:
             speed = self.spool_pull_speed
         base_length, reached_sensor_early = self._move_fil_toward_endstop(
-            self.toolhead_fil_endstops, bowden_length, speed
+            self.toolhead_fil_endstops,
+            bowden_length,
+            speed,
+            use_endstops=self.load_with_toolhead_sensor,
         )
 
         # sync extruder to filament driver
@@ -1812,27 +1815,37 @@ class TradRack:
         # notify toolhead unload complete
         self.printer.send_event("trad_rack:unload_complete")
 
-    def _move_fil_toward_endstop(self, endstops, dist, speed, triggered=True):
+    def _move_fil_toward_endstop(
+        self, endstops, dist, speed, triggered=True, use_endstops=True
+    ):
         self.tr_toolhead.get_last_move_time()
         pos = self.tr_toolhead.get_position()
         move_start = pos[1]
         pos[1] += dist
-        hmove = HomingMove(self.printer, endstops, self.tr_toolhead)
-        reached_sensor_early = True
-        try:
-            # move and check for early sensor trigger
-            trigpos = hmove.homing_move(
-                pos, speed, probe_pos=True, triggered=triggered
-            )
 
-            # if sensor triggered early, retract before next homing move
-            if dist > 0:
-                pos[1] = trigpos[1] - self.fil_homing_retract_dist
-            else:
-                pos[1] = trigpos[1] + self.fil_homing_retract_dist
-        except self.printer.command_error:
+        # if there are endstops, monitor them while moving
+        if endstops and use_endstops:
+            hmove = HomingMove(self.printer, endstops, self.tr_toolhead)
+            reached_sensor_early = True
+            try:
+                # move and check for early sensor trigger
+                trigpos = hmove.homing_move(
+                    pos, speed, probe_pos=True, triggered=triggered
+                )
+
+                # if sensor triggered early, retract before next homing move
+                if dist > 0:
+                    pos[1] = trigpos[1] - self.fil_homing_retract_dist
+                else:
+                    pos[1] = trigpos[1] + self.fil_homing_retract_dist
+            except self.printer.command_error:
+                reached_sensor_early = False
+        else:
             reached_sensor_early = False
+
+        # move to final position
         self.tr_toolhead.move(pos, speed)
+
         length_traveled = abs(pos[1] - move_start)
         return length_traveled, reached_sensor_early
 
