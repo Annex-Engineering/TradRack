@@ -239,6 +239,7 @@ class TradRack:
         self.ignore_next_unload_length = False
         self.last_heater_target = 0.0
         self.tr_next_generator = None
+        self.variables = None
 
         # resume variables
         self.resume_callbacks = {
