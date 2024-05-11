@@ -488,7 +488,9 @@ class TradRack:
     def cmd_TR_HOME(self, gcmd):
         # check for filament in the selector
         if self._query_selector_sensor():
-            raise self.gcode.error("Cannot home with filament in selector")
+            raise self.printer.command_error(
+                "Cannot home with filament in selector"
+            )
 
         # reset current lane
         self.curr_lane = None
@@ -616,7 +618,7 @@ class TradRack:
         if not gcmd.get_int("FORCE", 0):
             # check that the selector is at a lane
             if not self._can_lower_servo():
-                raise self.gcode.error(
+                raise self.printer.command_error(
                     "Selector must be moved to a lane before lowering the servo"
                 )
 
@@ -658,7 +660,7 @@ class TradRack:
         # check raw angle
         max_angle = self.servo.get_max_angle()
         if raw_angle > max_angle:
-            raise self.gcode.error(
+            raise self.printer.command_error(
                 "Raw angle is above the maximum of %.3f (corresponding to a"
                 " commanded angle of %.3f). If the servo is not rotating far"
                 " enough, try increasing maximum_pulse_width in the [%s]"
@@ -666,7 +668,7 @@ class TradRack:
                 % (max_angle, raw_to_cmd(max_angle), SERVO_NAME)
             )
         elif raw_angle < 0.0:
-            raise self.gcode.error(
+            raise self.printer.command_error(
                 "Raw angle is below the minimum of 0.0 (corresponding to a"
                 " commanded angle of %.3f). If the servo is not rotating far"
                 " enough, try decreasing minimum_pulse_width in the [%s]"
@@ -689,7 +691,7 @@ class TradRack:
 
         # check for filament in the selector
         if not self._query_selector_sensor():
-            raise self.gcode.error(
+            raise self.printer.command_error(
                 "Cannot set active lane without filament in selector"
             )
 
@@ -748,7 +750,7 @@ class TradRack:
                 retry_resume, resume_msg = resume_callback(
                     gcmd, **resume_kwargs
                 )
-            except:
+            except self.printer.command_error:
                 # if the resume callback raised an error, add the resume back to
                 # the stack
                 self.resume_stack.append((resume_callback, resume_kwargs))
@@ -781,7 +783,7 @@ class TradRack:
                 try:
                     self._check_lane_valid(saved_active_lane)
                     self.active_lane = saved_active_lane
-                except self.gcode.error:
+                except self.printer.command_error:
                     pass
 
             if self.active_lane is None:
@@ -870,7 +872,7 @@ class TradRack:
                 if not isinstance(e, StopIteration):
                     raise
         else:
-            raise self.gcode.error("TR_NEXT command is inactive")
+            raise self.printer.command_error("TR_NEXT command is inactive")
 
     cmd_TR_SET_HOTEND_LOAD_LENGTH_help = (
         "Sets hotend_load_length. Does not persist across restarts."
@@ -881,7 +883,9 @@ class TradRack:
         if value is None:
             adjust = gcmd.get_float("ADJUST", None)
             if adjust is None:
-                raise self.gcode.error("VALUE or ADJUST must be specified")
+                raise self.printer.command_error(
+                    "VALUE or ADJUST must be specified"
+                )
             value = max(0.0, self.hotend_load_length + adjust)
         self.hotend_load_length = value
         gcmd.respond_info("hotend_load_length: %f" % (self.hotend_load_length))
@@ -1066,13 +1070,13 @@ class TradRack:
 
     def _check_lane_valid(self, lane):
         if lane is None or lane > self.lane_count - 1 or lane < 0:
-            raise self.gcode.error("Invalid LANE")
+            raise self.printer.command_error("Invalid LANE")
 
     def _check_tool_valid(self, tool):
         try:
             self._check_lane_valid(tool)
-        except:
-            raise self.gcode.error("Invalid TOOL")
+        except self.printer.command_error:
+            raise self.printer.command_error("Invalid TOOL")
 
     def _check_selector_homed(self):
         if not self._is_selector_homed():
@@ -1106,7 +1110,7 @@ class TradRack:
 
         # check for filament in the selector
         if self._query_selector_sensor():
-            raise self.gcode.error(
+            raise self.printer.command_error(
                 "Cannot change lane with filament in selector"
             )
 
@@ -1175,7 +1179,7 @@ class TradRack:
             max(min_temp, exact_temp, target_temp, self.last_heater_target)
             < min_extrude_temp
         ):
-            raise self.gcode.error(
+            raise self.printer.command_error(
                 "Extruder temperature must be set above min_extrude_temp"
             )
 
@@ -1253,7 +1257,7 @@ class TradRack:
         if not (selector_already_loaded and self.curr_lane == lane):
             try:
                 self._unload_toolhead(gcmd)
-            except:
+            except self.printer.command_error:
                 self._raise_servo()
                 if self.curr_lane is None:
                     gcmd.respond_info(
@@ -1291,7 +1295,7 @@ class TradRack:
         # load filament into the selector
         try:
             selected_lane = self._load_selector(lane, tool=tool)
-        except:
+        except self.printer.command_error:
             self._raise_servo()
             if tool is None:
                 gcmd.respond_info(
@@ -1363,7 +1367,7 @@ class TradRack:
                 trigpos = hmove.homing_move(
                     pos, self.toolhead_sense_speed, probe_pos=True
                 )
-            except:
+            except self.printer.command_error:
                 self._raise_servo()
                 self.extruder_sync_manager.unsync()
                 gcmd.respond_info(
@@ -1487,7 +1491,7 @@ class TradRack:
     def _load_selector(self, lane, tool=None, user_load=False):
         try:
             self._do_load_selector(lane, user_load=user_load)
-        except self.gcode.error:
+        except self.printer.command_error:
             if tool is None:
                 raise
             else:
@@ -1495,7 +1499,7 @@ class TradRack:
                     lane, check_runout_lane=False
                 )
                 if lane is None:
-                    raise self.gcode.error(
+                    raise self.printer.command_error(
                         "Failed to load filament into selector from any of the"
                         " lanes assigned to tool {}".format(tool)
                     )
@@ -1520,12 +1524,12 @@ class TradRack:
         pos[1] += self.fil_homing_lengths[length_key]
         try:
             hmove.homing_move(pos, self.selector_sense_speed)
-        except:
+        except self.printer.command_error:
             self._raise_servo()
             logging.warning(
                 "trad_rack: Selector homing move failed", exc_info=True
             )
-            raise self.gcode.error(
+            raise self.printer.command_error(
                 "Failed to load filament into selector. No trigger on selector"
                 " sensor after full movement"
             )
@@ -1561,12 +1565,12 @@ class TradRack:
                     probe_pos=True,
                     triggered=False,
                 )
-            except:
+            except self.printer.command_error:
                 self._raise_servo()
                 logging.warning(
                     "trad_rack: Selector homing move failed", exc_info=True
                 )
-                raise self.gcode.error(
+                raise self.printer.command_error(
                     "Failed to unload filament from selector. Selector sensor"
                     " still triggered after full movement"
                 )
@@ -1660,7 +1664,7 @@ class TradRack:
 
         # check that the selector is at a lane
         if not self._can_lower_servo():
-            raise self.gcode.error(
+            raise self.printer.command_error(
                 "Selector must be moved to a lane before unloading"
             )
 
@@ -1708,14 +1712,14 @@ class TradRack:
                 hmove.homing_move(
                     pos, self.toolhead_sense_speed, triggered=False
                 )
-            except:
+            except self.printer.command_error:
                 self._raise_servo()
                 self.extruder_sync_manager.unsync()
                 logging.warning(
                     "trad_rack: Toolhead sensor homing move failed",
                     exc_info=True,
                 )
-                raise self.gcode.error(
+                raise self.printer.command_error(
                     "Failed to unload toolhead. Toolhead sensor still triggered"
                     " after full movement"
                 )
@@ -1814,7 +1818,7 @@ class TradRack:
                         self._load_selector(lane)
                         self.default_lanes[tool] = lane
                         return lane
-                    except:
+                    except self.printer.command_error:
                         self.lanes_dead[lane] = True
             if lane == runout_lane:
                 break
@@ -1827,7 +1831,7 @@ class TradRack:
                 self.lanes_dead[lane] = False
                 self.default_lanes[tool] = lane
                 return lane
-            except:
+            except self.printer.command_error:
                 pass
         return None
 
@@ -1879,7 +1883,7 @@ class TradRack:
                     gcmd, force_unload=True, sync=True, eject=True
                 )
                 check_runout_lane = False
-            except:
+            except self.printer.command_error:
                 self._raise_servo()
                 gcmd.respond_info(
                     "Failed to unload. Please pull filament {} out of the"
@@ -2144,7 +2148,7 @@ class TradRack:
         if self.retry_tool is not None:
             replacement_lane = self._find_replacement_lane(self.retry_lane)
             if replacement_lane is None:
-                raise self.gcode.error(
+                raise self.printer.command_error(
                     "Failed to load filament into selector from any of the"
                     " lanes assigned to tool {}".format(self.retry_tool)
                 )
