@@ -226,6 +226,7 @@ class TradRack:
         self.retry_lane = None  # lane to reload before resuming
         self.retry_tool = None  # tool to load a lane from before resuming
         self.next_lane = None  # next lane to load to toolhead
+        self.next_tool = None  # next tool to load to toolhead
         self.servo_raised = None
         self.lanes_unloaded = [False] * self.lane_count
         self.bowden_load_calibrated = False
@@ -1223,6 +1224,9 @@ class TradRack:
         # keep track of lane in case of an error (and for status)
         self.next_lane = lane
 
+        # keep track of tool for status
+        self.next_tool = tool
+
         # check lane
         self._check_lane_valid(lane)
         if lane == self.active_lane:
@@ -1479,8 +1483,9 @@ class TradRack:
             "RESTORE_GCODE_STATE NAME=TR_TOOLCHANGE_STATE MOVE=1"
         )
 
-        # reset next lane
+        # reset next lane and tool
         self.next_lane = None
+        self.next_tool = None
 
         # notify toolhead load complete
         self.printer.send_event("trad_rack:load_complete")
@@ -2227,6 +2232,7 @@ class TradRack:
             "curr_lane": self.curr_lane,
             "active_lane": self.active_lane,
             "next_lane": self.next_lane,
+            "next_tool": self.next_tool,
             "tool_map": self.tool_map,
             "selector_homed": self._is_selector_homed(),
         }
