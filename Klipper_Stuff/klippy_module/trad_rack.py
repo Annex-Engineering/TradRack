@@ -2166,27 +2166,28 @@ class TradRack:
 
     # resume callbacks
     def _resume_load_toolhead(self):
-        # load any of the tool's assigned lanes to selector
-        selector_already_loaded = False
-        if self.retry_tool is not None:
-            replacement_lane = self._find_replacement_lane(self.retry_lane)
-            if replacement_lane is None:
-                raise self.printer.command_error(
-                    "Failed to load filament into selector from any of the"
-                    " lanes assigned to tool {}".format(self.retry_tool)
-                )
-            self.next_lane = replacement_lane
-            selector_already_loaded = True
+        if not self._is_next_toolchange_done():
+            # load any of the tool's assigned lanes to selector
+            selector_already_loaded = False
+            if self.retry_tool is not None:
+                replacement_lane = self._find_replacement_lane(self.retry_lane)
+                if replacement_lane is None:
+                    raise self.printer.command_error(
+                        "Failed to load filament into selector from any of the"
+                        " lanes assigned to tool {}".format(self.retry_tool)
+                    )
+                self.next_lane = replacement_lane
+                selector_already_loaded = True
 
-        # retry loading lane
-        elif self.retry_lane is not None:
-            self._load_lane(self.retry_lane, user_load=True)
+            # retry loading lane
+            elif self.retry_lane is not None:
+                self._load_lane(self.retry_lane, user_load=True)
 
-        # load next filament into toolhead
-        self._load_toolhead(
-            self.next_lane,
-            selector_already_loaded=selector_already_loaded,
-        )
+            # load next filament into toolhead
+            self._load_toolhead(
+                self.next_lane,
+                selector_already_loaded=selector_already_loaded,
+            )
 
         return False, "Toolhead loaded successfully. Resuming print"
 
