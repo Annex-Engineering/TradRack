@@ -707,6 +707,11 @@ class TradRack:
         self.curr_lane = lane
         self._set_active_lane(lane)
 
+        # reset next lane and tool if there is no longer a pending toolchange
+        if self._is_next_toolchange_done():
+            self.next_lane = None
+            self.next_tool = None
+
         # restore extruder sync
         self._restore_extruder_sync()
 
@@ -1083,6 +1088,28 @@ class TradRack:
         return (
             self._is_selector_homed() and self.curr_lane is not None
         ) or self._query_selector_sensor()
+
+    def _is_next_toolchange_done(self):
+        # return True if there is no pending toolchange
+        if self.next_lane is None:
+            return True
+
+        # check if an active lane is set
+        if self.active_lane is None:
+            return False
+
+        # check if active lane matches next lane
+        if self.active_lane == self.next_lane:
+            return True
+
+        # check if active lane is assigned to next tool
+        if (
+            self.next_tool is not None
+            and self.tool_map[self.active_lane] == self.next_tool
+        ):
+            return True
+
+        return False
 
     def _reset_fil_driver(self):
         self.extruder_sync_manager.reset_fil_driver()
