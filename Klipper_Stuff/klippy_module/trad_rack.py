@@ -239,6 +239,7 @@ class TradRack:
         self.ignore_next_unload_length = False
         self.last_heater_target = 0.0
         self.tr_next_generator = None
+        self.variables = None
 
         # resume variables
         self.resume_callbacks = {
@@ -1179,11 +1180,11 @@ class TradRack:
             )
 
         # set temp and wait if below acceptable temp
-        min_temp = max(min_temp, min_extrude_temp)
-        if exact_temp or smoothed_temp < min_temp:
+        min_usable_temp = max(min_temp, min_extrude_temp)
+        if exact_temp or smoothed_temp < min_usable_temp:
             if exact_temp:
                 temp = save_temp = exact_temp
-            elif target_temp > min_temp:
+            elif target_temp > min_usable_temp:
                 temp = save_temp = target_temp
             else:
                 temp = max(min_temp, self.last_heater_target)
@@ -1490,7 +1491,9 @@ class TradRack:
             if tool is None:
                 raise
             else:
-                lane = self._find_replacement_lane(lane)
+                lane = self._find_replacement_lane(
+                    lane, check_runout_lane=False
+                )
                 if lane is None:
                     raise self.gcode.error(
                         "Failed to load filament into selector from any of the"
@@ -1794,13 +1797,15 @@ class TradRack:
         self.tool_map = list(range(self.lane_count))
         self.default_lanes = list(range(self.lane_count))
 
-    def _find_replacement_lane(self, runout_lane):
+    def _find_replacement_lane(self, runout_lane, check_runout_lane=True):
         tool = self.tool_map[runout_lane]
         pre_dead_lanes = []
 
         # 1st pass - check lanes not marked as dead
         lane = (runout_lane + 1) % self.lane_count
         while True:
+            if lane == runout_lane and not check_runout_lane:
+                break
             if self.tool_map[lane] == tool:
                 if self.lanes_dead[lane]:
                     pre_dead_lanes.append(lane)
@@ -1865,12 +1870,15 @@ class TradRack:
         return lanes
 
     def _runout_replace_filament(self, gcmd):
+        check_runout_lane = True
+
         # unload
         if self.runout_steps_done < 1:
             try:
                 self._unload_toolhead(
                     gcmd, force_unload=True, sync=True, eject=True
                 )
+                check_runout_lane = False
             except:
                 self._raise_servo()
                 gcmd.respond_info(
@@ -1887,7 +1895,9 @@ class TradRack:
         # find a new lane to use
         selector_already_loaded = False
         if self.runout_steps_done < 2:
-            lane = self._find_replacement_lane(self.runout_lane)
+            lane = self._find_replacement_lane(
+                self.runout_lane, check_runout_lane=check_runout_lane
+            )
             if lane is None:
                 runout_tool = self.tool_map[self.runout_lane]
                 assigned_lanes = self._get_assigned_lanes(runout_tool)
@@ -1956,7 +1966,8 @@ class TradRack:
             )
 
     def _calibrate_selector(self, gcmd):
-        extra_travel = 1.0
+        extra_travel_base = 1.0
+        extra_travel_per_lane = 0.3
 
         # prompt user to set the selector at lane 0
         self._prompt_selector_calibration(0, gcmd)
@@ -1968,7 +1979,7 @@ class TradRack:
             .get_homing_info()
             .position_endstop
         )
-        max_travel = self.lane_positions[0] - pos_endstop + extra_travel
+        max_travel = self.lane_positions[0] - pos_endstop + extra_travel_base
         endstop_to_lane0 = self._measure_selector_to_endstop(max_travel, gcmd)
 
         # prompt user to set the selector at the last lane
@@ -1980,7 +1991,8 @@ class TradRack:
             self.lane_positions[self.lane_count - 1]
             - self.lane_positions[0]
             + endstop_to_lane0
-            + extra_travel
+            + extra_travel_base
+            + (self.lane_count - 1) * extra_travel_per_lane
         )
         endstop_to_last_lane = self._measure_selector_to_endstop(
             max_travel, gcmd
