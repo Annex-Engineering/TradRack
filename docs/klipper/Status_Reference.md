@@ -9,6 +9,11 @@ but only contains items pertaining to Trad Rack.
 The following information is available in the `trad_rack` object:
 - `curr_lane`: The lane the selector is currently positioned at.
 - `active_lane`: The lane currently loaded in the toolhead.
+- `next_lane`: The next lane to load to the toolhead if a toolchange
+  is in progress.
+- `tool_map`: An array of integers listing the assigned tool for each
+  lane. The tool number for a specified lane can be accessed with
+  `tool_map[<lane index>]`.
 - `selector_homed`: Whether or not the selector axis is homed.
 
 ## save_variables
