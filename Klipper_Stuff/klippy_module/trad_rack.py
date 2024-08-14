@@ -334,12 +334,16 @@ class TradRack:
         self.resume_macro = gcode_macro.load_template(
             config, "resume_gcode", "RESUME"
         )
-        try:
+
+        cut_override = config.get(
+            "cut_override_gcode", default=None, note_valid=False
+        )
+        if cut_override is None:
+            self.cut_override_macro = None
+        else:
             self.cut_override_macro = gcode_macro.load_tempate(
                 config, "cut_override_gcode"
             )
-        except self.printer.config_error:
-            self.cut_override_macro = None
 
         # register gcode commands
         self.gcode = self.printer.lookup_object("gcode")
