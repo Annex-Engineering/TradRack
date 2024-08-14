@@ -334,6 +334,12 @@ class TradRack:
         self.resume_macro = gcode_macro.load_template(
             config, "resume_gcode", "RESUME"
         )
+        try:
+            self.cut_override_macro = gcode_macro.load_tempate(
+                config, "cut_override_gcode"
+            )
+        except self.printer.config_error:
+            self.cut_override_macro = None
 
         # register gcode commands
         self.gcode = self.printer.lookup_object("gcode")
@@ -1920,13 +1926,21 @@ class TradRack:
         pos[1] -= self.cutter_retract_length
         self.tr_toolhead.move(pos, self.cutter_retract_speed)
 
-        # move servo to cut
-        self.tr_toolhead.wait_moves()
-        self.cutter_servo.set_servo(angle=self.cutter_servo_cut_angle)
-        self.tr_toolhead.dwell(self.cutter_servo_wait)
+        # perform default cutting behavior (if not overridden)
+        if self.cut_override_macro is None:
+            # move servo to cut
+            self.tr_toolhead.wait_moves()
+            self.cutter_servo.set_servo(angle=self.cutter_servo_cut_angle)
+            self.tr_toolhead.dwell(self.cutter_servo_wait)
 
-        # initiate servo move back to reset position
-        self.cutter_servo.set_servo(angle=self.cutter_servo_reset_angle)
+            # initiate servo move back to reset position
+            self.cutter_servo.set_servo(angle=self.cutter_servo_reset_angle)
+
+        # else run cut override custom gcode
+        else:
+            self.cut_override_macro.run_gcode_from_command()
+            self.toolhead.wait_moves()
+            self.tr_toolhead.wait_moves()
 
     def _send_pause(self):
         pause_resume = self.printer.lookup_object("pause_resume")
