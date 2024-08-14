@@ -1940,6 +1940,8 @@ class TradRack:
 
         # else run cut override custom gcode
         else:
+            self.toolhead.wait_moves()
+            self.tr_toolhead.wait_moves()
             self.cut_override_macro.run_gcode_from_command()
             self.toolhead.wait_moves()
             self.tr_toolhead.wait_moves()
