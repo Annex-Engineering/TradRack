@@ -335,13 +335,11 @@ class TradRack:
             config, "resume_gcode", "RESUME"
         )
 
-        cut_override = config.get(
-            "cut_override_gcode", default=None, note_valid=False
-        )
+        cut_override = config.get("cut_override_gcode", default=None)
         if cut_override is None:
             self.cut_override_macro = None
         else:
-            self.cut_override_macro = gcode_macro.load_tempate(
+            self.cut_override_macro = gcode_macro.load_template(
                 config, "cut_override_gcode"
             )
 
