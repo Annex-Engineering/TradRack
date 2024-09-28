@@ -1157,17 +1157,6 @@ class TradRack:
         if reset_speed:
             self.lanes_unloaded[lane] = False
 
-        # move selector
-        self._go_to_lane(lane)
-
-        # lower servo and turn the drive gear until filament is detected
-        self._lower_servo()
-        self.tr_toolhead.wait_moves()
-        if user_load:
-            self.gcode.respond_info(
-                "Please insert filament in lane %d" % (lane)
-            )
-
         # load filament into the selector
         self._load_selector(lane, user_load=user_load)
 
@@ -1538,8 +1527,17 @@ class TradRack:
         # move selector
         self._go_to_lane(lane)
 
-        # lower servo and turn the drive gear until filament is detected
+        # lower servo
         self._lower_servo()
+        self.tr_toolhead.wait_moves()
+
+        # prompt user to insert filament
+        if user_load:
+            self.gcode.respond_info(
+                "Please insert filament in lane %d" % (lane)
+            )
+
+        # turn the drive gear until filament is detected
         self._reset_fil_driver()
         self.tr_toolhead.get_last_move_time()
         pos = self.tr_toolhead.get_position()
@@ -2076,11 +2074,6 @@ class TradRack:
             )
         self._go_to_lane(lane)
 
-        # lower servo and turn the drive gear until filament is detected
-        self._lower_servo()
-        self.tr_toolhead.wait_moves()
-        self.gcode.respond_info("Please insert filament in lane %d" % (lane))
-
         # disable selector motor
         print_time = self.tr_toolhead.get_last_move_time()
         stepper_enable = self.printer.lookup_object("stepper_enable")
@@ -2167,14 +2160,21 @@ class TradRack:
     # resume callbacks
     def _resume_load_toolhead(self):
         if not self._is_next_toolchange_done():
+            selector_already_loaded = False
+
             # retry loading lane
             if self.retry_lane is not None:
-                self._load_lane(self.retry_lane, user_load=True)
+                if self.retry_lane == self.next_lane:
+                    self._load_selector(self.retry_lane, user_load=True)
+                    selector_already_loaded = True
+                else:
+                    self._load_lane(self.retry_lane, user_load=True)
 
             # load next filament into toolhead
             self._load_toolhead(
                 self.next_lane,
                 tool=self.next_tool,
+                selector_already_loaded=selector_already_loaded,
             )
 
         return False, "Toolhead loaded successfully. Resuming print"
