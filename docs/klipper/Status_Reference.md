@@ -12,7 +12,7 @@ The following information is available in the `trad_rack` object:
 - `next_lane`: The next lane to load to the toolhead if a toolchange
   is in progress.
 - `next_tool`: The next tool to load to the toolhead if a toolchange
-  is in progres (if a tool number was specified for the toolchange).
+  is in progress (if a tool number was specified for the toolchange).
 - `tool_map`: An array of integers listing the assigned tool for each
   lane. The tool number for a specified lane can be accessed with
   `tool_map[<lane index>]`.
