@@ -224,7 +224,6 @@ class TradRack:
         self.curr_lane = None  # which lane the selector is positioned at
         self.active_lane = None  # lane currently loaded in the toolhead
         self.retry_lane = None  # lane to reload before resuming
-        self.retry_tool = None  # tool to load a lane from before resuming
         self.next_lane = None  # next lane to load to toolhead
         self.next_tool = None  # next tool to load to toolhead
         self.servo_raised = None
@@ -1248,6 +1247,9 @@ class TradRack:
         extruder_load_length=None,
         hotend_load_length=None,
     ):
+        # reset retry_lane
+        self.retry_lane = None
+
         # keep track of lane in case of an error (and for status)
         self.next_lane = lane
 
@@ -1330,6 +1332,7 @@ class TradRack:
                     "Failed to load selector from lane {lane}. Use TR_RESUME to"
                     " reload lane {lane} and retry.".format(lane=str(lane))
                 )
+                self.retry_lane = lane
             else:
                 assigned_lanes = self._get_assigned_lanes(tool)
                 self.gcode.respond_info(
@@ -1340,14 +1343,11 @@ class TradRack:
                     " TR_ASSIGN_LANE LANE=&lt;lane index&gt TOOL={tool}"
                     " beforehand.)".format(tool=tool, lanes=assigned_lanes)
                 )
-            self.retry_lane = lane
-            self.retry_tool = tool
             logging.warning("trad_rack: Failed to load selector", exc_info=True)
             raise TradRackLoadError(
                 "Failed to load toolhead. Could not load selector from lane %d"
                 % lane
             )
-        self.retry_tool = None
 
         # update lane and next_lane in case the selector was loaded from a lane
         # other than what was initially specified
@@ -2167,26 +2167,14 @@ class TradRack:
     # resume callbacks
     def _resume_load_toolhead(self):
         if not self._is_next_toolchange_done():
-            # load any of the tool's assigned lanes to selector
-            selector_already_loaded = False
-            if self.retry_tool is not None:
-                replacement_lane = self._find_replacement_lane(self.retry_lane)
-                if replacement_lane is None:
-                    raise self.printer.command_error(
-                        "Failed to load filament into selector from any of the"
-                        " lanes assigned to tool {}".format(self.retry_tool)
-                    )
-                self.next_lane = replacement_lane
-                selector_already_loaded = True
-
             # retry loading lane
-            elif self.retry_lane is not None:
+            if self.retry_lane is not None:
                 self._load_lane(self.retry_lane, user_load=True)
 
             # load next filament into toolhead
             self._load_toolhead(
                 self.next_lane,
-                selector_already_loaded=selector_already_loaded,
+                tool=self.next_tool,
             )
 
         return False, "Toolhead loaded successfully. Resuming print"
