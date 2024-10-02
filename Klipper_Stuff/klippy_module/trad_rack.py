@@ -1198,11 +1198,11 @@ class TradRack:
             )
 
         # set temp and wait if below acceptable temp
-        min_temp = max(min_temp, min_extrude_temp)
-        if exact_temp or smoothed_temp < min_temp:
+        min_usable_temp = max(min_temp, min_extrude_temp)
+        if exact_temp or smoothed_temp < min_usable_temp:
             if exact_temp:
                 temp = save_temp = exact_temp
-            elif target_temp > min_temp:
+            elif target_temp > min_usable_temp:
                 temp = save_temp = target_temp
             else:
                 temp = max(min_temp, self.last_heater_target)

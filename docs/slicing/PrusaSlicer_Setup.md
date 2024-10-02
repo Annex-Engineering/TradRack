@@ -36,7 +36,8 @@ or beta version so that you copy the items to the correct folder.
 
 Next, launch PrusaSlicer and open the Configuration Wizard by clicking
 `Configuration > Configuration Wizard`. Click on "Other Vendors" on
-the left side and ensure "Annex Engineering" is checked.
+the left side (or "Other FFF" on PrusaSlicer 2.8 or later) and ensure
+"Annex Engineering" is checked.
 
 ![Check "Annex Engineering"](images/ps_wizard_vendor.png?raw=true)
 
