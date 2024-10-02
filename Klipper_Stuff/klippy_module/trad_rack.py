@@ -18,12 +18,16 @@ FIL_DRIVER_STEPPER_NAME = "stepper_tr_fil_driver"
 
 class TradRack:
 
+    # variables saved with save_variables
     VARS_CALIB_BOWDEN_LOAD_LENGTH = "tr_calib_bowden_load_length"
     VARS_CALIB_BOWDEN_UNLOAD_LENGTH = "tr_calib_bowden_unload_length"
     VARS_CONFIG_BOWDEN_LENGTH = "tr_config_bowden_length"
     VARS_TOOL_STATUS = "tr_state_tool_status"
     VARS_HEATER_TARGET = "tr_last_heater_target"
     VARS_ACTIVE_LANE = "tr_active_lane"
+
+    # gcode states
+    GCODE_STATE_TOOLCHANGE = "TR_TOOLCHANGE_STATE"
 
     def __init__(self, config):
         self.printer = config.get_printer()
@@ -1236,6 +1240,11 @@ class TradRack:
         extruder_load_length=None,
         hotend_load_length=None,
     ):
+        # save gcode state
+        self.gcode.run_script_from_command(
+            "SAVE_GCODE_STATE NAME={}".format(self.GCODE_STATE_TOOLCHANGE)
+        )
+
         # reset retry_lane
         self.retry_lane = None
 
@@ -1260,11 +1269,6 @@ class TradRack:
             extruder_load_length = self.extruder_load_length
         if hotend_load_length is None:
             hotend_load_length = self.hotend_load_length
-
-        # save gcode state
-        self.gcode.run_script_from_command(
-            "SAVE_GCODE_STATE NAME=TR_TOOLCHANGE_STATE"
-        )
 
         # wait for heater temp if needed
         save_temp = self._wait_for_heater_temp(min_temp, exact_temp)
@@ -1496,7 +1500,9 @@ class TradRack:
 
         # restore gcode state
         self.gcode.run_script_from_command(
-            "RESTORE_GCODE_STATE NAME=TR_TOOLCHANGE_STATE MOVE=1"
+            "RESTORE_GCODE_STATE NAME={} MOVE=1".format(
+                self.GCODE_STATE_TOOLCHANGE
+            )
         )
 
         # reset next lane and tool
@@ -1804,8 +1810,19 @@ class TradRack:
 
     def _send_pause(self):
         pause_resume = self.printer.lookup_object("pause_resume")
-        if not pause_resume.get_status(self.reactor.monotonic())["is_paused"]:
-            self.pause_macro.run_gcode_from_command()
+        if pause_resume.get_status(self.reactor.monotonic())["is_paused"]:
+            return
+
+        # run pause macro
+        self.pause_macro.run_gcode_from_command()
+
+        # if a toolchange is in progress, replace the PAUSE_STATE gcode state
+        # with the state from right before the toolchange was initiated
+        if not self._is_next_toolchange_done():
+            saved_states = self.printer.lookup_object("gcode_move").saved_states
+            saved_states["PAUSE_STATE"] = saved_states[
+                self.GCODE_STATE_TOOLCHANGE
+            ]
 
     def _send_resume(self, resume_msg=None):
         pause_resume = self.printer.lookup_object("pause_resume")
