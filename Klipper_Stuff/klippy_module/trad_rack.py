@@ -2075,6 +2075,7 @@ class TradRack:
         self._go_to_lane(lane)
 
         # disable selector motor
+        self.tr_toolhead.wait_moves()
         print_time = self.tr_toolhead.get_last_move_time()
         stepper_enable = self.printer.lookup_object("stepper_enable")
         enable = stepper_enable.lookup_enable(SELECTOR_STEPPER_NAME)
