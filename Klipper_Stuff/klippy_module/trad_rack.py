@@ -750,7 +750,10 @@ class TradRack:
         self.selector_sensor.set_active(False)
         self.printer.send_event("trad_rack:reset_active_lane")
 
-    cmd_TR_RESUME_help = "Resume after a failed load or unload"
+    cmd_TR_RESUME_help = (
+        "Completes necessary actions for Trad Rack to recover and resumes the"
+        " print"
+    )
 
     def cmd_TR_RESUME(self, gcmd):
         resume_msg = None
