@@ -2746,7 +2746,7 @@ class TradRackExtruderSyncManager:
             prev_toolhead = self.toolhead
             external_toolhead = self.tr_toolhead
             self.reset_fil_driver()
-            new_pos = 0.0
+            new_pos = [0.0, 0.0, 0.0]
         elif sync_type == FIL_DRIVER_TO_EXTRUDER:
             steppers = self.fil_driver_rail.get_steppers()
             self._prev_trapq = self.tr_toolhead.get_trapq()
@@ -2756,6 +2756,8 @@ class TradRackExtruderSyncManager:
             prev_toolhead = self.tr_toolhead
             external_toolhead = self.toolhead
             new_pos = extruder.last_position
+            if not isinstance(new_pos, list):
+                new_pos = [new_pos, 0.0, 0.0]
         else:
             raise Exception("Invalid sync_type: %d" % sync_type)
 
@@ -2768,7 +2770,7 @@ class TradRackExtruderSyncManager:
                 stepper.set_stepper_kinematics(stepper_kinematics)
             )
             stepper.set_trapq(external_trapq)
-            stepper.set_position((new_pos, 0.0, 0.0))
+            stepper.set_position(new_pos)
             prev_toolhead.step_generators.remove(stepper.generate_steps)
             external_toolhead.register_step_generator(stepper.generate_steps)
         self.sync_state = sync_type
