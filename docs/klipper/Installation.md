@@ -20,6 +20,11 @@ Klipper.
 This section involves adding the Trad Rack Klippy module(s) to Klipper
 and enabling updates through Moonraker.
 
+If you are using
+[Danger Klipper](https://github.com/DangerKlippers/danger-klipper),
+you can skip to [setting up config files](#config-files) since
+Danger Klipper already includes the trad_rack module.
+
 The installation procedure differs slightly depending on whether
 you are using a recent version of Klipper or an older version from
 before
