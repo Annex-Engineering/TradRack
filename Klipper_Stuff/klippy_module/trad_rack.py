@@ -708,7 +708,7 @@ class TradRack:
 
         # mark selector position as uncertain if not homed or current position
         # doesn't match lane position
-        if (not self._is_selector_homed()) or pos[0] != lane_pos:
+        if not (self._is_selector_homed() and pos[0] == lane_pos):
             self.selector_pos_uncertain = True
 
         # set selector position
