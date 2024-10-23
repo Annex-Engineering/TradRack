@@ -118,10 +118,14 @@ selector motor will be enabled if it isn't already.
 not been loaded.
 
 ### TR_RESUME
-`TR_RESUME`: Retries loading the last lane, loads the next filament
-into the toolhead, and resumes the print. The user will be prompted
-to use this command if Trad Rack has paused the print due to a failed
-load or unload.
+`TR_RESUME`: Completes necessary actions for Trad Rack to recover
+(and/or checks that Trad Rack is ready to continue), then resumes the
+print if all of those actions complete successfully. For example, if
+the print was paused due to a failed toolchange, then this command
+would retry the toolchange and then resume the print if the toolchange
+completes successfully. You will be prompted to use this command if
+Trad Rack has paused the print and requires user interaction or
+confirmation before attempting to recover and resume.
 
 ### TR_LOCATE_SELECTOR
 `TR_LOCATE_SELECTOR`: Ensures the position of Trad Rack's selector is
