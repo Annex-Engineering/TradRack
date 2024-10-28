@@ -277,6 +277,9 @@ class TradRack:
         self.save_active_lane = config.getboolean("save_active_lane", True)
         self.log_bowden_lengths = config.getboolean("log_bowden_lengths", False)
 
+
+        self.keep_servo_down_after_lane_load = config.getboolean("keep_servo_down_after_lane_load", False)
+
         # other variables
         self.toolhead = None
         self.curr_lane = None  # which lane the selector is positioned at
@@ -1273,8 +1276,9 @@ class TradRack:
         # reset filament driver position
         self._reset_fil_driver()
 
-        # raise servo
-        self._raise_servo()
+        if not self.keep_servo_down_after_lane_load:
+            # raise servo
+            self._raise_servo()
 
         if user_load:
             self.gcode.respond_info("Load complete")
