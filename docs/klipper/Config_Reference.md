@@ -240,6 +240,10 @@ toolhead_unload_length:
 #   Gcode command template that is run whenever the TR_RESUME command
 #   needs to resume the print. The default is to run the RESUME
 #   gcode command.
+#keep_servo_down_after_lane_load: False
+#   If set to True, after loading filament into a lane the servo is kept
+#   down to hold the filament in place.
+
 ```
 
 ## Additional sections
