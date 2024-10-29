@@ -216,6 +216,9 @@ toolhead_unload_length:
 #   command will infer the active lane if the selector filament sensor
 #   is triggered and an active lane was saved previously.
 #   The default is True.
+#keep_servo_down_after_lane_load: False
+#   If set to True, after loading filament into a lane the servo is
+#   kept down to hold the filament in place. The default is False.
 #log_bowden_lengths: False
 #   Whether to log bowden load length data and bowden unload length
 #   data (to ~/bowden_load_lengths.csv and ~/bowden_unload_lengths.csv
@@ -240,10 +243,6 @@ toolhead_unload_length:
 #   Gcode command template that is run whenever the TR_RESUME command
 #   needs to resume the print. The default is to run the RESUME
 #   gcode command.
-#keep_servo_down_after_lane_load: False
-#   If set to True, after loading filament into a lane the servo is kept
-#   down to hold the filament in place.
-
 ```
 
 ## Additional sections

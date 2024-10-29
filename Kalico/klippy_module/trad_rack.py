@@ -275,10 +275,10 @@ class TradRack:
             "register_toolchange_commands", default=True
         )
         self.save_active_lane = config.getboolean("save_active_lane", True)
+        self.keep_servo_down_after_lane_load = config.getboolean(
+            "keep_servo_down_after_lane_load", False
+        )
         self.log_bowden_lengths = config.getboolean("log_bowden_lengths", False)
-
-
-        self.keep_servo_down_after_lane_load = config.getboolean("keep_servo_down_after_lane_load", False)
 
         # other variables
         self.toolhead = None
