@@ -17,7 +17,6 @@ FIL_DRIVER_STEPPER_NAME = "stepper_tr_fil_driver"
 
 
 class TradRack:
-
     # variables saved with save_variables
     VARS_CALIB_BOWDEN_LOAD_LENGTH = "tr_calib_bowden_load_length"
     VARS_CALIB_BOWDEN_UNLOAD_LENGTH = "tr_calib_bowden_unload_length"
@@ -1967,8 +1966,8 @@ class TradRack:
                 self._raise_servo()
                 self.gcode.respond_info(
                     "Failed to unload. Please pull filament {} out of the"
-                    " toolhead and selector, then use TR_RESUME to continue."
-                    .format(self.runout_lane)
+                    " toolhead and selector, then use TR_RESUME to"
+                    " continue.".format(self.runout_lane)
                 )
                 logging.warning(
                     "trad_rack: Failed to unload toolhead", exc_info=True
@@ -2620,9 +2619,8 @@ class TradRackHoming(Homing, object):
             kin = self.toolhead.get_kinematics()
             homepos = self.toolhead.get_position()
             kin_spos = {
-                s.get_name(): s.get_commanded_position() + self.adjust_pos.get(
-                    s.get_name(), 0.0
-                )
+                s.get_name(): s.get_commanded_position()
+                + self.adjust_pos.get(s.get_name(), 0.0)
                 for s in kin.get_steppers()
             }
             newpos = kin.calc_position(kin_spos)
