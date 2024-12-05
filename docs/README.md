@@ -17,20 +17,20 @@ quickly as possible with minimal reading, see the
   assembling Trad Rack.
 - [Wiring](Wiring.md): information on wiring for Trad Rack.
 
-## Klipper
-- [Installation](klipper/Installation.md): how to get Trad Rack set up
-  to work with Klipper.
-- [Config Reference](klipper/Config_Reference.md): config settings for
+## Kalico
+- [Installation](kalico/Installation.md): how to get Trad Rack set up
+  to work with Kalico or Klipper.
+- [Config Reference](kalico/Config_Reference.md): config settings for
   Trad Rack.
-- [G-Codes](klipper/G-Codes.md): commands added by the trad_rack
-  Klipper module.
-- [Customization](klipper/Customization.md): info on how code is
-  divided between the trad_rack Klipper module and the config, how to
+- [G-Codes](kalico/G-Codes.md): commands added by the trad_rack
+  klippy module.
+- [Customization](kalico/Customization.md): info on how code is
+  divided between the trad_rack klippy module and the config, how to
   customize Trad Rack's behavior through gcode templates, and what the
   trad_rack_optional config file does.
-- [Status Reference](klipper/Status_Reference.md): information
-  available to macros (and similar) from the trad_rack Klipper module.
-- [Save Variables](klipper/Save_Variables.md): information on the
+- [Status Reference](kalico/Status_Reference.md): information
+  available to macros (and similar) from the trad_rack klippy module.
+- [Save Variables](kalico/Save_Variables.md): information on the
   variables that Trad Rack saves to disk using save_variables.
 
 ## Tuning and feature overviews
