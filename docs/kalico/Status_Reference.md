@@ -1,7 +1,7 @@
 # Status Reference
 
-This document is modeled after Klipper's
-[Status Reference document](https://www.klipper3d.org/Status_Reference.html)
+This document is modeled after Kalico's
+[Status Reference document](https://docs.kalico.gg/Status_Reference.html)
 but only contains items pertaining to Trad Rack.
 
 ## trad_rack
@@ -23,6 +23,6 @@ The following information is available in the `trad_rack` object:
 Trad Rack uses the `save_variables` object to save variables to disk
 so that they can be used across restarts. See the
 [Save Variables document](Save_Variables.md) for more details
-on how Trad Rack uses save_variables, and Klipper's
-[Command Templates document](https://www.klipper3d.org/Command_Templates.html#save-variables-to-disk)
+on how Trad Rack uses save_variables, and Kalico's
+[Command Templates document](https://docs.kalico.gg/Command_Templates.html#save-variables-to-disk)
 for details on how to access all saved variables.
