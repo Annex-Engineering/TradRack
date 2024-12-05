@@ -57,7 +57,7 @@ tool's lane group will become the new default lane. In addition, if
 you load the toolhead with filament from a specific lane using
 `TR_LOAD_TOOLHEAD LANE=<lane index>`, that lane will become the new
 default lane for its assigned tool.
-[Several gcode commands](klipper/G-Codes.md#tool-mapping) are
+[Several gcode commands](kalico/G-Codes.md#tool-mapping) are
 available for viewing and manipulating the tool mapping/lane
 groups.
 

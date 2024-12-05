@@ -1,7 +1,7 @@
 # Trad Rack Configuration reference
 
-This document is modeled after Klipper's
-[Config Reference document](https://www.klipper3d.org/Config_Reference.html)
+This document is modeled after Kalico's
+[Config Reference document](https://docs.kalico.gg/Config_Reference.html)
 but only contains items pertaining to Trad Rack.
 
 **Table of Contents**
@@ -262,7 +262,7 @@ position_endstop:
 position_max:
 #   This should be set to (lane_count - 1) * lane_spacing.
 homing_speed:
-#   See the "stepper" section in Klipper's Config_Reference.md
+#   See the "stepper" section in Kalico's Config_Reference.md
 #   document for a description of the above parameters.
 ```
 
@@ -289,7 +289,7 @@ position_max:
 #   This should be set to a large positive number greater than the
 #   length of the bowden tube between Trad Rack and the toolhead.
 homing_positive_dir: False
-#   See the "[stepper]" section in Klipper's Config_Reference.md
+#   See the "[stepper]" section in Kalico's Config_Reference.md
 #   document for a description of the above parameters.
 ```
 
@@ -302,7 +302,7 @@ Stepper driver section for stepper_tr_selector.
 uart_pin:
 run_current:
 sense_resistor:
-#   See the "[tmc_2209]" section in Klipper's Config_Reference.md
+#   See the "[tmc_2209]" section in Kalico's Config_Reference.md
 #   document for a description of the above parameters. You may have
 #   to use a different section name if you use a different driver.
 ```
@@ -316,7 +316,7 @@ Stepper driver section for stepper_tr_fil_driver.
 uart_pin:
 run_current:
 sense_resistor:
-#   See the "[tmc_2209]" section in Klipper's Config_Reference.md
+#   See the "[tmc_2209]" section in Kalico's Config_Reference.md
 #   document for a description of the above parameters. You may have
 #   to use a different section name if you use a different driver.
 ```
@@ -331,6 +331,6 @@ pin:
 maximum_servo_angle:
 minimum_pulse_width:
 maximum_pulse_width:
-#   See the "[servo]" section in Klipper's Config_Reference.md
+#   See the "[servo]" section in Kalico's Config_Reference.md
 #   document for a description of the above parameters.
 ```
