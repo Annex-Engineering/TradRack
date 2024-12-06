@@ -29,8 +29,25 @@ class TradRack:
     # gcode states
     GCODE_STATE_TOOLCHANGE = "TR_TOOLCHANGE_STATE"
 
+    WARNING_MSG = (
+        "[trad_rack]: trad_rack.py has been moved to a different folder in"
+        ' the TradRack repo. Please redo the steps here under "Klippy'
+        ' module installation" (including using curl to download the updated'
+        " install script) to update your trad_rack installation to use the new"
+        " folder:"
+        " https://github.com/Annex-Engineering/TradRack/blob/main/docs/kalico/Installation.md#klippy-module-installation"
+        "\nThe old folder is being kept intact for now but will be deleted"
+        " soon. After that happens, attempting to update trad_rack through"
+        " Moonraker may break the trad_rack install."
+    )
+
     def __init__(self, config):
         self.printer = config.get_printer()
+
+        # warning to use trad_rack.py from the new folder instead
+        pconfig = self.printer.lookup_object("configfile")
+        pconfig.runtime_warning(self.WARNING_MSG)
+
         self.reactor = self.printer.get_reactor()
         self.printer.register_event_handler(
             "klippy:connect", self.handle_connect
@@ -416,6 +433,12 @@ class TradRack:
 
     def handle_ready(self):
         self._load_saved_state()
+
+        # warning to use trad_rack.py from the new folder instead
+        self.reactor.register_callback(
+            lambda _: self.gcode.respond_info(self.WARNING_MSG),
+            self.reactor.monotonic() + 1,
+        )
 
     def _load_saved_state(self):
         # load bowden lengths if the user has not changed the config value
