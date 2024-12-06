@@ -18,7 +18,7 @@ The [selector harness](#selector-harness) and the
 need to be connected to the control board. This document does not
 cover connections to your control board since they will depend on the
 specific board you are using. If you are using
-[one of the provided base config files](/Klipper_Stuff/klipper_config/base_config_options/),
+[one of the provided base config files](/Kalico/kalico_config/base_config_options/),
 see the comments in the file for which pin/port to use for each
 signal. Check the manufacturer's documentation if you need help
 figuring out where each pin/port is located on the board.

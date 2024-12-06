@@ -12,7 +12,6 @@ from stepper import LookupMultiRail
 import chelper, toolhead, kinematics.extruder
 
 SERVO_NAME = "servo tr_servo"
-CUTTER_SERVO_NAME = "servo tr_cutter_servo"
 SELECTOR_STEPPER_NAME = "stepper_tr_selector"
 FIL_DRIVER_STEPPER_NAME = "stepper_tr_fil_driver"
 
@@ -21,7 +20,6 @@ class TradRack:
     # variables saved with save_variables
     VARS_CALIB_BOWDEN_LOAD_LENGTH = "tr_calib_bowden_load_length"
     VARS_CALIB_BOWDEN_UNLOAD_LENGTH = "tr_calib_bowden_unload_length"
-    VARS_CALIB_CUTTER_BOWDEN_LENGTH = "tr_calib_cutter_bowden_length"
     VARS_CONFIG_BOWDEN_LENGTH = "tr_config_bowden_length"
     VARS_TOOL_STATUS = "tr_state_tool_status"
     VARS_HEATER_TARGET = "tr_last_heater_target"
@@ -30,25 +28,8 @@ class TradRack:
     # gcode states
     GCODE_STATE_TOOLCHANGE = "TR_TOOLCHANGE_STATE"
 
-    WARNING_MSG = (
-        "[trad_rack]: trad_rack.py has been moved to a different folder in"
-        ' the TradRack repo. Please redo the steps here under "Klippy'
-        ' module installation" (including using curl to download the updated'
-        " install script) to update your trad_rack installation to use the new"
-        " folder:"
-        " https://github.com/Annex-Engineering/TradRack/blob/main/docs/kalico/Installation.md#klippy-module-installation"
-        "\nThe old folder is being kept intact for now but will be deleted"
-        " soon. After that happens, attempting to update trad_rack through"
-        " Moonraker may break the trad_rack install."
-    )
-
     def __init__(self, config):
         self.printer = config.get_printer()
-
-        # warning to use trad_rack.py from the new folder instead
-        pconfig = self.printer.lookup_object("configfile")
-        pconfig.runtime_warning(self.WARNING_MSG)
-
         self.reactor = self.printer.get_reactor()
         self.printer.register_event_handler(
             "klippy:connect", self.handle_connect
@@ -71,18 +52,10 @@ class TradRack:
         )
         self.sel_max_velocity, _ = self.tr_toolhead.get_sel_max_velocity()
 
-        # check if cutter will be used
-        self.enable_cutter = config.getboolean("enable_cutter", False)
-
-        # get servos
+        # get servo
         self.servo = TradRackServo(
             self.printer.load_object(config, SERVO_NAME), self.tr_toolhead
         )
-        if self.enable_cutter:
-            self.cutter_servo = TradRackServo(
-                self.printer.load_object(config, CUTTER_SERVO_NAME),
-                self.tr_toolhead,
-            )
 
         # get kinematics and filament driver endstops
         self.tr_kinematics = self.tr_toolhead.get_kinematics()
@@ -92,16 +65,21 @@ class TradRack:
 
         # set up toolhead filament sensor
         toolhead_fil_sensor_pin = config.get("toolhead_fil_sensor_pin", None)
-        self.toolhead_fil_endstops = self.create_fil_endstop(
-            config, toolhead_fil_sensor_pin, "toolhead_fil_sensor"
-        )
+        self.toolhead_fil_endstops = []
+        if toolhead_fil_sensor_pin is not None:
+            # register endstop
+            ppins = self.printer.lookup_object("pins")
+            mcu_endstop = ppins.setup_pin("endstop", toolhead_fil_sensor_pin)
+            name = "toolhead_fil_sensor"
+            self.toolhead_fil_endstops.append((mcu_endstop, name))
+            query_endstops = self.printer.load_object(config, "query_endstops")
+            query_endstops.register_endstop(mcu_endstop, name)
 
-        # set up cutter filament sensor
-        cutter_fil_sensor_pin = config.get("cutter_fil_sensor_pin", None)
-        if self.enable_cutter:
-            self.cutter_fil_endstops = self.create_fil_endstop(
-                config, cutter_fil_sensor_pin, "cutter_fil_sensor"
-            )
+            # add filament driver stepper to endstop
+            for (
+                stepper
+            ) in self.tr_kinematics.get_fil_driver_rail().get_steppers():
+                mcu_endstop.add_stepper(stepper)
 
         # set up selector sensor as a runout sensor
         pin = config.getsection(FIL_DRIVER_STEPPER_NAME).get("endstop_pin")
@@ -122,10 +100,6 @@ class TradRack:
         )
         self.bowden_load_length_filter = MovingAverageFilter(bowden_samples)
         self.bowden_unload_length_filter = MovingAverageFilter(bowden_samples)
-        if self.enable_cutter:
-            self.cutter_bowden_length_filter = MovingAverageFilter(
-                bowden_samples
-            )
 
         # create extruder sync manager
         self.extruder_sync_manager = TradRackExtruderSyncManager(
@@ -140,24 +114,6 @@ class TradRack:
         self.servo_wait = (
             config.getfloat("servo_wait_ms", default=500.0, above=0.0) / 1000.0
         )
-        if self.enable_cutter:
-            self.cutter_servo_cut_angle = config.getfloat(
-                "cutter_servo_cut_angle"
-            )
-            self.cutter_servo_reset_angle = config.getfloat(
-                "cutter_servo_reset_angle"
-            )
-        else:
-            self.cutter_servo_cut_angle = config.getfloat(
-                "cutter_servo_cut_angle", default=0.0
-            )
-            self.cutter_servo_reset_angle = config.getfloat(
-                "cutter_servo_reset_angle", default=0.0
-            )
-        self.cutter_servo_wait = (
-            config.getfloat("cutter_servo_wait_ms", default=1000.0, above=0)
-            / 1000.0
-        )
         self.selector_unload_length = config.getfloat(
             "selector_unload_length", above=0.0
         )
@@ -170,16 +126,6 @@ class TradRack:
         self.config_bowden_length = self.bowden_load_length = (
             self.bowden_unload_length
         ) = config.getfloat("bowden_length", above=0.0)
-        self.cutter_bowden_length = config.getfloat(
-            "cutter_bowden_length",
-            default=self.config_bowden_length * 0.5,
-            above=0.0,
-        )
-        # if self.enable_cutter:
-        #     self.bowden_unload_length = self.config_bowden_length \
-        #                                 - self.cutter_bowden_length
-        # else:
-        #     self.bowden_unload_length = self.config_bowden_length
         self.extruder_load_length = config.getfloat(
             "extruder_load_length", above=0.0
         )
@@ -195,14 +141,6 @@ class TradRack:
                 "toolhead_unload_length",
                 default=self.extruder_load_length + self.hotend_load_length,
                 above=0.0,
-            )
-        if self.enable_cutter:
-            self.cutter_retract_length = config.getfloat(
-                "cutter_retract_length"
-            )
-        else:
-            self.cutter_retract_length = config.getfloat(
-                "cutter_retract_length", default=0.0
             )
         self.selector_sense_speed = config.getfloat(
             "selector_sense_speed", default=40.0, above=0.0
@@ -225,12 +163,6 @@ class TradRack:
         self.toolhead_unload_speed = config.getfloat(
             "toolhead_unload_speed", default=self.extruder_load_speed, above=0.0
         )
-        self.cutter_sense_speed = config.getfloat(
-            "cutter_sense_speed", default=self.selector_sense_speed, above=0.0
-        )
-        self.cutter_retract_speed = config.getfloat(
-            "cutter_retract_speed", default=60.0, above=0.0
-        )
         self.load_with_toolhead_sensor = config.getboolean(
             "load_with_toolhead_sensor", True
         )
@@ -247,9 +179,6 @@ class TradRack:
         )
         self.target_selector_homing_dist = config.getfloat(
             "target_selector_homing_dist", 10.0, above=0.0
-        )
-        self.target_cutter_homing_dist = config.getfloat(
-            "target_cutter_homing_dist", 10.0, above=0.0
         )
         self.fil_homing_lengths = {
             "user load lane": (
@@ -358,14 +287,6 @@ class TradRack:
         self.resume_macro = gcode_macro.load_template(
             config, "resume_gcode", "RESUME"
         )
-
-        cut_override = config.get("cut_override_gcode", default=None)
-        if cut_override is None:
-            self.cut_override_macro = None
-        else:
-            self.cut_override_macro = gcode_macro.load_template(
-                config, "cut_override_gcode"
-            )
 
         # register gcode commands
         self.gcode = self.printer.lookup_object("gcode")
@@ -498,12 +419,6 @@ class TradRack:
     def handle_ready(self):
         self._load_saved_state()
 
-        # warning to use trad_rack.py from the new folder instead
-        self.reactor.register_callback(
-            lambda _: self.gcode.respond_info(self.WARNING_MSG),
-            self.reactor.monotonic() + 1,
-        )
-
     def _load_saved_state(self):
         # load bowden lengths if the user has not changed the config value
         prev_config_bowden_length = self.variables.get(
@@ -535,19 +450,6 @@ class TradRack:
                 for _ in range(unload_length_stats["sample_count"]):
                     self.bowden_unload_length_filter.update(
                         self.bowden_unload_length
-                    )
-
-            # update cutter length
-            cutter_length_stats = self.variables.get(
-                self.VARS_CALIB_CUTTER_BOWDEN_LENGTH
-            )
-            if cutter_length_stats:
-                self.cutter_bowden_length = cutter_length_stats[
-                    "new_set_length"
-                ]
-                for _ in range(cutter_length_stats["sample_count"]):
-                    self.cutter_bowden_length_filter.update(
-                        self.cutter_bowden_length
                     )
         else:
             # save bowden_length config value
@@ -1478,16 +1380,29 @@ class TradRack:
 
         # move filament through the bowden tube
         self._reset_fil_driver()
+        self.tr_toolhead.get_last_move_time()
+        pos = self.tr_toolhead.get_position()
+        move_start = pos[1]
+        pos[1] += bowden_length
         if self.lanes_unloaded[self.curr_lane]:
             speed = self.buffer_pull_speed
         else:
             speed = self.spool_pull_speed
-        base_length, reached_sensor_early = self._move_fil_toward_endstop(
-            self.toolhead_fil_endstops,
-            bowden_length,
-            speed,
-            use_endstops=self.load_with_toolhead_sensor,
-        )
+        reached_sensor_early = True
+        if self.load_with_toolhead_sensor and self.toolhead_fil_endstops:
+            hmove = HomingMove(
+                self.printer, self.toolhead_fil_endstops, self.tr_toolhead
+            )
+            try:
+                # move and check for early sensor trigger
+                trigpos = hmove.homing_move(pos, speed, probe_pos=True)
+
+                # if sensor triggered early, retract before next homing move
+                pos[1] = trigpos[1] - self.fil_homing_retract_dist
+            except self.printer.command_error:
+                reached_sensor_early = False
+        self.tr_toolhead.move(pos, speed)
+        base_length = pos[1] - move_start
 
         # sync extruder to filament driver
         self.tr_toolhead.wait_moves()
@@ -1883,24 +1798,32 @@ class TradRack:
         self.tr_toolhead.wait_moves()
         self.extruder_sync_manager.unsync()
 
-        # cut filament
-        if self.enable_cutter:
-            self._cut_filament()
-
         # move filament through the bowden tube
-        self.tr_toolhead.wait_moves()
-        length_traveled, reached_sensor_early = self._move_fil_toward_endstop(
-            self.fil_driver_endstops,
-            -self.bowden_unload_length,
-            self.buffer_pull_speed,
-            triggered=False,
+        self.tr_toolhead.get_last_move_time()
+        pos = self.tr_toolhead.get_position()
+        move_start = pos[1]
+        pos[1] -= self.bowden_unload_length
+        hmove = HomingMove(
+            self.printer, self.fil_driver_endstops, self.tr_toolhead
         )
+        reached_sensor_early = True
+        try:
+            # move and check for early sensor trigger
+            trigpos = hmove.homing_move(
+                pos, self.buffer_pull_speed, probe_pos=True, triggered=False
+            )
+
+            # if sensor triggered early, retract before next homing move
+            pos[1] = trigpos[1] + self.fil_homing_retract_dist
+        except self.printer.command_error:
+            reached_sensor_early = False
+        self.tr_toolhead.move(pos, self.buffer_pull_speed)
 
         # unload selector
         mark_calibrated = not (
             self.bowden_unload_calibrated or reached_sensor_early
         )
-        self._unload_selector(length_traveled, mark_calibrated, eject)
+        self._unload_selector(move_start - pos[1], mark_calibrated, eject)
 
         # note that the current lane's buffer has been filled
         if self.curr_lane is not None:
@@ -1916,126 +1839,6 @@ class TradRack:
 
         # notify toolhead unload complete
         self.printer.send_event("trad_rack:unload_complete")
-
-    def _move_fil_toward_endstop(
-        self, endstops, dist, speed, triggered=True, use_endstops=True
-    ):
-        self.tr_toolhead.get_last_move_time()
-        pos = self.tr_toolhead.get_position()
-        move_start = pos[1]
-        pos[1] += dist
-
-        # if there are endstops, monitor them while moving
-        if endstops and use_endstops:
-            hmove = HomingMove(self.printer, endstops, self.tr_toolhead)
-            reached_sensor_early = True
-            try:
-                # move and check for early sensor trigger
-                trigpos = hmove.homing_move(
-                    pos, speed, probe_pos=True, triggered=triggered
-                )
-
-                # if sensor triggered early, retract before next homing move
-                if dist > 0:
-                    pos[1] = trigpos[1] - self.fil_homing_retract_dist
-                else:
-                    pos[1] = trigpos[1] + self.fil_homing_retract_dist
-            except self.printer.command_error:
-                reached_sensor_early = False
-        else:
-            reached_sensor_early = False
-
-        # move to final position
-        self.tr_toolhead.move(pos, speed)
-
-        length_traveled = abs(pos[1] - move_start)
-        return length_traveled, reached_sensor_early
-
-    def _cut_filament(self):
-        # move filament through the bowden tube
-        length_traveled, reached_sensor_early = self._move_fil_toward_endstop(
-            self.cutter_fil_endstops,
-            -self.cutter_bowden_length,
-            self.buffer_pull_speed,
-            triggered=False,
-        )
-
-        # move filament until cutter sensor is untriggered
-        if self.cutter_fil_endstops:
-            self.tr_toolhead.get_last_move_time()
-            pos = self.tr_toolhead.get_position()
-            move_start = pos[1]
-            hmove = HomingMove(
-                self.printer, self.cutter_fil_endstops, self.tr_toolhead
-            )
-            pos[1] -= self.fil_homing_lengths["bowden unload"]
-            try:
-                trigpos = hmove.homing_move(
-                    pos,
-                    self.cutter_sense_speed,
-                    probe_pos=True,
-                    triggered=False,
-                )
-            except:
-                self._raise_servo()
-                self.extruder_sync_manager.unsync()
-                logging.warning(
-                    "trad_rack: Cutter sensor homing move failed", exc_info=True
-                )
-                raise self.gcode.error(
-                    "Failed to unload to cutter. Cutter "
-                    "sensor still triggered after full "
-                    "movement"
-                )
-
-            # update cutter_bowden_length
-            if not self.ignore_next_unload_length:
-                length = (
-                    move_start
-                    - trigpos[1]
-                    + length_traveled
-                    - self.target_cutter_homing_dist
-                )
-                # old_set_length = self.cutter_bowden_length
-                self.cutter_bowden_length = (
-                    self.cutter_bowden_length_filter.update(length)
-                )
-                samples = self.cutter_bowden_length_filter.get_entry_count()
-                # self._write_bowden_length_data(
-                #     self.cutter_bowden_lengths_filename, length, old_set_length,
-                #     self.cutter_bowden_length, samples)
-                self._save_bowden_length(
-                    "cutter", self.cutter_bowden_length, samples
-                )
-                # if not (self.cutter_bowden_calibrated or reached_sensor_early):
-                #     self.cutter_bowden_calibrated = True
-                #     self.gcode.respond_info(
-                #         "Calibrated cutter_bowden_length: {}"
-                #         .format(self.cutter_bowden_length))
-
-        # retract to cutting position
-        self._reset_fil_driver()
-        pos = self.tr_toolhead.get_position()
-        pos[1] -= self.cutter_retract_length
-        self.tr_toolhead.move(pos, self.cutter_retract_speed)
-
-        # perform default cutting behavior (if not overridden)
-        if self.cut_override_macro is None:
-            # move servo to cut
-            self.tr_toolhead.wait_moves()
-            self.cutter_servo.set_servo(angle=self.cutter_servo_cut_angle)
-            self.tr_toolhead.dwell(self.cutter_servo_wait)
-
-            # initiate servo move back to reset position
-            self.cutter_servo.set_servo(angle=self.cutter_servo_reset_angle)
-
-        # else run cut override custom gcode
-        else:
-            self.toolhead.wait_moves()
-            self.tr_toolhead.wait_moves()
-            self.cut_override_macro.run_gcode_from_command()
-            self.toolhead.wait_moves()
-            self.tr_toolhead.wait_moves()
 
     def _send_pause(self):
         pause_resume = self.printer.lookup_object("pause_resume")
@@ -2238,11 +2041,6 @@ class TradRack:
                 'SAVE_VARIABLE VARIABLE=%s VALUE="%s"'
                 % (self.VARS_CALIB_BOWDEN_LOAD_LENGTH, length_stats)
             )
-        elif mode == "cutter":
-            self.gcode.run_script_from_command(
-                'SAVE_VARIABLE VARIABLE=%s VALUE="%s"'
-                % (self.VARS_CALIB_CUTTER_BOWDEN_LENGTH, length_stats)
-            )
         else:
             self.gcode.run_script_from_command(
                 'SAVE_VARIABLE VARIABLE=%s VALUE="%s"'
@@ -2414,24 +2212,6 @@ class TradRack:
 
         # return distance traveled
         return max_travel - trigpos[0]
-
-    def create_fil_endstop(self, config, pin, name):
-        endstops = []
-        if pin is None:
-            return endstops
-
-        # register endstop
-        ppins = self.printer.lookup_object("pins")
-        mcu_endstop = ppins.setup_pin("endstop", pin)
-        endstops.append((mcu_endstop, name))
-        query_endstops = self.printer.load_object(config, "query_endstops")
-        query_endstops.register_endstop(mcu_endstop, name)
-
-        # add filament driver stepper to endstop
-        for stepper in self.tr_kinematics.get_fil_driver_rail().get_steppers():
-            mcu_endstop.add_stepper(stepper)
-
-        return endstops
 
     # resume callbacks
     def _resume_load_toolhead(self):
