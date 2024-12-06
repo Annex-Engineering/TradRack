@@ -28,25 +28,8 @@ class TradRack:
     # gcode states
     GCODE_STATE_TOOLCHANGE = "TR_TOOLCHANGE_STATE"
 
-    WARNING_MSG = (
-        "[trad_rack]: trad_rack.py has been moved to a different folder in"
-        ' the TradRack repo. Please redo the steps here under "Klippy'
-        ' module installation" (including using curl to download the updated'
-        " install script) to update your trad_rack installation to use the new"
-        " folder:"
-        " https://github.com/Annex-Engineering/TradRack/blob/main/docs/kalico/Installation.md#klippy-module-installation"
-        "\nThe old folder is being kept intact for now but will be deleted"
-        " soon. After that happens, attempting to update trad_rack through"
-        " Moonraker may break the trad_rack install."
-    )
-
     def __init__(self, config):
         self.printer = config.get_printer()
-
-        # warning to use trad_rack.py from the new folder instead
-        pconfig = self.printer.lookup_object("configfile")
-        pconfig.runtime_warning(self.WARNING_MSG)
-
         self.reactor = self.printer.get_reactor()
         self.printer.register_event_handler(
             "klippy:connect", self.handle_connect
@@ -435,12 +418,6 @@ class TradRack:
 
     def handle_ready(self):
         self._load_saved_state()
-
-        # warning to use trad_rack.py from the new folder instead
-        self.reactor.register_callback(
-            lambda _: self.gcode.respond_info(self.WARNING_MSG),
-            self.reactor.monotonic() + 1,
-        )
 
     def _load_saved_state(self):
         # load bowden lengths if the user has not changed the config value
@@ -2333,9 +2310,6 @@ class TradRack:
         }
 
 
-SDS_CHECK_TIME = 0.001  # step+dir+step filter in stepcompress.c
-
-
 class TradRackToolHead(toolhead.ToolHead, object):
     def __init__(self, config, buffer_pull_speed, is_extruder_synced):
         self.printer = config.get_printer()
@@ -2348,14 +2322,13 @@ class TradRackToolHead(toolhead.ToolHead, object):
             m for n, m in self.printer.lookup_objects(module="mcu")
         ]
         self.mcu = self.all_mcus[0]
-        self.can_pause = True
-        if self.mcu.is_fileoutput():
-            self.can_pause = False
-        self.move_queue = toolhead.MoveQueue(self)
+        if hasattr(toolhead, "LookAheadQueue"):
+            self.lookahead = toolhead.LookAheadQueue(self)
+            self.lookahead.set_flush_time(toolhead.BUFFER_TIME_HIGH)
+        else:
+            self.move_queue = toolhead.MoveQueue(self)
+            self.move_queue.set_flush_time(toolhead.BUFFER_TIME_HIGH)
         self.commanded_pos = [0.0, 0.0, 0.0, 0.0]
-        self.printer.register_event_handler(
-            "klippy:shutdown", self._handle_shutdown
-        )
         # Velocity and acceleration control
         tr_config = config.getsection("trad_rack")
         self.sel_max_velocity = tr_config.getfloat(
@@ -2389,33 +2362,31 @@ class TradRackToolHead(toolhead.ToolHead, object):
         )
         self.junction_deviation = self.max_accel_to_decel = 0.0
         self._calc_junction_deviation()
-        # Print time tracking
-        self.buffer_time_low = config.getfloat(
-            "buffer_time_low", 1.000, above=0.0
-        )
-        self.buffer_time_high = config.getfloat(
-            "buffer_time_high", 2.000, above=self.buffer_time_low
-        )
-        self.buffer_time_start = config.getfloat(
-            "buffer_time_start", 0.250, above=0.0
-        )
-        self.move_flush_time = config.getfloat(
-            "move_flush_time", 0.050, above=0.0
-        )
-        self.print_time = 0.0
-        self.special_queuing_state = "Flushed"
-        self.need_check_stall = -1.0
-        self.flush_timer = self.reactor.register_timer(self._flush_handler)
-        self.move_queue.set_flush_time(self.buffer_time_high)
-        self.idle_flush_print_time = 0.0
+        # Input stall detection
+        self.check_stall_time = 0.0
         self.print_stall = 0
+        # Input pause tracking
+        self.can_pause = True
+        if self.mcu.is_fileoutput():
+            self.can_pause = False
+        self.need_check_pause = -1.0
+        # Print time tracking
+        self.print_time = 0.0
+        self.special_queuing_state = "NeedPrime"
+        self.priming_timer = None
         self.drip_completion = None
-        # Kinematic step generation scan window time tracking
-        self.kin_flush_delay = SDS_CHECK_TIME
-        self.kin_flush_times = []
-        self.force_flush_time = self.last_kin_flush_time = (
-            self.last_kin_move_time
+        # Flush tracking
+        self.flush_timer = self.reactor.register_timer(self._flush_handler)
+        self.do_kick_flush_timer = True
+        self.last_flush_time = self.last_sg_flush_time = (
+            self.min_restart_time
         ) = 0.0
+        self.need_flush_time = self.step_gen_time = self.clear_history_time = (
+            0.0
+        )
+        # Kinematic step generation scan window time tracking
+        self.kin_flush_delay = toolhead.SDS_CHECK_TIME
+        self.kin_flush_times = []
         # Setup iterative solver
         ffi_main, ffi_lib = chelper.get_ffi()
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
@@ -2436,6 +2407,9 @@ class TradRackToolHead(toolhead.ToolHead, object):
             msg = "Error loading kinematics 'trad_rack'"
             logging.exception(msg)
             raise config.error(msg)
+        self.printer.register_event_handler(
+            "klippy:shutdown", self._handle_shutdown
+        )
 
     def set_position(self, newpos, homing_axes=()):
         for _ in range(4 - len(newpos)):
