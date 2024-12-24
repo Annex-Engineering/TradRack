@@ -40,9 +40,9 @@ driver to keep it in sync with the primary extruder. See
 ## Enabling extruder syncing
 
 To enable extruder syncing, set `sync_to_extruder` to `True` in the
-[trad_rack config section](kalico/Config_Reference.md#trad_rack).
-The [TR_SYNC_TO_EXTRUDER gcode command](kalico/G-Codes.md#tr_sync_to_extruder)
+[trad_rack config section](klipper/Config_Reference.md#trad_rack).
+The [TR_SYNC_TO_EXTRUDER gcode command](klipper/G-Codes.md#tr_sync_to_extruder)
 can also be used to enable syncing, and
-[TR_UNSYNC_FROM_EXTRUDER](kalico/G-Codes.md#tr_unsync_from_extruder)
+[TR_UNSYNC_FROM_EXTRUDER](klipper/G-Codes.md#tr_unsync_from_extruder)
 can be used to disable syncing. However, any changes made by these
 gcode commands will not persist across restarts.

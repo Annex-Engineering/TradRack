@@ -211,14 +211,14 @@ skips when the fast bowden move is stopped.
 ### Saving and restoring bowden lengths
 
 Bowden load and unload length data is saved to disk using
-[save_variables](https://docs.kalico.gg/Config_Reference.html#save_variables)
+[save_variables](https://www.klipper3d.org/Config_Reference.html#save_variables)
 so it can be restored across restarts. The `bowden_length` config
 value is only used on the initial load and unload. However, if
-`bowden_length` is set to a new value and Kalico is restarted, any
+`bowden_length` is set to a new value and Klipper is restarted, any
 saved bowden load and unload length data will be ignored and
 overwritten. Setting a new `bowden_length` allows you to discard old
 saved values if you make a change to your hardware setup. See the
-[Save Variables document](kalico/Save_Variables.md) for more details
+[Save Variables document](klipper/Save_Variables.md) for more details
 on how Trad Rack uses save_variables.
 
 ## Bowden speeds

@@ -8,7 +8,7 @@ Each section should be completed before moving on to the next.
 - [Printing required parts](#printing-required-parts)
 - [Mechanical assembly](#mechanical-assembly)
 - [Wiring](#wiring)
-- [Kalico installation](#kalico-installation)
+- [Klipper installation](#klipper-installation)
 - [Servo calibration](#servo-calibration)
   - [Servo rotation direction](#servo-rotation-direction)
   - [Servo horn angle](#servo-horn-angle)
@@ -57,15 +57,15 @@ assembling Trad Rack.
 
 See the [Wiring document](Wiring.md).
 
-## Kalico installation
+## Klipper installation
 
-See the [Kalico installation document](kalico/Installation.md).
+See the [Klipper installation document](klipper/Installation.md).
 
 ## Servo calibration
 
 This section involves setting the rotation direction and angles of the
 servo. You will need to have Trad Rack fully assembled, wired, and
-connected to your printer with Kalico running.
+connected to your printer with Klipper running.
 
 To prepare, remove the servo from Trad Rack by undoing the 2 screws
 that attach it to the right carriage.
@@ -87,9 +87,9 @@ TR_SERVO_DOWN FORCE=1
 ```
 
 If the servo rotated clockwise, you can continue on to setting the
-[servo horn angle](#servo-horn-angle). Otherwise, in your Kalico
+[servo horn angle](#servo-horn-angle). Otherwise, in your Klipper
 config, swap the values of `servo_down_angle` and `servo_up_angle` in
-the [trad_rack] section. Then restart Kalico and continue.
+the [trad_rack] section. Then restart Klipper and continue.
 
 ### Servo horn angle
 
@@ -169,7 +169,7 @@ Once the servo aligns well enough with the slots that the screw can
 protrude from the jig, observe the last "raw angle" value reported in
 the console. In your main Trad Rack config file, replace the value of
 `servo_up_angle` in the [trad_rack] section with the "raw angle"
-value. Remove the servo jig and restart Kalico. Then run the
+value. Remove the servo jig and restart Klipper. Then run the
 following gcode command:
 
 ```
@@ -209,12 +209,12 @@ See the [Slicing document](slicing/Slicing.md).
 ## Changing Slicer_Unload macro settings
 
 This section involves adjusting the settings of the
-[Slicer_Unload macro](kalico/Customization.md#tip-shaping) to match
+[Slicer_Unload macro](klipper/Customization.md#tip-shaping) to match
 your slicer settings so that toolhead unloads performed outside of a
 print will closely match toolhead unloads performed during a print.
 
 Under `[gcode_macro Slicer_Unload]` in your copy of
-[trad_rack_optional.cfg](/Kalico/kalico_config/trad_rack_optional.cfg),
+[trad_rack_optional.cfg](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg),
 change the values of the following variables to match the values you
 set in the slicer profile. Variable names match the "parameter names"
 used in the slicer config files:
@@ -266,7 +266,7 @@ default lane*), run the following command:
 T0
 ```
 
-\* see the [G-Codes document](kalico/G-Codes.md#tr_load_toolhead)
+\* see the [Gcode reference document](klipper/G-Codes.md#tr_load_toolhead)
 for more details on the available parameters for the `TR_LOAD_TOOLHEAD`
 and `T<tool index>` toolchange commands.
 

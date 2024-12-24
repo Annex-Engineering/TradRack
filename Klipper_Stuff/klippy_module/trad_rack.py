@@ -18,6 +18,7 @@ FIL_DRIVER_STEPPER_NAME = "stepper_tr_fil_driver"
 
 
 class TradRack:
+
     # variables saved with save_variables
     VARS_CALIB_BOWDEN_LOAD_LENGTH = "tr_calib_bowden_load_length"
     VARS_CALIB_BOWDEN_UNLOAD_LENGTH = "tr_calib_bowden_unload_length"
@@ -30,25 +31,8 @@ class TradRack:
     # gcode states
     GCODE_STATE_TOOLCHANGE = "TR_TOOLCHANGE_STATE"
 
-    WARNING_MSG = (
-        "[trad_rack]: trad_rack.py has been moved to a different folder in"
-        ' the TradRack repo. Please redo the steps here under "Klippy'
-        ' module installation" (including using curl to download the updated'
-        " install script) to update your trad_rack installation to use the new"
-        " folder:"
-        " https://github.com/Annex-Engineering/TradRack/blob/main/docs/kalico/Installation.md#klippy-module-installation"
-        "\nThe old folder is being kept intact for now but will be deleted"
-        " soon. After that happens, attempting to update trad_rack through"
-        " Moonraker may break the trad_rack install."
-    )
-
     def __init__(self, config):
         self.printer = config.get_printer()
-
-        # warning to use trad_rack.py from the new folder instead
-        pconfig = self.printer.lookup_object("configfile")
-        pconfig.runtime_warning(self.WARNING_MSG)
-
         self.reactor = self.printer.get_reactor()
         self.printer.register_event_handler(
             "klippy:connect", self.handle_connect
@@ -291,9 +275,6 @@ class TradRack:
             "register_toolchange_commands", default=True
         )
         self.save_active_lane = config.getboolean("save_active_lane", True)
-        self.keep_servo_down_after_lane_load = config.getboolean(
-            "keep_servo_down_after_lane_load", False
-        )
         self.log_bowden_lengths = config.getboolean("log_bowden_lengths", False)
 
         # other variables
@@ -497,12 +478,6 @@ class TradRack:
 
     def handle_ready(self):
         self._load_saved_state()
-
-        # warning to use trad_rack.py from the new folder instead
-        self.reactor.register_callback(
-            lambda _: self.gcode.respond_info(self.WARNING_MSG),
-            self.reactor.monotonic() + 1,
-        )
 
     def _load_saved_state(self):
         # load bowden lengths if the user has not changed the config value
@@ -1295,9 +1270,8 @@ class TradRack:
         # reset filament driver position
         self._reset_fil_driver()
 
-        if not self.keep_servo_down_after_lane_load:
-            # raise servo
-            self._raise_servo()
+        # raise servo
+        self._raise_servo()
 
         if user_load:
             self.gcode.respond_info("Load complete")
@@ -2163,8 +2137,8 @@ class TradRack:
                 self._raise_servo()
                 self.gcode.respond_info(
                     "Failed to unload. Please pull filament {} out of the"
-                    " toolhead and selector, then use TR_RESUME to"
-                    " continue.".format(self.runout_lane)
+                    " toolhead and selector, then use TR_RESUME to continue."
+                    .format(self.runout_lane)
                 )
                 logging.warning(
                     "trad_rack: Failed to unload toolhead", exc_info=True
@@ -2839,8 +2813,9 @@ class TradRackHoming(Homing, object):
             kin = self.toolhead.get_kinematics()
             homepos = self.toolhead.get_position()
             kin_spos = {
-                s.get_name(): s.get_commanded_position()
-                + self.adjust_pos.get(s.get_name(), 0.0)
+                s.get_name(): s.get_commanded_position() + self.adjust_pos.get(
+                    s.get_name(), 0.0
+                )
                 for s in kin.get_steppers()
             }
             newpos = kin.calc_position(kin_spos)

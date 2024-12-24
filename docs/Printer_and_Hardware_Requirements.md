@@ -24,16 +24,14 @@ Your 3D printer must meet the following requirements to work with Trad
 Rack:
 
 - Must use 1.75mm filament.
-- Must run [Kalico](http://github.com/KalicoCrew/kalico) or
-  [Klipper](https://github.com/Klipper3d/klipper) firmware.[^1]
+- Must run [Klipper firmware](https://github.com/Klipper3d/klipper/).[^1]
 - The toolhead or extruder must have a collet/coupling to secure a 4mm
   bowden tube at the inlet.[^2]
   
-[^1]: We only provide software for using Trad Rack with Kalico or
-Klipper. However, Trad Rack's hardware is not inherently reliant on
-these firmwares, so you can use it with another 3D printer firmware
-if you write your own software for making Trad Rack work with that
-firmware.
+[^1]: We only provide software for using Trad Rack with Klipper.
+However, Trad Rack's hardware is not inherently reliant on Klipper, so
+you can use it with another 3D printer firmware if you write your own
+software for making Trad Rack work with that firmware.
 
 [^2]: If you are adding a mod to your toolhead in order to add a
 filament sensor, it is likely that the mod also includes support for a
@@ -251,7 +249,7 @@ be bulged or stringy, in order to leave a clean end.
 
 Trad Rack currently supports using a filament cutter mounted to the
 printer's toolhead (see the
-[Customization document](kalico/Customization.md#tip-shaping) for
+[Customization document](klipper/Customization.md#tip-shaping) for
 more details on software setup). Support for a filament cutter either
 inline with the bowden tube between Trad Rack and the toolhead or
 mounted to Trad Rack's selector is planned but not implemented yet.
@@ -265,7 +263,7 @@ portion of the purging[^6] to reduce the size of the wipe tower and
 reclaim build space.
 
 [^6]: To completely eliminate the wipe tower, additional code would be
-required to tell Kalico how much material to purge depending on the
+required to tell Klipper how much material to purge depending on the
 specific filaments being unloaded and loaded. However, it is
 recommended to always at least use a small wipe tower to ensure the
 hotend is primed for printing (as is commonly done on toolchanger and
@@ -275,11 +273,11 @@ In addition, a nozzle wiper and purge bucket may be useful if you are
 replacing PrusaSlicer's ramming procedure (which deposits material on
 the wipe tower) with your own tip-shaping procedure that produces
 waste material that must be collected. See the
-[Customization document](kalico/Customization.md#tip-shaping) for
+[Customization document](klipper/Customization.md#tip-shaping) for
 more details on tip-shaping options.
 
 For the Annex K3 printer, the
-[trad_rack_optional.cfg config file](/Kalico/kalico_config/trad_rack_optional.cfg)
+[trad_rack_optional.cfg config file](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg)
 provides the option of performing the tip-shaping process over its
 purge bucket and wiping the nozzle afterwards. This option can work
 with other printers as well (with their own bucket/wiper setup) if
