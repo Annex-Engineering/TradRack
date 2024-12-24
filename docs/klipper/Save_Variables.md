@@ -1,7 +1,7 @@
 # Save Variables
 
 Trad Rack uses
-[save_variables](https://docs.kalico.gg/Config_Reference.html#save_variables)
+[save_variables](https://www.klipper3d.org/Config_Reference.html#save_variables)
 to save variables to disk so that they can be used across restarts.
 This document lists all of the variables that Trad Rack saves to disk.
 
@@ -28,7 +28,7 @@ after a restart. See the
 - `tr_config_bowden_length`: The value of `bowden_length` at the time
   that bowden length data was last saved. On a restart, the saved
   bowden length data will be ignored if `bowden_length` does not match
-  `tr_config_bowden_length`. This variable is saved each time Kalico
+  `tr_config_bowden_length`. This variable is saved each time Klipper
   starts.
 
 [^1]: If `toolhead_fil_sensor_pin` is not specified or

@@ -1,14 +1,14 @@
 # Customization
 
 This document contains info on how code is divided between the
-[trad_rack klippy module](/Kalico/klippy_module/trad_rack.py)
+[trad_rack Klipper module](/Klipper_Stuff/klippy_module/trad_rack.py)
 and the config, how to customize Trad Rack's behavior through gcode
 templates, and what the
-[trad_rack_optional config file](/Kalico/kalico_config/trad_rack_optional.cfg)
+[trad_rack_optional config file](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg)
 does.
 
 **Table of Contents**
-- [Klippy module and config files](#klippy-module-and-config-files)
+- [Klipper module and config files](#klipper-module-and-config-files)
 - [The trad\_rack\_optional config file](#the-trad_rack_optional-config-file)
   - [Main settings](#main-settings)
   - [Tip shaping](#tip-shaping)
@@ -16,10 +16,10 @@ does.
     - [Contents of the Shape\_Tip macro](#contents-of-the-shape_tip-macro)
   - [Macros](#macros)
 
-## Klippy module and config files
+## Klipper module and config files
 
 Most of Trad Rack's functionality is handled through the
-[trad_rack klippy module](/Kalico/klippy_module/trad_rack.py).
+[trad_rack Klipper module](/Klipper_Stuff/klippy_module/trad_rack.py).
 This functionality includes any behaviors that are considered
 "universal" enough that they should require no customization besides
 simple config value changes, but (hopefully) no more than that. All
@@ -45,7 +45,7 @@ templates are currently available:
 
 ## The trad_rack_optional config file
 
-[trad_rack_optional.cfg](/Kalico/kalico_config/trad_rack_optional.cfg)
+[trad_rack_optional.cfg](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg)
 provides a recommended example implementation of `pre_unload_gcode`
 and `post_load_gcode`.[^1] It is highly recommended to include this file
 when getting started with Trad Rack; it provides several useful
@@ -85,7 +85,7 @@ more details.
 
 By default, the `Shape_Tip` macro will call `Slicer_Unload`. This is
 another macro defined in
-[trad_rack_optional.cfg](/Kalico/kalico_config/trad_rack_optional.cfg)
+[trad_rack_optional.cfg](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg)
 that mimics ramming and/or unload behavior from PrusaSlicer or
 SuperSlicer. If you want the `Shape_Tip` macro to do something else
 instead (for example if you are using a filament cutter and don't need
@@ -94,7 +94,7 @@ the typical tip-shaping procedure), you can replace the call to
 
 ### Macros
 
-[trad_rack_optional.cfg](/Kalico/kalico_config/trad_rack_optional.cfg)
+[trad_rack_optional.cfg](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg)
 adds the following macros. See the comments in the file for
 information on how these macros are meant to be used and what
 parameters they expect:

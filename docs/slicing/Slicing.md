@@ -27,8 +27,8 @@ other setups.
 ### Prerequisites
 
 These profiles assume you have included
-[trad_rack_optional.cfg](/Kalico/kalico_config/trad_rack_optional.cfg)
-in your Kalico config and that you have a `Print_Start` g-code macro
+[trad_rack_optional.cfg](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg)
+in your Klipper config and that you have a `Print_Start` g-code macro
 that takes the following parameters:
 
 - `EXTRUDER`: Hotend temperature
@@ -93,9 +93,9 @@ profile(s) to work:
 
 With the ramming and/or unload gcode removed, you will need to have
 some sort of replacement run in the `pre_unload_gcode` in the
-[trad_rack] section of your Kalico config. The simplest way to do
+[trad_rack] section of your Klipper config. The simplest way to do
 this (assuming you have included
-[trad_rack_optional.cfg](/Kalico/kalico_config/trad_rack_optional.cfg))
+[trad_rack_optional.cfg](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg))
 is to set `variable_shape_tip` to `True` in the
 [gcode_macro TR_Variables] section. Keep in mind that the provided
 `Shape_Tip` macro includes both ramming and unloading.
@@ -129,7 +129,7 @@ Printer Settings tab:
     Explanation:
     - `CLEAR_PAUSE`: Clears the paused state.
     - `TR_LOCATE_SELECTOR`: See the
-      [G-Codes document](/docs/kalico/G-Codes.md/#tr_locate_selector)
+      [G-Codes document](/docs/klipper/G-Codes.md/#tr_locate_selector)
       for more details.
     - `T{initial_tool} MIN_TEMP={...}`: Loads the first filament into
       the toolhead.

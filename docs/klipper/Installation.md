@@ -1,7 +1,7 @@
 # Installation
 
 This document lists the steps to get Trad Rack set up to work with
-Kalico or Klipper.
+Klipper.
 
 **Table of Contents**
 - [Klippy module](#klippy-module)
@@ -20,9 +20,10 @@ Kalico or Klipper.
 This section involves adding the Trad Rack Klippy module(s) to Klipper
 and enabling updates through Moonraker.
 
-If you are using [Kalico](http://github.com/KalicoCrew/kalico),
+If you are using
+[Danger Klipper](https://github.com/DangerKlippers/danger-klipper),
 you can skip to [setting up config files](#config-files) since
-Kalico already includes the trad_rack module.
+Danger Klipper already includes the trad_rack module.
 
 The installation procedure differs slightly depending on whether
 you are using a recent version of Klipper or an older version from
@@ -43,7 +44,7 @@ module(s):
 
 ```
 cd ~
-curl -LJO https://raw.githubusercontent.com/Annex-Engineering/TradRack/main/Kalico/klippy_module/install.sh
+curl -LJO https://raw.githubusercontent.com/Annex-Engineering/TradRack/main/Klipper_Stuff/klippy_module/install.sh
 chmod +x install.sh
 ./install.sh
 ```
@@ -52,7 +53,7 @@ chmod +x install.sh
   
   ```
   cd ~
-  curl -LJO https://raw.githubusercontent.com/Annex-Engineering/TradRack/main/Kalico/klippy_module/install.sh
+  curl -LJO https://raw.githubusercontent.com/Annex-Engineering/TradRack/main/Klipper_Stuff/klippy_module/install.sh
   chmod +x install.sh
   ./install.sh pre_toolhead_changes
   ```
@@ -77,7 +78,7 @@ sudo systemctl restart klipper
 > following commands:
 > ```
 > cd ~
-> ./trad_rack_klippy_module/Kalico/klippy_module/install.sh <branch_name>
+> ./trad_rack_klippy_module/Klipper_Stuff/klippy_module/install.sh <branch_name>
 > ```
 > If unspecified, `branch_name` defaults to `main`.
 
@@ -116,7 +117,7 @@ sudo systemctl restart moonraker
 
 ## Config files
 
-Complete the following changes/additions to your Kalico config:
+Complete the following changes/additions to your Klipper config:
 
 ### Preliminary changes
 
@@ -142,25 +143,24 @@ gcode:
 
 #### [save_variables]
 
-The [save_variables] config section is required. See the
-[Kalico Config Reference document](https://docs.kalico.gg/Config_Reference.html#save_variables)
-for details on how to add this section.
+The [save_variables] config section is required. 
+See the [Klipper config reference document](https://www.klipper3d.org/Config_Reference.html#save_variables) for details on how to add this section.
 
 ### Using provided config files
 
-Copy the following files into your Kalico config folder and
-[include them](https://docs.kalico.gg/Config_Reference.html#include)
+Copy the following files into your Klipper config folder and
+[include them](https://www.klipper3d.org/Config_Reference.html#include)
 in your main printer config file:
 
 - One of the files from the
-  [base_config_options folder](/Kalico/kalico_config/base_config_options/):
+  [base_config_options folder](/Klipper_Stuff/klipper_config/base_config_options/):
   base config file. Several options are provided for different boards
   or stepper drivers. This file is required. Make sure to complete the
   following changes:
   - [mcu tr] section
     - Replace `serial` with the serial for your board.
-      See Kalico's 
-      [Installation document](https://docs.kalico.gg/Installation.html)
+      See Klipper's 
+      [Installation document](https://www.klipper3d.org/Installation.html)
       if you need help finding this value.
   - [trad_rack] section
     - Change `toolhead_fil_sensor_pin` to match the pin you are using
@@ -181,7 +181,7 @@ in your main printer config file:
   - [tmc2209 stepper_tr_fil_driver] or [tmc5160 stepper_tr_fil_driver]
     section
     - Change `run_current` to match your filament driver motor.
-- [trad_rack_optional.cfg](/Kalico/kalico_config/trad_rack_optional.cfg):
+- [trad_rack_optional.cfg](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg):
   optional config file. It is highly recommended to include this file
   (see the [Customization document](Customization.md) for more
   details).
@@ -193,8 +193,8 @@ Follow the instructions in
 addition, modify every "pin" or "uart_address" setting in
 the base config file to match your board: copy each of these settings
 from a corresponding section in the
-[example Kalico config for your board](https://github.com/KalicoCrew/kalico/tree/main/config).
-Some settings such as `tx_pin` or `uart_address` might not be needed.
+[example Klipper config for your board](https://github.com/Klipper3d/klipper/tree/master/config). Some settings such as `tx_pin` or `uart_address` might
+not be needed.
 
 ### Building a config from scratch
 

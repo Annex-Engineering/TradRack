@@ -1,7 +1,7 @@
 # G-Codes
 
-This document is modeled after Kalico's
-[G-Codes document](https://docs.kalico.gg/G-Codes.html) but only
+This document is modeled after Klipper's
+[G-Codes document](https://www.klipper3d.org/G-Codes.html) but only
 contains items pertaining to Trad Rack.
 
 **Table of Contents**
@@ -167,7 +167,7 @@ sync_to_extruder to True in the
 ## Calibration and testing
 
 The following commands are used either for calibration or for testing
-settings without having to restart Kalico to reload the config.
+settings without having to restart Klipper to reload the config.
 Calibration procedures that should be run before using Trad Rack are
 covered by the [Quick Start document](/docs/Quick_Start.md):
 
@@ -246,6 +246,6 @@ default lane will be indicated.
 ## Macros
 
 In addition to the above gcode commands, the
-[trad_rack_optional config file](/Kalico/kalico_config/trad_rack_optional.cfg)
+[trad_rack_optional config file](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg)
 adds several gcode macros (if you choose to include it). See the
 [Customization document](Customization.md#macros) for details.
