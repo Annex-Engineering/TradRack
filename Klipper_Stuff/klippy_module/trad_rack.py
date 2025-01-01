@@ -30,7 +30,8 @@ class TradRack:
 
     WARNING_MSG = (
         "[trad_rack]: trad_rack.py has been moved to a different folder in"
-        ' the TradRack repo. Please redo the steps here under "Klippy'
+        " the TradRack repo. Please delete the ~/trad_rack_klippy_module"
+        ' directory, then redo the steps here under "Klippy'
         ' module installation" (including using curl to download the updated'
         " install script) to update your trad_rack installation to use the new"
         " folder:"
