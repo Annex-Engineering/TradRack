@@ -62,6 +62,16 @@ lane_spacing:
 #   variations in a lane module that will affect its position as well
 #   as the positions of any subsequent modules with a higher index.
 #   The default is 0.0 for each lane.
+#lane_entry_fil_sensor_pin_<lane index>:
+#   Options with a "lane_entry_fil_sensor_pin_" prefix may be
+#   specified for any of the lanes (from 0 to lane_count - 1). Each
+#   option is the pin on which a filament sensor is connected, with
+#   the sensor being located at the entry of the corresponding lane
+#   module (or further upstream in its filament path). If this option
+#   is specified for a given lane, the connected sensor will be used
+#   for detecting filament runouts on that lane. If not specified,
+#   only the selector filament sensor will be used for detecting
+#   runouts on that lane.
 servo_down_angle:
 #   The angle (in degrees) for the servo's down position.
 #   This parameter must be specified.

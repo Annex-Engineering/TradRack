@@ -1,6 +1,6 @@
 # Trad Rack multimaterial system support
 #
-# Copyright (C) 2022-2024 Ryan Ghosh <rghosh776@gmail.com>
+# Copyright (C) 2022-2025 Ryan Ghosh <rghosh776@gmail.com>
 # based on code by Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
@@ -84,7 +84,10 @@ class TradRack:
         # set up selector sensor as a runout sensor
         pin = config.getsection(FIL_DRIVER_STEPPER_NAME).get("endstop_pin")
         self.selector_sensor = TradRackRunoutSensor(
-            config, self.handle_runout, pin
+            config,
+            lambda e: self.handle_runout(e, self.active_lane, "selector"),
+            pin,
+            allow_duplicate_pins=True,
         )
 
         # read lane count and get lane positions
@@ -93,6 +96,19 @@ class TradRack:
             self.lane_count, config
         )
         self.lane_positions = self.lane_position_manager.get_lane_positions()
+
+        # set up any lane entry sensors as runout sensors
+        self.lane_entry_sensors = [None] * self.lane_count
+        for i in range(self.lane_count):
+            pin = config.get(
+                "lane_entry_fil_sensor_pin_" + str(i), default=None
+            )
+            if pin:
+                self.lane_entry_sensors[i] = TradRackRunoutSensor(
+                    config,
+                    lambda e, l=i: self.handle_runout(e, l, "lane entry"),
+                    pin,
+                )
 
         # create bowden length filters
         bowden_samples = config.getint(
@@ -467,31 +483,38 @@ class TradRack:
             self.VARS_HEATER_TARGET, 0.0
         )
 
-    def handle_runout(self, eventtime):
-        # send pause command
-        pause_resume = self.printer.lookup_object("pause_resume")
-        pause_resume.send_pause_command()
-        # self.printer.get_reactor().pause(eventtime + self.pause_delay)
+    def handle_runout(self, eventtime, lane, sensor_location):
+        # note lane is not loaded, buffer is not full
+        self.lanes_dead[lane] = True
+        self.lanes_buffered[lane] = False
 
-        # set up resume callback and run pause gcode
-        self._set_up_resume_and_pause("runout", {})
+        # if the runout occurred on the active lane, pause and attempt to
+        # replace the filament with one from a different lane before resuming
+        if self.active_lane == lane:
+            # send pause command
+            pause_resume = self.printer.lookup_object("pause_resume")
+            pause_resume.send_pause_command()
+            # self.printer.get_reactor().pause(eventtime + self.pause_delay)
 
-        # note runout
-        self.runout_lane = self.active_lane
-        self._set_active_lane(None)
-        self.lanes_buffered[self.runout_lane] = False
-        self.lanes_dead[self.runout_lane] = True
-        self.gcode.respond_info(
-            "Runout detected at selector on lane {} (tool {})".format(
-                self.runout_lane, self.tool_map[self.runout_lane]
+            # set up resume callback and run pause gcode
+            self._set_up_resume_and_pause("runout", {})
+
+            # note runout
+            self.runout_lane = self.active_lane
+            self._set_active_lane(None)
+            self.gcode.respond_info(
+                "Runout detected at {} on lane {} (tool {})".format(
+                    sensor_location,
+                    self.runout_lane,
+                    self.tool_map[self.runout_lane],
+                )
             )
-        )
 
-        # unload filament and reload from a new lane
-        self.runout_steps_done = 0
-        self.cmd_TR_RESUME(
-            self.gcode.create_gcode_command("TR_RESUME", "TR_RESUME", {})
-        )
+            # unload filament and reload from a new lane
+            self.runout_steps_done = 0
+            self.cmd_TR_RESUME(
+                self.gcode.create_gcode_command("TR_RESUME", "TR_RESUME", {})
+            )
 
     # gcode commands
     cmd_TR_HOME_help = "Home Trad Rack's selector"
@@ -570,7 +593,10 @@ class TradRack:
                     "condition": (
                         lambda t=tool: self.default_lanes[t] is not None
                     ),
-                    "action": lambda g=gcmd: self.cmd_TR_LOAD_TOOLHEAD(g),
+                    "action": lambda g=gcmd,
+                    t=tool_override: self.cmd_TR_LOAD_TOOLHEAD(
+                        g, tool_override=t
+                    ),
                     "fail_msg": (
                         "Cannot resume. Please use TR_ASSIGN_LANE to assign a"
                         " lane to tool %d, then use TR_RESUME." % tool
@@ -611,7 +637,8 @@ class TradRack:
             # (and wait for user to resume)
             resume_kwargs = {
                 "condition": self._is_selector_homed,
-                "action": lambda g=gcmd: self.cmd_TR_LOAD_TOOLHEAD(g),
+                "action": lambda g=gcmd,
+                t=tool_override: self.cmd_TR_LOAD_TOOLHEAD(g, tool_override=t),
                 "fail_msg": (
                     "Cannot resume. Please use either TR_LOCATE_SELECTOR or"
                     " TR_HOME to home the selector, then use TR_RESUME."
@@ -748,7 +775,7 @@ class TradRack:
         # make lane the new default for its assigned tool
         self._make_lane_default(lane)
 
-        # enable runout detection
+        # enable selector sensor runout detection
         self.selector_sensor.set_active(True)
 
         # notify active lane was set without loading the toolhead
@@ -1290,7 +1317,7 @@ class TradRack:
         # wait for heater temp if needed
         save_temp = self._wait_for_heater_temp(min_temp, exact_temp)
 
-        # disable runout detection
+        # disable selector sensor runout detection
         self.selector_sensor.set_active(False)
 
         if not (selector_already_loaded and self.curr_lane == lane):
@@ -1517,7 +1544,7 @@ class TradRack:
         # make lane the new default for its assigned tool
         self._make_lane_default(lane)
 
-        # enable runout detection
+        # enable selector sensor runout detection
         self.selector_sensor.set_active(True)
 
         # save heater target
@@ -1597,6 +1624,9 @@ class TradRack:
                 "Failed to load filament into selector. No trigger on selector"
                 " sensor after full movement"
             )
+
+        # enable lane entry sensor runout detection (if a sensor exists)
+        self._enable_lane_entry_sensor(lane)
 
     def _unload_selector(
         self, base_length=None, mark_calibrated=False, eject=False
@@ -1731,7 +1761,7 @@ class TradRack:
                 "Selector must be moved to a lane before unloading"
             )
 
-        # disable runout detection
+        # disable selector sensor runout detection
         self.selector_sensor.set_active(False)
 
         # notify toolhead unload started
@@ -1870,6 +1900,14 @@ class TradRack:
                 'SAVE_VARIABLE VARIABLE=%s VALUE="%s"'
                 % (self.VARS_ACTIVE_LANE, lane)
             )
+
+        # enable lane entry sensor runout detection (if a sensor exists)
+        self._enable_lane_entry_sensor(lane)
+
+    def _enable_lane_entry_sensor(self, lane):
+        sensor = self.lane_entry_sensors[lane]
+        if sensor is not None:
+            sensor.set_active(True)
 
     def _reset_tool_map(self):
         self.tool_map = list(range(self.lane_count))
@@ -2880,19 +2918,22 @@ class SelectorNotHomedError(CommandError):
 
 
 class TradRackRunoutSensor:
-    def __init__(self, config, runout_callback, pin):
+    def __init__(
+        self, config, runout_callback, pin, allow_duplicate_pins=False
+    ):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
         self.runout_callback = runout_callback
 
-        # disable config checks for duplicate pins
-        pin_desc = pin
-        if pin_desc.startswith("^") or pin_desc.startswith("~"):
-            pin_desc = pin_desc[1:].strip()
-        if pin_desc.startswith("!"):
-            pin_desc = pin_desc[1:].strip()
-        ppins = self.printer.lookup_object("pins")
-        ppins.allow_multi_use_pin(pin_desc)
+        if allow_duplicate_pins:
+            # disable config checks for duplicate pins
+            pin_desc = pin
+            if pin_desc.startswith("^") or pin_desc.startswith("~"):
+                pin_desc = pin_desc[1:].strip()
+            if pin_desc.startswith("!"):
+                pin_desc = pin_desc[1:].strip()
+            ppins = self.printer.lookup_object("pins")
+            ppins.allow_multi_use_pin(pin_desc)
 
         # register button
         buttons = config.get_printer().load_object(config, "buttons")
