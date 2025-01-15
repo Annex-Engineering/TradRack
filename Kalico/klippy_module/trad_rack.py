@@ -1901,8 +1901,9 @@ class TradRack:
                 % (self.VARS_ACTIVE_LANE, lane)
             )
 
-        # enable lane entry sensor runout detection (if a sensor exists)
-        self._enable_lane_entry_sensor(lane)
+        if lane is not None:
+            # enable lane entry sensor runout detection (if a sensor exists)
+            self._enable_lane_entry_sensor(lane)
 
     def _enable_lane_entry_sensor(self, lane):
         sensor = self.lane_entry_sensors[lane]
