@@ -2323,7 +2323,7 @@ class TradRackToolHead(toolhead.ToolHead, object):
         ]
         self.mcu = self.all_mcus[0]
         if hasattr(toolhead, "LookAheadQueue"):
-            self.lookahead = toolhead.LookAheadQueue(self)
+            self.lookahead = toolhead.LookAheadQueue()
             self.lookahead.set_flush_time(toolhead.BUFFER_TIME_HIGH)
         else:
             self.move_queue = toolhead.MoveQueue(self)
@@ -2374,7 +2374,6 @@ class TradRackToolHead(toolhead.ToolHead, object):
         self.print_time = 0.0
         self.special_queuing_state = "NeedPrime"
         self.priming_timer = None
-        self.drip_completion = None
         # Flush tracking
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.do_kick_flush_timer = True
