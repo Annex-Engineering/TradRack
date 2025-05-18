@@ -2413,7 +2413,7 @@ class TradRackToolHead(toolhead.ToolHead, object):
             "klippy:shutdown", self._handle_shutdown
         )
 
-    def set_position(self, newpos, homing_axes=""):
+    def set_position(self, newpos, homing_axes=()):
         for _ in range(4 - len(newpos)):
             newpos.append(0.0)
         super(TradRackToolHead, self).set_position(newpos, homing_axes)
