@@ -5,6 +5,7 @@ Each section should be completed before moving on to the next.
 
 **Table of Contents**
 - [BOM/sourcing and other required hardware](#bomsourcing-and-other-required-hardware)
+  - [Item Calculator](#item-calculator)
 - [Printing required parts](#printing-required-parts)
 - [Mechanical assembly](#mechanical-assembly)
 - [Wiring](#wiring)
@@ -31,6 +32,13 @@ The bill of materials/sourcing guide for Trad Rack can be found
 Before placing any orders for parts for Trad Rack, it is recommended to read the
 [Printer and hardware requirements document](Printer_and_Hardware_Requirements.md)
 in case there are any other items you may want to combine into your orders.
+
+### Item Calculator
+
+Several parts of the build are scalable to the needs of the builder. There are two ways to use our item calculator, which can help you determine how many and what sizes of these parts you need.
+
+  - [Web Based Calculator](https://trinket.io/python/694b97d948?outputOnly=true&runOption=run)
+  - [Spreadsheet Calculator](https://docs.google.com/spreadsheets/d/1RdqxC5n0PXs8FgdxJVkqQUN2aY69W7eFC76b8XtMozI/edit?usp=sharing)
 
 ## Printing required parts
 
