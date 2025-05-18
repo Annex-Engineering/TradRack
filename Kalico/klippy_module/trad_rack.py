@@ -2397,7 +2397,8 @@ class TradRackToolHead(toolhead.ToolHead, object):
         # Create kinematic class
         gcode = self.printer.lookup_object("gcode")
         self.Coord = gcode.Coord
-        self.extruder = kinematics.extruder.DummyExtruder(self.printer)
+        extruder = kinematics.extruder.DummyExtruder(self.printer)
+        self.extra_axes = [extruder]
         try:
             self.kin = TradRackKinematics(self, config, is_extruder_synced)
         except config.error as e:
