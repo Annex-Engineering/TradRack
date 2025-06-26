@@ -233,7 +233,7 @@ class TradRack:
         self.next_lane = None  # next lane to load to toolhead
         self.next_tool = None  # next tool to load to toolhead
         self.servo_raised = None
-        self.lanes_unloaded = [False] * self.lane_count
+        self.lanes_buffered = [False] * self.lane_count
         self.bowden_load_calibrated = False
         self.bowden_unload_calibrated = False
         self.bowden_load_lengths_filename = os.path.expanduser(
@@ -475,7 +475,7 @@ class TradRack:
         # note runout
         self.runout_lane = self.active_lane
         self._set_active_lane(None)
-        self.lanes_unloaded[self.runout_lane] = False
+        self.lanes_buffered[self.runout_lane] = False
         self.lanes_dead[self.runout_lane] = True
         self.gcode.respond_info(
             "Runout detected at selector on lane {} (tool {})".format(
@@ -1176,7 +1176,7 @@ class TradRack:
 
         # reset lane speed
         if reset_speed:
-            self.lanes_unloaded[lane] = False
+            self.lanes_buffered[lane] = False
 
         # load filament into the selector
         self._load_selector(lane, user_load=user_load)
@@ -1315,7 +1315,7 @@ class TradRack:
                             lane=str(self.curr_lane)
                         )
                     )
-                    self.lanes_unloaded[self.curr_lane] = False
+                    self.lanes_buffered[self.curr_lane] = False
                 self.retry_lane = self.curr_lane
                 logging.warning(
                     "trad_rack: Failed to unload toolhead", exc_info=True
@@ -1384,7 +1384,7 @@ class TradRack:
         pos = self.tr_toolhead.get_position()
         move_start = pos[1]
         pos[1] += bowden_length
-        if self.lanes_unloaded[self.curr_lane]:
+        if self.lanes_buffered[self.curr_lane]:
             speed = self.buffer_pull_speed
         else:
             speed = self.spool_pull_speed
@@ -1827,7 +1827,7 @@ class TradRack:
 
         # note that the current lane's buffer has been filled
         if self.curr_lane is not None:
-            self.lanes_unloaded[self.curr_lane] = True
+            self.lanes_buffered[self.curr_lane] = True
 
         # reset ignore_next_unload_length
         self.ignore_next_unload_length = False
