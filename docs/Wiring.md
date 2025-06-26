@@ -103,10 +103,10 @@ shown below:
 
 | Wire          | Color | From      | From pin  | To                        | To pin    |
 | ---           | ---   | ---       | ---       | ---                       | ---       |
-| Motor A       | Black | Stepper   | N/A[^2]   | 3-pin Microfit receptacle | 1         |
-| Motor C       | Green | Stepper   | N/A[^2]   | 3-pin Microfit receptacle | 2         |
-| Motor B       | Red   | Stepper   | N/A[^2]   | 3-pin Microfit receptacle | 3         |
-| Motor D       | Blue  | Stepper   | N/A[^2]   | 3-pin Microfit receptacle | 4         |
+| Motor A       | Black | Stepper   | N/A[^2]   | 4-pin Microfit receptacle | 1         |
+| Motor C       | Green | Stepper   | N/A[^2]   | 4-pin Microfit receptacle | 2         |
+| Motor B       | Red   | Stepper   | N/A[^2]   | 4-pin Microfit receptacle | 3         |
+| Motor D       | Blue  | Stepper   | N/A[^2]   | 4-pin Microfit receptacle | 4         |
 
 [^2]: If your stepper has a detachable cable and you do not already
 have a premade cable that matches the colors in this table, refer to
