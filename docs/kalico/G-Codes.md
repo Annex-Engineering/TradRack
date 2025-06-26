@@ -87,15 +87,21 @@ commands.
 
 ### TR_UNLOAD_TOOLHEAD
 `TR_UNLOAD_TOOLHEAD [MIN_TEMP=<temperature>]
-[EXACT_TEMP=<temperature>]`: Unloads filament from the toolhead and
-back into its module. If `MIN_TEMP` is specified and it is higher than
-the extruder's current temperature, then the extruder will be heated
-to at least `MIN_TEMP` before unloading; the current extruder
-temperature target may be used instead if it is higher than
-`MIN_TEMP`, and if not then [tr_last_heater_target](Save_Variables.md)
-may be used. If `EXACT_TEMP` is specified, the extruder will be heated
-to `EXACT_TEMP` before unloading/loading, regardless of any other
-temperature setting.
+[EXACT_TEMP=<temperature>] [RESET_SPEED=<0|1>]`: Unloads filament from
+the toolhead and back into its module. If `MIN_TEMP` is specified and
+it is higher than the extruder's current temperature, then the
+extruder will be heated to at least `MIN_TEMP` before unloading; the
+current extruder temperature target may be used instead if it is
+higher than `MIN_TEMP`, and if not then
+[tr_last_heater_target](Save_Variables.md) may be used. If
+`EXACT_TEMP` is specified, the extruder will be heated to `EXACT_TEMP`
+before unloading/loading, regardless of any other temperature setting.
+If `RESET_SPEED` is 1, the bowden move speed used for the current lane
+will be reset to spool_pull_speed from the
+[trad_rack config section](Config_Reference.md#trad_rack)
+(see [bowden speeds](/docs/Tuning.md#bowden-speeds) for details on how
+the bowden speed settings are used). If not specified, `RESET_SPEED`
+defaults to 1.
 
 ### TR_SERVO_DOWN
 `TR_SERVO_DOWN [FORCE=<0|1>]`: Moves the servo to bring the drive gear

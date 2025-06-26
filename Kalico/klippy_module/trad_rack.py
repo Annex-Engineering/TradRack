@@ -615,10 +615,16 @@ class TradRack:
     cmd_TR_UNLOAD_TOOLHEAD_help = "Unload filament from the toolhead"
 
     def cmd_TR_UNLOAD_TOOLHEAD(self, gcmd):
-        self._unload_toolhead(
-            gcmd.get_float("MIN_TEMP", 0.0, minval=0.0),
-            gcmd.get_float("EXACT_TEMP", 0.0, minval=0.0),
-        )
+        try:
+            # unload toolhead
+            self._unload_toolhead(
+                gcmd.get_float("MIN_TEMP", 0.0, minval=0.0),
+                gcmd.get_float("EXACT_TEMP", 0.0, minval=0.0),
+            )
+        finally:
+            # reset lane speed (in case the user is removing/swapping the spool)
+            if gcmd.get_int("RESET_SPEED", 1) and self.curr_lane is not None:
+                self.lanes_buffered[self.curr_lane] = False
 
     cmd_TR_SERVO_DOWN_help = "Lower the servo"
 
