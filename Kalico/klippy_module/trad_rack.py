@@ -285,7 +285,7 @@ class TradRack:
         self.next_lane = None  # next lane to load to toolhead
         self.next_tool = None  # next tool to load to toolhead
         self.servo_raised = None
-        self.lanes_unloaded = [False] * self.lane_count
+        self.lanes_buffered = [False] * self.lane_count
         self.bowden_load_calibrated = False
         self.bowden_unload_calibrated = False
         self.bowden_load_lengths_filename = os.path.expanduser(
@@ -548,7 +548,7 @@ class TradRack:
         # note runout
         self.runout_lane = self.active_lane
         self._set_active_lane(None)
-        self.lanes_unloaded[self.runout_lane] = False
+        self.lanes_buffered[self.runout_lane] = False
         self.lanes_dead[self.runout_lane] = True
         self.gcode.respond_info(
             "Runout detected at selector on lane {} (tool {})".format(
@@ -688,10 +688,16 @@ class TradRack:
     cmd_TR_UNLOAD_TOOLHEAD_help = "Unload filament from the toolhead"
 
     def cmd_TR_UNLOAD_TOOLHEAD(self, gcmd):
-        self._unload_toolhead(
-            gcmd.get_float("MIN_TEMP", 0.0, minval=0.0),
-            gcmd.get_float("EXACT_TEMP", 0.0, minval=0.0),
-        )
+        try:
+            # unload toolhead
+            self._unload_toolhead(
+                gcmd.get_float("MIN_TEMP", 0.0, minval=0.0),
+                gcmd.get_float("EXACT_TEMP", 0.0, minval=0.0),
+            )
+        finally:
+            # reset lane speed (in case the user is removing/swapping the spool)
+            if gcmd.get_int("RESET_SPEED", 1) and self.curr_lane is not None:
+                self.lanes_buffered[self.curr_lane] = False
 
     cmd_TR_SERVO_DOWN_help = "Lower the servo"
 
@@ -1249,7 +1255,7 @@ class TradRack:
 
         # reset lane speed
         if reset_speed:
-            self.lanes_unloaded[lane] = False
+            self.lanes_buffered[lane] = False
 
         # load filament into the selector
         self._load_selector(lane, user_load=user_load)
@@ -1387,7 +1393,7 @@ class TradRack:
                             lane=str(self.curr_lane)
                         )
                     )
-                    self.lanes_unloaded[self.curr_lane] = False
+                    self.lanes_buffered[self.curr_lane] = False
                 self.retry_lane = self.curr_lane
                 logging.warning(
                     "trad_rack: Failed to unload toolhead", exc_info=True
@@ -1452,7 +1458,7 @@ class TradRack:
 
         # move filament through the bowden tube
         self._reset_fil_driver()
-        if self.lanes_unloaded[self.curr_lane]:
+        if self.lanes_buffered[self.curr_lane]:
             speed = self.buffer_pull_speed
         else:
             speed = self.spool_pull_speed
@@ -1878,7 +1884,7 @@ class TradRack:
 
         # note that the current lane's buffer has been filled
         if self.curr_lane is not None:
-            self.lanes_unloaded[self.curr_lane] = True
+            self.lanes_buffered[self.curr_lane] = True
 
         # reset ignore_next_unload_length
         self.ignore_next_unload_length = False
@@ -2517,7 +2523,7 @@ class TradRackToolHead(toolhead.ToolHead, object):
         ]
         self.mcu = self.all_mcus[0]
         if hasattr(toolhead, "LookAheadQueue"):
-            self.lookahead = toolhead.LookAheadQueue(self)
+            self.lookahead = toolhead.LookAheadQueue()
             self.lookahead.set_flush_time(toolhead.BUFFER_TIME_HIGH)
         else:
             self.move_queue = toolhead.MoveQueue(self)
@@ -2568,7 +2574,6 @@ class TradRackToolHead(toolhead.ToolHead, object):
         self.print_time = 0.0
         self.special_queuing_state = "NeedPrime"
         self.priming_timer = None
-        self.drip_completion = None
         # Flush tracking
         self.flush_timer = self.reactor.register_timer(self._flush_handler)
         self.do_kick_flush_timer = True
@@ -2586,11 +2591,14 @@ class TradRackToolHead(toolhead.ToolHead, object):
         self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
         self.trapq_append = ffi_lib.trapq_append
         self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
+        # Motion flushing
         self.step_generators = []
+        self.flush_trapqs = [self.trapq]
         # Create kinematic class
         gcode = self.printer.lookup_object("gcode")
         self.Coord = gcode.Coord
-        self.extruder = kinematics.extruder.DummyExtruder(self.printer)
+        extruder = kinematics.extruder.DummyExtruder(self.printer)
+        self.extra_axes = [extruder]
         try:
             self.kin = TradRackKinematics(self, config, is_extruder_synced)
         except config.error as e:
