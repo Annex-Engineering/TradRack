@@ -5,10 +5,11 @@ Each section should be completed before moving on to the next.
 
 **Table of Contents**
 - [BOM/sourcing and other required hardware](#bomsourcing-and-other-required-hardware)
+  - [Item Calculator](#item-calculator)
 - [Printing required parts](#printing-required-parts)
 - [Mechanical assembly](#mechanical-assembly)
 - [Wiring](#wiring)
-- [Klipper installation](#klipper-installation)
+- [Kalico installation](#kalico-installation)
 - [Servo calibration](#servo-calibration)
   - [Servo rotation direction](#servo-rotation-direction)
   - [Servo horn angle](#servo-horn-angle)
@@ -31,6 +32,13 @@ The bill of materials/sourcing guide for Trad Rack can be found
 Before placing any orders for parts for Trad Rack, it is recommended to read the
 [Printer and hardware requirements document](Printer_and_Hardware_Requirements.md)
 in case there are any other items you may want to combine into your orders.
+
+### Item Calculator
+
+Several parts of the build are scalable to the needs of the builder. There are two ways to use our item calculator, which can help you determine how many and what sizes of these parts you need.
+
+  - [Web Based Calculator](https://trinket.io/python/694b97d948?outputOnly=true&runOption=run)
+  - [Spreadsheet Calculator](https://docs.google.com/spreadsheets/d/1RdqxC5n0PXs8FgdxJVkqQUN2aY69W7eFC76b8XtMozI/edit?usp=sharing)
 
 ## Printing required parts
 
@@ -57,15 +65,15 @@ assembling Trad Rack.
 
 See the [Wiring document](Wiring.md).
 
-## Klipper installation
+## Kalico installation
 
-See the [Klipper installation document](klipper/Installation.md).
+See the [Kalico installation document](kalico/Installation.md).
 
 ## Servo calibration
 
 This section involves setting the rotation direction and angles of the
 servo. You will need to have Trad Rack fully assembled, wired, and
-connected to your printer with Klipper running.
+connected to your printer with Kalico running.
 
 To prepare, remove the servo from Trad Rack by undoing the 2 screws
 that attach it to the right carriage.
@@ -87,9 +95,9 @@ TR_SERVO_DOWN FORCE=1
 ```
 
 If the servo rotated clockwise, you can continue on to setting the
-[servo horn angle](#servo-horn-angle). Otherwise, in your Klipper
+[servo horn angle](#servo-horn-angle). Otherwise, in your Kalico
 config, swap the values of `servo_down_angle` and `servo_up_angle` in
-the [trad_rack] section. Then restart Klipper and continue.
+the [trad_rack] section. Then restart Kalico and continue.
 
 ### Servo horn angle
 
@@ -169,7 +177,7 @@ Once the servo aligns well enough with the slots that the screw can
 protrude from the jig, observe the last "raw angle" value reported in
 the console. In your main Trad Rack config file, replace the value of
 `servo_up_angle` in the [trad_rack] section with the "raw angle"
-value. Remove the servo jig and restart Klipper. Then run the
+value. Remove the servo jig and restart Kalico. Then run the
 following gcode command:
 
 ```
@@ -209,12 +217,12 @@ See the [Slicing document](slicing/Slicing.md).
 ## Changing Slicer_Unload macro settings
 
 This section involves adjusting the settings of the
-[Slicer_Unload macro](klipper/Customization.md#tip-shaping) to match
+[Slicer_Unload macro](kalico/Customization.md#tip-shaping) to match
 your slicer settings so that toolhead unloads performed outside of a
 print will closely match toolhead unloads performed during a print.
 
 Under `[gcode_macro Slicer_Unload]` in your copy of
-[trad_rack_optional.cfg](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg),
+[trad_rack_optional.cfg](/Kalico/kalico_config/trad_rack_optional.cfg),
 change the values of the following variables to match the values you
 set in the slicer profile. Variable names match the "parameter names"
 used in the slicer config files:
@@ -266,7 +274,7 @@ default lane*), run the following command:
 T0
 ```
 
-\* see the [Gcode reference document](klipper/G-Codes.md#tr_load_toolhead)
+\* see the [G-Codes document](kalico/G-Codes.md#tr_load_toolhead)
 for more details on the available parameters for the `TR_LOAD_TOOLHEAD`
 and `T<tool index>` toolchange commands.
 

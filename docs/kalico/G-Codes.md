@@ -1,7 +1,7 @@
 # G-Codes
 
-This document is modeled after Klipper's
-[G-Codes document](https://www.klipper3d.org/G-Codes.html) but only
+This document is modeled after Kalico's
+[G-Codes document](https://docs.kalico.gg/G-Codes.html) but only
 contains items pertaining to Trad Rack.
 
 **Table of Contents**
@@ -87,15 +87,21 @@ commands.
 
 ### TR_UNLOAD_TOOLHEAD
 `TR_UNLOAD_TOOLHEAD [MIN_TEMP=<temperature>]
-[EXACT_TEMP=<temperature>]`: Unloads filament from the toolhead and
-back into its module. If `MIN_TEMP` is specified and it is higher than
-the extruder's current temperature, then the extruder will be heated
-to at least `MIN_TEMP` before unloading; the current extruder
-temperature target may be used instead if it is higher than
-`MIN_TEMP`, and if not then [tr_last_heater_target](Save_Variables.md)
-may be used. If `EXACT_TEMP` is specified, the extruder will be heated
-to `EXACT_TEMP` before unloading/loading, regardless of any other
-temperature setting.
+[EXACT_TEMP=<temperature>] [RESET_SPEED=<0|1>]`: Unloads filament from
+the toolhead and back into its module. If `MIN_TEMP` is specified and
+it is higher than the extruder's current temperature, then the
+extruder will be heated to at least `MIN_TEMP` before unloading; the
+current extruder temperature target may be used instead if it is
+higher than `MIN_TEMP`, and if not then
+[tr_last_heater_target](Save_Variables.md) may be used. If
+`EXACT_TEMP` is specified, the extruder will be heated to `EXACT_TEMP`
+before unloading/loading, regardless of any other temperature setting.
+If `RESET_SPEED` is 1, the bowden move speed used for the current lane
+will be reset to spool_pull_speed from the
+[trad_rack config section](Config_Reference.md#trad_rack)
+(see [bowden speeds](/docs/Tuning.md#bowden-speeds) for details on how
+the bowden speed settings are used). If not specified, `RESET_SPEED`
+defaults to 1.
 
 ### TR_SERVO_DOWN
 `TR_SERVO_DOWN [FORCE=<0|1>]`: Moves the servo to bring the drive gear
@@ -167,7 +173,7 @@ sync_to_extruder to True in the
 ## Calibration and testing
 
 The following commands are used either for calibration or for testing
-settings without having to restart Klipper to reload the config.
+settings without having to restart Kalico to reload the config.
 Calibration procedures that should be run before using Trad Rack are
 covered by the [Quick Start document](/docs/Quick_Start.md):
 
@@ -246,6 +252,6 @@ default lane will be indicated.
 ## Macros
 
 In addition to the above gcode commands, the
-[trad_rack_optional config file](/Klipper_Stuff/klipper_config/trad_rack_optional.cfg)
+[trad_rack_optional config file](/Kalico/kalico_config/trad_rack_optional.cfg)
 adds several gcode macros (if you choose to include it). See the
 [Customization document](Customization.md#macros) for details.
