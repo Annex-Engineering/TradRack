@@ -6,10 +6,11 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math, os, time
 from collections import deque
-from extras.homing import Homing, HomingMove
-from gcode import CommandError
-from stepper import LookupMultiRail
-import chelper, toolhead, kinematics.extruder
+from .homing import Homing, HomingMove
+from .. import chelper, toolhead
+from ..gcode import CommandError
+from ..stepper import LookupMultiRail
+from ..kinematics import extruder
 
 SERVO_NAME = "servo tr_servo"
 SELECTOR_STEPPER_NAME = "stepper_tr_selector"
@@ -2392,7 +2393,7 @@ class TradRackToolHead(toolhead.ToolHead, object):
         # Create kinematic class
         gcode = self.printer.lookup_object("gcode")
         self.Coord = gcode.Coord
-        self.extruder = kinematics.extruder.DummyExtruder(self.printer)
+        self.extruder = extruder.DummyExtruder(self.printer)
         try:
             self.kin = TradRackKinematics(self, config, is_extruder_synced)
         except config.error as e:
