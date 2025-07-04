@@ -1,6 +1,6 @@
 # Trad Rack multimaterial system support
 #
-# Copyright (C) 2022-2024 Ryan Ghosh <rghosh776@gmail.com>
+# Copyright (C) 2022-2025 Ryan Ghosh <rghosh776@gmail.com>
 # based on code by Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
@@ -570,7 +570,10 @@ class TradRack:
                     "condition": (
                         lambda t=tool: self.default_lanes[t] is not None
                     ),
-                    "action": lambda g=gcmd: self.cmd_TR_LOAD_TOOLHEAD(g),
+                    "action": lambda g=gcmd,
+                    t=tool_override: self.cmd_TR_LOAD_TOOLHEAD(
+                        g, tool_override=t
+                    ),
                     "fail_msg": (
                         "Cannot resume. Please use TR_ASSIGN_LANE to assign a"
                         " lane to tool %d, then use TR_RESUME." % tool
@@ -611,7 +614,8 @@ class TradRack:
             # (and wait for user to resume)
             resume_kwargs = {
                 "condition": self._is_selector_homed,
-                "action": lambda g=gcmd: self.cmd_TR_LOAD_TOOLHEAD(g),
+                "action": lambda g=gcmd,
+                t=tool_override: self.cmd_TR_LOAD_TOOLHEAD(g, tool_override=t),
                 "fail_msg": (
                     "Cannot resume. Please use either TR_LOCATE_SELECTOR or"
                     " TR_HOME to home the selector, then use TR_RESUME."
