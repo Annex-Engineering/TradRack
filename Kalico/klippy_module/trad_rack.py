@@ -117,8 +117,6 @@ class TradRack:
                     untrigger_callback=lambda e, l=i: self.handle_runout(
                         e, l, "lane entry"
                     ),
-                    auto_reset_untrigger=False,
-                    untrigger_only_when_printing=True,
                 )
 
         # create bowden length filters
@@ -274,6 +272,7 @@ class TradRack:
         self.last_heater_target = 0.0
         self.tr_next_generator = None
         self.selector_pos_uncertain = False
+        self.unload_pending = False
         self.variables = None
 
         # resume variables
@@ -502,7 +501,9 @@ class TradRack:
 
         # if the runout occurred on the active lane, pause and attempt to
         # replace the filament with one from a different lane before resuming
-        if self.active_lane == lane:
+        idle_timeout = self.printer.lookup_object("idle_timeout")
+        printing = idle_timeout.get_status(eventtime)["state"] == "Printing"
+        if printing and self.active_lane == lane and not self.unload_pending:
             # send pause command
             pause_resume = self.printer.lookup_object("pause_resume")
             pause_resume.send_pause_command()
@@ -1668,9 +1669,6 @@ class TradRack:
                 " sensor after full movement"
             )
 
-        # enable lane entry sensor runout detection (if a sensor exists)
-        self._set_lane_entry_sensor_runout_active(lane, True)
-
     def _unload_selector(
         self, base_length=None, mark_calibrated=False, eject=False
     ):
@@ -1776,6 +1774,9 @@ class TradRack:
         sync=False,
         eject=False,
     ):
+        # note that there is a pending unload
+        self.unload_pending = True
+
         selector_sensor_state = self._query_selector_sensor()
         toolhead_sensor_state = self._query_toolhead_sensor()
 
@@ -1807,9 +1808,6 @@ class TradRack:
         # disable selector sensor runout detection
         self.selector_sensor.set_untrigger_active(False)
 
-        # disable lane entry sensor runout detection
-        self._set_lane_entry_sensor_runout_active(self, self.active_lane, False)
-
         # notify toolhead unload started
         self.printer.send_event("trad_rack:unload_started")
 
@@ -1832,11 +1830,6 @@ class TradRack:
 
             # reset active lane
             self._set_active_lane(None)
-
-            # re-enable lane entry sensor runout detection
-            self._set_lane_entry_sensor_runout_active(
-                self, self.active_lane, True
-            )
 
         # lower servo
         self._lower_servo(True)
@@ -1917,6 +1910,9 @@ class TradRack:
         self.toolhead.wait_moves()
         self.tr_toolhead.wait_moves()
 
+        # note that there is no longer a pending unload
+        self.unload_pending = False
+
         # notify toolhead unload complete
         self.printer.send_event("trad_rack:unload_complete")
 
@@ -1951,15 +1947,6 @@ class TradRack:
                 'SAVE_VARIABLE VARIABLE=%s VALUE="%s"'
                 % (self.VARS_ACTIVE_LANE, lane)
             )
-
-        if lane is not None:
-            # enable lane entry sensor runout detection (if a sensor exists)
-            self._set_lane_entry_sensor_runout_active(lane, True)
-
-    def _set_lane_entry_sensor_runout_active(self, lane, active):
-        sensor = self.lane_entry_sensors[lane]
-        if sensor is not None:
-            sensor.set_untrigger_active(active)
 
     def _reset_tool_map(self):
         self.tool_map = list(range(self.lane_count))
