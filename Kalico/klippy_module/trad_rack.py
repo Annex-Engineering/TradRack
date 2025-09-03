@@ -1,6 +1,6 @@
 # Trad Rack multimaterial system support
 #
-# Copyright (C) 2022-2024 Ryan Ghosh <rghosh776@gmail.com>
+# Copyright (C) 2022-2025 Ryan Ghosh <rghosh776@gmail.com>
 # based on code by Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
@@ -461,10 +461,14 @@ class TradRack:
             for i in range(self.lane_count):
                 self.gcode.register_command(
                     "T{}".format(i),
-                    lambda params: self.cmd_SELECT_TOOL(
-                        self.gcode._get_extended_params(params)
+                    lambda params, t=i: self.cmd_TR_LOAD_TOOLHEAD(
+                        self.gcode._get_extended_params(params),
+                        tool_override=t,
                     ),
-                    desc=self.cmd_SELECT_TOOL_help,
+                    desc=(
+                        "Load filament from Trad Rack into the toolhead from"
+                        " tool {}".format(i)
+                    ),
                 )
 
     def handle_connect(self):
@@ -610,10 +614,13 @@ class TradRack:
 
     cmd_TR_LOAD_TOOLHEAD_help = "Load filament from Trad Rack into the toolhead"
 
-    def cmd_TR_LOAD_TOOLHEAD(self, gcmd):
+    def cmd_TR_LOAD_TOOLHEAD(self, gcmd, tool_override=None):
         start_lane = self.active_lane
         lane = gcmd.get_int("LANE", None)
-        tool = gcmd.get_int("TOOL", None)
+        if tool_override is not None:
+            tool = tool_override
+        else:
+            tool = gcmd.get_int("TOOL", None)
 
         # select lane
         if lane is None:
@@ -636,7 +643,10 @@ class TradRack:
                     "condition": (
                         lambda t=tool: self.default_lanes[t] is not None
                     ),
-                    "action": lambda g=gcmd: self.cmd_TR_LOAD_TOOLHEAD(g),
+                    "action": lambda g=gcmd,
+                    t=tool_override: self.cmd_TR_LOAD_TOOLHEAD(
+                        g, tool_override=t
+                    ),
                     "fail_msg": (
                         "Cannot resume. Please use TR_ASSIGN_LANE to assign a"
                         " lane to tool %d, then use TR_RESUME." % tool
@@ -677,7 +687,8 @@ class TradRack:
             # (and wait for user to resume)
             resume_kwargs = {
                 "condition": self._is_selector_homed,
-                "action": lambda g=gcmd: self.cmd_TR_LOAD_TOOLHEAD(g),
+                "action": lambda g=gcmd,
+                t=tool_override: self.cmd_TR_LOAD_TOOLHEAD(g, tool_override=t),
                 "fail_msg": (
                     "Cannot resume. Please use either TR_LOCATE_SELECTOR or"
                     " TR_HOME to home the selector, then use TR_RESUME."
@@ -1109,20 +1120,6 @@ class TradRack:
                 msg += " (default: {})".format(self.default_lanes[tool])
             msg += "\n"
         gcmd.respond_info(msg)
-
-    cmd_SELECT_TOOL_help = (
-        "Load filament from Trad Rack into the toolhead with T<index> commands"
-    )
-
-    def cmd_SELECT_TOOL(self, gcmd):
-        tool = int(gcmd.get_command().partition("T")[2])
-        params = gcmd.get_command_parameters()
-        params["TOOL"] = tool
-        self.cmd_TR_LOAD_TOOLHEAD(
-            self.gcode.create_gcode_command(
-                "TR_LOAD_TOOLHEAD", "TR_LOAD_TOOLHEAD", params
-            )
-        )
 
     # helper functions
     def _lower_servo(self, toolhead_dwell=False):
