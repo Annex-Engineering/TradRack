@@ -62,6 +62,16 @@ lane_spacing:
 #   variations in a lane module that will affect its position as well
 #   as the positions of any subsequent modules with a higher index.
 #   The default is 0.0 for each lane.
+#lane_entry_fil_sensor_pin_<lane index>:
+#   Options with a "lane_entry_fil_sensor_pin_" prefix may be
+#   specified for any of the lanes (from 0 to lane_count - 1). Each
+#   option is the pin on which a filament sensor is connected, with
+#   the sensor being located at the entry of the corresponding lane
+#   module (or further upstream in its filament path). If this option
+#   is specified for a given lane, the connected sensor will be used
+#   for detecting filament runouts on that lane. If not specified,
+#   only the selector filament sensor will be used for detecting
+#   runouts on that lane.
 servo_down_angle:
 #   The angle (in degrees) for the servo's down position.
 #   This parameter must be specified.
@@ -216,6 +226,15 @@ toolhead_unload_length:
 #   command will infer the active lane if the selector filament sensor
 #   is triggered and an active lane was saved previously.
 #   The default is True.
+#keep_servo_down_after_lane_load: False
+#   If set to True, after loading filament into a lane the servo is
+#   kept down to hold the filament in place. The default is False.
+#home_on_fil_insert: True
+#   If set to True, the selector will be homed automatically (if it
+#   isn't already homed) whenever a filament is inserted into a lane
+#   entry sensor so that the corresponding lane can be loaded. If set
+#   to False, the lane will not be automatically loaded unless the
+#   selector is already homed. The default is True.
 #log_bowden_lengths: False
 #   Whether to log bowden load length data and bowden unload length
 #   data (to ~/bowden_load_lengths.csv and ~/bowden_unload_lengths.csv
