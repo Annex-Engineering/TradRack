@@ -229,6 +229,12 @@ toolhead_unload_length:
 #keep_servo_down_after_lane_load: False
 #   If set to True, after loading filament into a lane the servo is
 #   kept down to hold the filament in place. The default is False.
+#home_on_fil_insert: True
+#   If set to True, the selector will be homed automatically (if it
+#   isn't already homed) whenever a filament is inserted into a lane
+#   entry sensor so that the corresponding lane can be loaded. If set
+#   to False, the lane will not be automatically loaded unless the
+#   selector is already homed. The default is True.
 #log_bowden_lengths: False
 #   Whether to log bowden load length data and bowden unload length
 #   data (to ~/bowden_load_lengths.csv and ~/bowden_unload_lengths.csv

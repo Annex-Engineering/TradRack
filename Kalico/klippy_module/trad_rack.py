@@ -83,11 +83,15 @@ class TradRack:
 
         # set up selector sensor as a runout sensor
         pin = config.getsection(FIL_DRIVER_STEPPER_NAME).get("endstop_pin")
-        self.selector_sensor = TradRackRunoutSensor(
+        self.selector_sensor = TradRackFilSensor(
             config,
-            lambda e: self.handle_runout(e, self.active_lane, "selector"),
             pin,
             allow_duplicate_pins=True,
+            untrigger_callback=lambda e: self.handle_runout(
+                e, self.active_lane, "selector"
+            ),
+            auto_reset_untrigger=False,
+            untrigger_only_when_printing=True,
         )
 
         # read lane count and get lane positions
@@ -104,10 +108,17 @@ class TradRack:
                 "lane_entry_fil_sensor_pin_" + str(i), default=None
             )
             if pin:
-                self.lane_entry_sensors[i] = TradRackRunoutSensor(
+                self.lane_entry_sensors[i] = TradRackFilSensor(
                     config,
-                    lambda e, l=i: self.handle_runout(e, l, "lane entry"),
                     pin,
+                    trigger_callback=lambda e, l=i: self.handle_fil_insertion(
+                        e, l
+                    ),
+                    untrigger_callback=lambda e, l=i: self.handle_runout(
+                        e, l, "lane entry"
+                    ),
+                    auto_reset_untrigger=False,
+                    untrigger_only_when_printing=True,
                 )
 
         # create bowden length filters
@@ -239,6 +250,7 @@ class TradRack:
         self.keep_servo_down_after_lane_load = config.getboolean(
             "keep_servo_down_after_lane_load", False
         )
+        self.home_on_fil_insert = config.getboolean("home_on_fil_insert", True)
         self.log_bowden_lengths = config.getboolean("log_bowden_lengths", False)
 
         # other variables
@@ -516,6 +528,37 @@ class TradRack:
                 self.gcode.create_gcode_command("TR_RESUME", "TR_RESUME", {})
             )
 
+    def handle_fil_insertion(self, eventtime, lane):
+        # return if there is an active lane
+        if self.active_lane is not None:
+            self.gcode.respond_info(
+                "Filament insertion detected on lane {}. Skipping lane loading"
+                " since lane {} is active.".format(lane, self.active_lane)
+            )
+            return
+
+        # home selector if needed and allowed
+        if not self._is_selector_homed():
+            # check if homing the selector is allowed
+            if not self.home_on_fil_insert:
+                self.gcode.respond_info(
+                    "Filament insertion detected on lane {}. Skipping lane"
+                    " loading since the selector is not homed.".format(lane)
+                )
+                return
+
+            # home the selector
+            self.cmd_TR_HOME(
+                self.gcode.create_gcode_command("TR_HOME", "TR_HOME", {})
+            )
+
+        # load lane
+        self.cmd_TR_LOAD_LANE(
+            self.gcode.create_gcode_command(
+                "TR_LOAD_LANE", "TR_LOAD_LANE", {"LANE": lane}
+            )
+        )
+
     # gcode commands
     cmd_TR_HOME_help = "Home Trad Rack's selector"
 
@@ -776,7 +819,7 @@ class TradRack:
         self._make_lane_default(lane)
 
         # enable selector sensor runout detection
-        self.selector_sensor.set_active(True)
+        self.selector_sensor.set_untrigger_active(True)
 
         # notify active lane was set without loading the toolhead
         self.printer.send_event("trad_rack:forced_active_lane")
@@ -789,7 +832,7 @@ class TradRack:
         self._set_active_lane(None)
         self._raise_servo()
         self.extruder_sync_manager.unsync()
-        self.selector_sensor.set_active(False)
+        self.selector_sensor.set_untrigger_active(False)
         self.printer.send_event("trad_rack:reset_active_lane")
 
     cmd_TR_RESUME_help = (
@@ -905,7 +948,7 @@ class TradRack:
                     )
         else:
             self._set_active_lane(None)
-            self.selector_sensor.set_active(False)
+            self.selector_sensor.set_untrigger_active(False)
             if not self._is_selector_homed():
                 self.cmd_TR_HOME(
                     self.gcode.create_gcode_command("TR_HOME", "TR_HOME", {})
@@ -1318,7 +1361,7 @@ class TradRack:
         save_temp = self._wait_for_heater_temp(min_temp, exact_temp)
 
         # disable selector sensor runout detection
-        self.selector_sensor.set_active(False)
+        self.selector_sensor.set_untrigger_active(False)
 
         if not (selector_already_loaded and self.curr_lane == lane):
             # unload current lane (if filament is detected)
@@ -1545,7 +1588,7 @@ class TradRack:
         self._make_lane_default(lane)
 
         # enable selector sensor runout detection
-        self.selector_sensor.set_active(True)
+        self.selector_sensor.set_untrigger_active(True)
 
         # save heater target
         if save_temp is not None:
@@ -1626,7 +1669,7 @@ class TradRack:
             )
 
         # enable lane entry sensor runout detection (if a sensor exists)
-        self._enable_lane_entry_sensor(lane)
+        self._set_lane_entry_sensor_runout_active(lane, True)
 
     def _unload_selector(
         self, base_length=None, mark_calibrated=False, eject=False
@@ -1762,7 +1805,10 @@ class TradRack:
             )
 
         # disable selector sensor runout detection
-        self.selector_sensor.set_active(False)
+        self.selector_sensor.set_untrigger_active(False)
+
+        # disable lane entry sensor runout detection
+        self._set_lane_entry_sensor_runout_active(self, self.active_lane, False)
 
         # notify toolhead unload started
         self.printer.send_event("trad_rack:unload_started")
@@ -1786,6 +1832,11 @@ class TradRack:
 
             # reset active lane
             self._set_active_lane(None)
+
+            # re-enable lane entry sensor runout detection
+            self._set_lane_entry_sensor_runout_active(
+                self, self.active_lane, True
+            )
 
         # lower servo
         self._lower_servo(True)
@@ -1903,12 +1954,12 @@ class TradRack:
 
         if lane is not None:
             # enable lane entry sensor runout detection (if a sensor exists)
-            self._enable_lane_entry_sensor(lane)
+            self._set_lane_entry_sensor_runout_active(lane, True)
 
-    def _enable_lane_entry_sensor(self, lane):
+    def _set_lane_entry_sensor_runout_active(self, lane, active):
         sensor = self.lane_entry_sensors[lane]
         if sensor is not None:
-            sensor.set_active(True)
+            sensor.set_untrigger_active(active)
 
     def _reset_tool_map(self):
         self.tool_map = list(range(self.lane_count))
@@ -2918,13 +2969,27 @@ class SelectorNotHomedError(CommandError):
     pass
 
 
-class TradRackRunoutSensor:
+class TradRackFilSensor:
     def __init__(
-        self, config, runout_callback, pin, allow_duplicate_pins=False
+        self,
+        config,
+        pin,
+        allow_duplicate_pins=False,
+        trigger_callback=None,
+        untrigger_callback=None,
+        auto_reset_trigger=True,
+        auto_reset_untrigger=True,
+        trigger_only_when_printing=False,
+        untrigger_only_when_printing=False,
     ):
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
-        self.runout_callback = runout_callback
+        self.callbacks = [untrigger_callback, trigger_callback]
+        self.auto_reset = [auto_reset_untrigger, auto_reset_trigger]
+        self.printing_required = [
+            untrigger_only_when_printing,
+            trigger_only_when_printing,
+        ]
 
         if allow_duplicate_pins:
             # disable config checks for duplicate pins
@@ -2940,17 +3005,33 @@ class TradRackRunoutSensor:
         buttons = config.get_printer().load_object(config, "buttons")
         buttons.register_buttons([pin], self.sensor_callback)
 
-        self.active = False
+        self.printer.register_event_handler("klippy:ready", self.handle_ready)
+
+        self.active = [False, False]
+
+    def handle_ready(self):
+        for state in range(2):
+            if self.auto_reset[state]:
+                self.active[state] = True
 
     def sensor_callback(self, eventtime, state):
-        if self.active and not state:
-            idle_timeout = self.printer.lookup_object("idle_timeout")
-            if idle_timeout.get_status(eventtime)["state"] == "Printing":
-                self.active = False
-                self.reactor.register_callback(self.runout_callback)
+        idle_timeout = self.printer.lookup_object("idle_timeout")
+        printing = idle_timeout.get_status(eventtime)["state"] == "Printing"
+        if (
+            (self.printing_required[state] and not printing)
+            or not self.active[state]
+            or self.callbacks[state] is None
+        ):
+            return
+        if not self.auto_reset[state]:
+            self.active[state] = False
+        self.reactor.register_callback(self.callbacks[state])
 
-    def set_active(self, active):
-        self.active = active
+    def set_trigger_active(self, active):
+        self.active[1] = active
+
+    def set_untrigger_active(self, active):
+        self.active[0] = active
 
 
 def load_config(config):
