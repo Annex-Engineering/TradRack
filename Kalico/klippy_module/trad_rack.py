@@ -549,16 +549,10 @@ class TradRack:
                 return
 
             # home the selector
-            self.cmd_TR_HOME(
-                self.gcode.create_gcode_command("TR_HOME", "TR_HOME", {})
-            )
+            self.gcode.run_script("TR_HOME")
 
         # load lane
-        self.cmd_TR_LOAD_LANE(
-            self.gcode.create_gcode_command(
-                "TR_LOAD_LANE", "TR_LOAD_LANE", {"LANE": lane}
-            )
-        )
+        self.gcode.run_script("TR_LOAD_LANE LANE={}".format(lane))
 
     # gcode commands
     cmd_TR_HOME_help = "Home Trad Rack's selector"
