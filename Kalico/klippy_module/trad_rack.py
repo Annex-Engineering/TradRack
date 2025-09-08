@@ -6,6 +6,7 @@
 # This file may be distributed under the terms of the GNU GPLv3 license.
 import logging, math, os, time
 from collections import deque
+from contextlib import contextmanager
 from extras.homing import Homing, HomingMove
 from gcode import CommandError
 from stepper import LookupMultiRail
@@ -270,7 +271,7 @@ class TradRack:
         )
         self.ignore_next_unload_length = False
         self.last_heater_target = 0.0
-        self.tr_next_generator = None
+        self.next_cmd_manager = NextCommandManager()
         self.selector_pos_uncertain = False
         self.unload_pending = False
         self.variables = None
@@ -955,8 +956,22 @@ class TradRack:
     )
 
     def cmd_TR_CALIBRATE_SELECTOR(self, gcmd):
-        self.tr_next_generator = self._calibrate_selector()
-        next(self.tr_next_generator)
+        # get lane entry sensor active status
+        sensors_active = self._get_lane_entry_sensors_active()
+
+        # disable trigger on all lane entry sensors
+        for sensor in self.lane_entry_sensors:
+            if sensor is not None:
+                sensor.set_trigger_active(False)
+
+        # start calibration (and restore lane entry sensor active status when it
+        # completes or errors out)
+        self.next_cmd_manager.start_generator(
+            self._calibrate_selector(),
+            on_reset_callback=lambda sa=sensors_active: (
+                self._set_lane_entry_sensors_active(sa)
+            ),
+        )
 
     cmd_TR_NEXT_help = (
         "You will be prompted to use this command if Trad Rack requires user"
@@ -964,15 +979,12 @@ class TradRack:
     )
 
     def cmd_TR_NEXT(self, gcmd):
-        if self.tr_next_generator:
-            try:
-                next(self.tr_next_generator)
-            except Exception as e:
-                self.tr_next_generator = None
-                if not isinstance(e, StopIteration):
-                    raise
-        else:
+        if not self.next_cmd_manager.in_progress():
             raise self.printer.command_error("TR_NEXT command is inactive")
+        try:
+            self.next_cmd_manager.next()
+        except StopIteration:
+            pass
 
     cmd_TR_SET_HOTEND_LOAD_LENGTH_help = (
         "Sets hotend_load_length. Does not persist across restarts."
@@ -1610,7 +1622,8 @@ class TradRack:
 
     def _load_selector(self, lane, tool=None, user_load=False):
         try:
-            self._do_load_selector(lane, user_load=user_load)
+            with self._lane_entry_sensor_trigger_ignored(lane):
+                self._do_load_selector(lane, user_load=user_load)
         except self.printer.command_error:
             if tool is None:
                 raise
@@ -1662,6 +1675,14 @@ class TradRack:
                 "Failed to load filament into selector. No trigger on selector"
                 " sensor after full movement"
             )
+
+    @contextmanager
+    def _lane_entry_sensor_trigger_ignored(self, lane):
+        if self.lane_entry_sensors[lane] is None:
+            yield
+        else:
+            with self.lane_entry_sensors[lane].trigger_ignored():
+                yield
 
     def _unload_selector(
         self, base_length=None, mark_calibrated=False, eject=False
@@ -2282,6 +2303,25 @@ class TradRack:
 
         # return distance traveled
         return max_travel - trigpos[0]
+
+    def _get_lane_entry_sensors_active(self):
+        sensors_active = [None] * self.lane_count
+        for lane in range(self.lane_count):
+            sensor = self.lane_entry_sensors[lane]
+            if sensor is not None:
+                sensors_active[lane] = (
+                    sensor.is_trigger_active(),
+                    sensor.is_untrigger_active(),
+                )
+        return sensors_active
+
+    def _set_lane_entry_sensors_active(self, sensors_active):
+        for lane in range(self.lane_count):
+            sensor = self.lane_entry_sensors[lane]
+            if sensor is not None:
+                trigger_active, untrigger_active = sensors_active[lane]
+                sensor.set_trigger_active(trigger_active)
+                sensor.set_untrigger_active(untrigger_active)
 
     # resume callbacks
     def _resume_load_toolhead(self):
@@ -3008,11 +3048,64 @@ class TradRackFilSensor:
             self.active[state] = False
         self.reactor.register_callback(self.callbacks[state])
 
+    def is_trigger_active(self):
+        return self.active[1]
+
+    def is_untrigger_active(self):
+        return self.active[0]
+
     def set_trigger_active(self, active):
         self.active[1] = active
 
     def set_untrigger_active(self, active):
         self.active[0] = active
+
+    @contextmanager
+    def trigger_ignored(self):
+        prev_trigger_active = self.active[1]
+        self.active[1] = False
+        try:
+            yield
+        finally:
+            self.active[1] = prev_trigger_active
+
+    @contextmanager
+    def untrigger_ignored(self):
+        prev_untrigger_active = self.active[0]
+        self.active[0] = False
+        try:
+            yield
+        finally:
+            self.active[0] = prev_untrigger_active
+
+
+class NextCommandManager:
+    def __init__(self):
+        self.generator = None
+        self.on_reset_callback = None
+
+    def start_generator(self, generator, on_reset_callback=None):
+        self.reset()
+        self.generator = generator
+        self.on_reset_callback = on_reset_callback
+        return next(self.generator)
+
+    def next(self):
+        if self.generator is None:
+            return None
+        try:
+            return next(self.generator)
+        except:
+            self.reset()
+            raise
+
+    def reset(self):
+        self.generator = None
+        if self.on_reset_callback is not None:
+            self.on_reset_callback()
+
+    def in_progress(self):
+        return self.generator is not None
 
 
 def load_config(config):
