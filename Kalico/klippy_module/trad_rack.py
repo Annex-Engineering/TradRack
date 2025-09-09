@@ -539,27 +539,34 @@ class TradRack:
             )
             return
 
-        # home selector if needed and allowed
-        if not self._is_selector_homed():
-            # check if homing the selector is allowed
-            if not self.home_on_fil_insert:
-                self.gcode.respond_info(
-                    "Filament insertion detected on lane {}. Skipping lane"
-                    " loading since the selector is not homed.".format(lane)
+        try:
+            # home selector if needed and allowed
+            if not self._is_selector_homed():
+                # check if homing the selector is allowed
+                if not self.home_on_fil_insert:
+                    self.gcode.respond_info(
+                        "Filament insertion detected on lane {}. Skipping lane"
+                        " loading since the selector is not homed.".format(lane)
+                    )
+                    return
+
+                # home the selector
+                self.cmd_TR_HOME(
+                    self.gcode.create_gcode_command("TR_HOME", "TR_HOME", {})
                 )
-                return
 
-            # home the selector
-            self.cmd_TR_HOME(
-                self.gcode.create_gcode_command("TR_HOME", "TR_HOME", {})
+            # load lane
+            self.cmd_TR_LOAD_LANE(
+                self.gcode.create_gcode_command(
+                    "TR_LOAD_LANE", "TR_LOAD_LANE", {"LANE": lane}
+                )
             )
-
-        # load lane
-        self.cmd_TR_LOAD_LANE(
-            self.gcode.create_gcode_command(
-                "TR_LOAD_LANE", "TR_LOAD_LANE", {"LANE": lane}
+        except self.printer.command_error as e:
+            logging.warning(
+                "trad_rack: Detected filament at lane {} but failed to load"
+                " lane".format(lane)
             )
-        )
+            self.gcode.respond_info(str(e))
 
     # gcode commands
     cmd_TR_HOME_help = "Home Trad Rack's selector"
