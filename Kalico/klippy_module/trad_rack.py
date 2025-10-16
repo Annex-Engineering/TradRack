@@ -2410,7 +2410,6 @@ class TradRackKinematics:
             rail.setup_itersolve("cartesian_stepper_alloc", axis.encode())
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
-            toolhead.register_step_generator(s.generate_steps)
         self.printer.register_event_handler(
             "stepper_enable:motor_off", self._motor_off
         )
@@ -2722,8 +2721,6 @@ class TradRackExtruderSyncManager:
             self._prev_trapq = steppers[0].get_trapq()
             external_trapq = self.tr_toolhead.get_trapq()
             stepper_alloc = ffi_lib.cartesian_stepper_alloc(b"y")
-            prev_toolhead = self.toolhead
-            external_toolhead = self.tr_toolhead
             self.reset_fil_driver()
             new_pos = [0.0, 0.0, 0.0]
         elif sync_type == FIL_DRIVER_TO_EXTRUDER:
@@ -2732,8 +2729,6 @@ class TradRackExtruderSyncManager:
             extruder = self.toolhead.get_extruder()
             external_trapq = extruder.get_trapq()
             stepper_alloc = ffi_lib.extruder_stepper_alloc()
-            prev_toolhead = self.tr_toolhead
-            external_toolhead = self.toolhead
             new_pos = extruder.last_position
             if not isinstance(new_pos, list):
                 new_pos = [new_pos, 0.0, 0.0]
@@ -2750,8 +2745,6 @@ class TradRackExtruderSyncManager:
             )
             stepper.set_trapq(external_trapq)
             stepper.set_position(new_pos)
-            prev_toolhead.step_generators.remove(stepper.generate_steps)
-            external_toolhead.register_step_generator(stepper.generate_steps)
         self.sync_state = sync_type
 
     def sync_extruder_to_fil_driver(self):
@@ -2770,20 +2763,14 @@ class TradRackExtruderSyncManager:
 
         if self.sync_state == EXTRUDER_TO_FIL_DRIVER:
             steppers = self._get_extruder_mcu_steppers()
-            prev_toolhead = self.toolhead
-            external_toolhead = self.tr_toolhead
         elif self.sync_state == FIL_DRIVER_TO_EXTRUDER:
             self.printer.send_event("trad_rack:unsyncing_from_extruder")
             steppers = self.fil_driver_rail.get_steppers()
-            prev_toolhead = self.tr_toolhead
-            external_toolhead = self.toolhead
         else:
             raise Exception("Invalid sync_state: %d" % self.sync_state)
 
         for i in range(len(steppers)):
             stepper = steppers[i]
-            external_toolhead.step_generators.remove(stepper.generate_steps)
-            prev_toolhead.register_step_generator(stepper.generate_steps)
             stepper.set_trapq(self._prev_trapq)
             stepper.set_stepper_kinematics(self._prev_sks[i])
             stepper.set_rotation_distance(self._prev_rotation_dists[i])
