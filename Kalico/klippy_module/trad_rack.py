@@ -2322,12 +2322,8 @@ class TradRackToolHead(toolhead.ToolHead, object):
             pass
         self.reactor = self.printer.get_reactor()
         self.mcu = self.printer.lookup_object("mcu")
-        if hasattr(toolhead, "LookAheadQueue"):
-            self.lookahead = toolhead.LookAheadQueue()
-            self.lookahead.set_flush_time(toolhead.BUFFER_TIME_HIGH)
-        else:
-            self.move_queue = toolhead.MoveQueue(self)
-            self.move_queue.set_flush_time(toolhead.BUFFER_TIME_HIGH)
+        self.lookahead = toolhead.LookAheadQueue()
+        self.lookahead.set_flush_time(toolhead.BUFFER_TIME_HIGH)
         self.commanded_pos = [0.0, 0.0, 0.0, 0.0]
         # Velocity and acceleration control
         tr_config = config.getsection("trad_rack")
