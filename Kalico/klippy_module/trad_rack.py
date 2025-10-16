@@ -2339,11 +2339,11 @@ class TradRackToolHead(toolhead.ToolHead, object):
             "filament_max_accel", default=1500.0, above=0.0
         )
         self.max_accel = max(self.sel_max_accel, self.fil_max_accel)
-        self.min_cruise_ratio = config.getfloat(
-            "minimum_cruise_ratio", 0.5, below=1.0, minval=0.0
+        self.min_cruise_ratio = tr_config.getfloat(
+            "minimum_cruise_ratio", 0.0, below=1.0, minval=0.0
         )
-        self.square_corner_velocity = config.getfloat(
-            "square_corner_velocity", 5.0, minval=0.0
+        self.square_corner_velocity = tr_config.getfloat(
+            "square_corner_velocity", 0.0, minval=0.0
         )
         self.junction_deviation = self.mcr_pseudo_accel = 0.0
         self._calc_junction_deviation()
