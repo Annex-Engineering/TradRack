@@ -2429,8 +2429,7 @@ class TradRackKinematics:
         self.is_extruder_synced = is_extruder_synced
 
     def get_steppers(self):
-        rails = self.rails
-        return [s for rail in rails for s in rail.get_steppers()]
+        return [s for rail in self.rails for s in rail.get_steppers()]
 
     def calc_position(self, stepper_positions):
         return [stepper_positions[rail.get_name()] for rail in self.rails]
@@ -2441,11 +2440,7 @@ class TradRackKinematics:
             if i in homing_axes:
                 self.limits[i] = rail.get_range()
 
-    def note_z_not_homed(self):
-        # Helper for Safe Z Home
-        pass
-
-    def _home_axis(self, homing_state, axis, rail):
+    def home_axis(self, homing_state, axis, rail):
         # Determine movement
         position_min, position_max = rail.get_range()
         hi = rail.get_homing_info()
@@ -2462,7 +2457,7 @@ class TradRackKinematics:
     def home(self, homing_state):
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
-            self._home_axis(homing_state, axis, self.rails[axis])
+            self.home_axis(homing_state, axis, self.rails[axis])
 
     def _check_endstops(self, move):
         end_pos = move.end_pos
