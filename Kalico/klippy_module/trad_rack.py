@@ -1269,16 +1269,21 @@ class TradRack:
         # reset retry_lane
         self.retry_lane = None
 
-        # keep track of lane in case of an error (and for status)
-        self.next_lane = lane
+        # check lane, and update next_lane and next_tool unless lane is already
+        # active
+        try:
+            self._check_lane_valid(lane)
+        except self.printer.command_error:
+            raise
+        finally:
+            if lane == self.active_lane:
+                return
 
-        # keep track of tool for status
-        self.next_tool = tool
+            # keep track of lane in case of an error (and for status)
+            self.next_lane = lane
 
-        # check lane
-        self._check_lane_valid(lane)
-        if lane == self.active_lane:
-            return
+            # keep track of tool for status
+            self.next_tool = tool
 
         # check if homed
         self._check_selector_homed()
