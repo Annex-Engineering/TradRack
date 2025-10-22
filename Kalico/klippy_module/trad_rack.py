@@ -1250,6 +1250,17 @@ class TradRack:
         )
         self.last_heater_target = target_temp
 
+    def _note_heater_temps_for_redundant_toolchange(
+        self, min_temp=0.0, exact_temp=0.0
+    ):
+        min_extrude_temp = (
+            self.toolhead.get_extruder().get_heater().min_extrude_temp
+        )
+        if exact_temp >= min_extrude_temp:
+            self._save_heater_target(target_temp=exact_temp)
+        elif min_temp >= min_extrude_temp:
+            self._save_heater_target(target_temp=min_temp)
+
     def _load_toolhead(
         self,
         lane,
@@ -1276,7 +1287,12 @@ class TradRack:
         except self.printer.command_error:
             raise
         finally:
+            # skip toolchange if lane is already active
             if lane == self.active_lane:
+                # save heater target based on temperature arguments
+                self._note_heater_temps_for_redundant_toolchange(
+                    min_temp=min_temp, exact_temp=exact_temp
+                )
                 return
 
             # keep track of lane in case of an error (and for status)
