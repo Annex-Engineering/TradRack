@@ -425,6 +425,11 @@ class TradRack:
             self.cmd_TR_PRINT_TOOL_GROUPS,
             desc=self.cmd_TR_PRINT_TOOL_GROUPS_help,
         )
+        self.gcode.register_command(
+            "TR_QUERY_LANE_ENTRY_SENSORS",
+            self.cmd_TR_QUERY_LANE_ENTRY_SENSORS,
+            desc=self.cmd_TR_QUERY_LANE_ENTRY_SENSORS_help,
+        )
         if register_toolchange_commands:
             for i in range(self.lane_count):
                 self.gcode.register_command(
@@ -1132,6 +1137,18 @@ class TradRack:
             if len(tool_groups[tool]) > 1:
                 msg += " (default: {})".format(self.default_lanes[tool])
             msg += "\n"
+        gcmd.respond_info(msg)
+
+    cmd_TR_QUERY_LANE_ENTRY_SENSORS_help = "Query the status of the lane entry sensors"
+
+    def cmd_TR_QUERY_LANE_ENTRY_SENSORS(self, gcmd):
+        triggered_sensors = self._get_lane_entry_sensors_active()
+        msg = ""
+        for lane, triggered in enumerate(triggered_sensors):
+            if not triggered[0] and not triggered[1]:
+                msg += "Lane {}: UNAVAILABLE".format(lane)
+            else: 
+                msg += "Lane {}: {}".format(lane, "UNTRIGGERED" if triggered[0] else "Triggered")
         gcmd.respond_info(msg)
 
     # helper functions
@@ -2430,6 +2447,7 @@ class TradRack:
             "next_tool": self.next_tool,
             "tool_map": self.tool_map,
             "selector_homed": self._is_selector_homed(),
+            "lane_entry_sensors": self._get_lane_entry_sensors_active(),
         }
 
 
