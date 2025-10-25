@@ -1148,7 +1148,7 @@ class TradRack:
             if not triggered[0] and not triggered[1]:
                 msg += "Lane {}: UNAVAILABLE".format(lane)
             else: 
-                msg += "Lane {}: {}".format(lane, "UNTRIGGERED" if triggered[0] else "Triggered")
+                msg += "Lane {}: {}".format(lane, "TRIGGERED" if triggered[0] else "UNTRIGGERED")
         gcmd.respond_info(msg)
 
     # helper functions
