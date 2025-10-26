@@ -282,7 +282,9 @@ The following commands are available for viewing lane entry sensor trigger state
 
 ### TR_QUERY_LANE_ENTRY_SENSORS
 
-`TR_QUERY_LANE_ENTRY_SENSOR`: Prints a list of tuples corresponding to the (Triggered, Untriggered) state of the sensor in each lane. Prints `UNAVAILABE` if lane sensor is not configured for a lane.
+`TR_QUERY_LANE_ENTRY_SENSOR`: Prints a list of the trigger state of
+the lane entry sensor on each lane. Will be one of
+`UNAVAILABLE | TRIGGERED| UNTRIGGERED`
 
 ## Macros
 

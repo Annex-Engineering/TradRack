@@ -18,7 +18,9 @@ The following information is available in the `trad_rack` object:
   lane. The tool number for a specified lane can be accessed with
   `tool_map[<lane index>]`.
 - `selector_homed`: Whether or not the selector axis is homed.
-- `lane_entry_sensors[<lane index>]`: An array of tuples, each tuple indicates `(Triggered state, Untriggered State)`
+- `lane_entry_sensors[<lane index>]`: An array indicating the status of each lane. Each lane will either be
+  - `None` if no sensor assigned
+  - A Tuple of boolean values, for `(Triggered State, Untriggered State)`
 
 ## save_variables
 
