@@ -1,5 +1,7 @@
 {
     "editor.rulers": [
         70, 80, 120
-    ]
+    ],
+    "markdown.extension.toc.levels": "2..6",
+    "markdown.extension.toc.updateOnSave": true
 }
