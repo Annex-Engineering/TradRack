@@ -1145,10 +1145,11 @@ class TradRack:
         triggered_sensors = self._get_lane_entry_sensors_active()
         msg = ""
         for lane, triggered in enumerate(triggered_sensors):
-            if not triggered[0] and not triggered[1]:
+            if triggered is None:
                 msg += "Lane {}: UNAVAILABLE".format(lane)
             else: 
                 msg += "Lane {}: {}".format(lane, "TRIGGERED" if triggered[0] else "UNTRIGGERED")
+            msg += "\n"
         gcmd.respond_info(msg)
 
     # helper functions
