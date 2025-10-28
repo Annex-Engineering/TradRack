@@ -1147,7 +1147,7 @@ class TradRack:
         for lane, triggered in enumerate(triggered_sensors):
             if triggered is None:
                 msg += "Lane {}: UNAVAILABLE".format(lane)
-            else: 
+            else:
                 msg += "Lane {}: {}".format(lane, "TRIGGERED" if triggered[0] else "UNTRIGGERED")
             msg += "\n"
         gcmd.respond_info(msg)
@@ -2353,6 +2353,19 @@ class TradRack:
                 trigger_active, untrigger_active = sensors_active[lane]
                 sensor.set_trigger_active(trigger_active)
                 sensor.set_untrigger_active(untrigger_active)
+    def _get_lane_entry_sensors_state(self, gcmd):
+        sensors_state = [None] * self.lane_count
+        # return the last raw state reported by each sensor (or None)
+        msg = "trad_rack: Lane entry sensors state:\n"
+        for lane in range(self.lane_count):
+            sensor = self.lane_entry_sensors[lane]
+            if sensor is not None:
+                msg += "Lane {}: {}\n".format(lane, "OPEN" if 0 in sensor.state else "CLOSED")
+                sensors_state[lane] = sensor.state
+            else:
+                sensors_state[lane] = "UNAVAILABLE"
+            msg += "\n"
+        gcmd.respond_info(msg)
 
     # resume callbacks
     def _resume_load_toolhead(self):
@@ -2448,7 +2461,7 @@ class TradRack:
             "next_tool": self.next_tool,
             "tool_map": self.tool_map,
             "selector_homed": self._is_selector_homed(),
-            "lane_entry_sensors": self._get_lane_entry_sensors_active(),
+            "lane_entry_sensors": self._get_lane_entry_sensors_state(),
         }
 
 
@@ -2987,7 +3000,6 @@ class TradRackFilSensor:
             untrigger_only_when_printing,
             trigger_only_when_printing,
         ]
-
         if allow_duplicate_pins:
             # disable config checks for duplicate pins
             pin_desc = pin
@@ -3003,7 +3015,11 @@ class TradRackFilSensor:
         buttons.register_buttons([pin], self.sensor_callback)
 
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        # last raw state reported by the button callback (None if unknown)
+        # state values come from the buttons framework (usually 0/1)
+        self.state = None
 
+        # active flags control whether trigger/untrigger callbacks will run
         self.active = [False, False]
 
     def handle_ready(self):
@@ -3012,6 +3028,9 @@ class TradRackFilSensor:
                 self.active[state] = True
 
     def sensor_callback(self, eventtime, state):
+        # always record the last raw sensor state so callers can query it
+        # even when callbacks/auto-reset logic prevents triggering handlers
+        self.state = state
         idle_timeout = self.printer.lookup_object("idle_timeout")
         printing = idle_timeout.get_status(eventtime)["state"] == "Printing"
         if (
