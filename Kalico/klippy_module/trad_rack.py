@@ -425,6 +425,11 @@ class TradRack:
             self.cmd_TR_PRINT_TOOL_GROUPS,
             desc=self.cmd_TR_PRINT_TOOL_GROUPS_help,
         )
+        self.gcode.register_command(
+            "TR_QUERY_LANE_ENTRY_SENSORS",
+            self.cmd_TR_QUERY_LANE_ENTRY_SENSORS,
+            desc=self.cmd_TR_QUERY_LANE_ENTRY_SENSORS_help,
+        )
         if register_toolchange_commands:
             for i in range(self.lane_count):
                 self.gcode.register_command(
@@ -1131,6 +1136,19 @@ class TradRack:
             msg += "Tool {}: {}".format(tool, tool_groups[tool])
             if len(tool_groups[tool]) > 1:
                 msg += " (default: {})".format(self.default_lanes[tool])
+            msg += "\n"
+        gcmd.respond_info(msg)
+
+    cmd_TR_QUERY_LANE_ENTRY_SENSORS_help = "Query the status of the lane entry sensors"
+
+    def cmd_TR_QUERY_LANE_ENTRY_SENSORS(self, gcmd):
+        triggered_sensors = self._get_lane_entry_sensors_active()
+        msg = ""
+        for lane, triggered in enumerate(triggered_sensors):
+            if triggered is None:
+                msg += "Lane {}: UNAVAILABLE".format(lane)
+            else:
+                msg += "Lane {}: {}".format(lane, "TRIGGERED" if triggered[0] else "UNTRIGGERED")
             msg += "\n"
         gcmd.respond_info(msg)
 
@@ -2335,6 +2353,19 @@ class TradRack:
                 trigger_active, untrigger_active = sensors_active[lane]
                 sensor.set_trigger_active(trigger_active)
                 sensor.set_untrigger_active(untrigger_active)
+    def _get_lane_entry_sensors_state(self, gcmd):
+        sensors_state = [None] * self.lane_count
+        # return the last raw state reported by each sensor (or None)
+        msg = "trad_rack: Lane entry sensors state:\n"
+        for lane in range(self.lane_count):
+            sensor = self.lane_entry_sensors[lane]
+            if sensor is not None:
+                msg += "Lane {}: {}\n".format(lane, "OPEN" if 0 in sensor.state else "CLOSED")
+                sensors_state[lane] = sensor.state
+            else:
+                sensors_state[lane] = "UNAVAILABLE"
+            msg += "\n"
+        gcmd.respond_info(msg)
 
     # resume callbacks
     def _resume_load_toolhead(self):
@@ -2430,6 +2461,7 @@ class TradRack:
             "next_tool": self.next_tool,
             "tool_map": self.tool_map,
             "selector_homed": self._is_selector_homed(),
+            "lane_entry_sensors": self._get_lane_entry_sensors_state(),
         }
 
 
@@ -2441,16 +2473,9 @@ class TradRackToolHead(toolhead.ToolHead, object):
         except config.error:
             pass
         self.reactor = self.printer.get_reactor()
-        self.all_mcus = [
-            m for n, m in self.printer.lookup_objects(module="mcu")
-        ]
-        self.mcu = self.all_mcus[0]
-        if hasattr(toolhead, "LookAheadQueue"):
-            self.lookahead = toolhead.LookAheadQueue()
-            self.lookahead.set_flush_time(toolhead.BUFFER_TIME_HIGH)
-        else:
-            self.move_queue = toolhead.MoveQueue(self)
-            self.move_queue.set_flush_time(toolhead.BUFFER_TIME_HIGH)
+        self.mcu = self.printer.lookup_object("mcu")
+        self.lookahead = toolhead.LookAheadQueue()
+        self.lookahead.set_flush_time(toolhead.BUFFER_TIME_HIGH)
         self.commanded_pos = [0.0, 0.0, 0.0, 0.0]
         # Velocity and acceleration control
         tr_config = config.getsection("trad_rack")
@@ -2466,24 +2491,13 @@ class TradRackToolHead(toolhead.ToolHead, object):
             "filament_max_accel", default=1500.0, above=0.0
         )
         self.max_accel = max(self.sel_max_accel, self.fil_max_accel)
-        self.min_cruise_ratio = config.getfloat(
-            "minimum_cruise_ratio", None, below=1.0, minval=0.0
+        self.min_cruise_ratio = tr_config.getfloat(
+            "minimum_cruise_ratio", 0.0, below=1.0, minval=0.0
         )
-        if self.min_cruise_ratio is None:
-            self.min_cruise_ratio = 0.5
-            req_accel_to_decel = config.getfloat(
-                "max_accel_to_decel", None, above=0.0
-            )
-            if req_accel_to_decel is not None:
-                config.deprecate("max_accel_to_decel")
-                self.min_cruise_ratio = 1.0 - min(
-                    1.0, (req_accel_to_decel / self.max_accel)
-                )
-        self.requested_accel_to_decel = self.min_cruise_ratio * self.max_accel
-        self.square_corner_velocity = config.getfloat(
-            "square_corner_velocity", 5.0, minval=0.0
+        self.square_corner_velocity = tr_config.getfloat(
+            "square_corner_velocity", 0.0, minval=0.0
         )
-        self.junction_deviation = self.max_accel_to_decel = 0.0
+        self.junction_deviation = self.mcr_pseudo_accel = 0.0
         self._calc_junction_deviation()
         # Input stall detection
         self.check_stall_time = 0.0
@@ -2497,26 +2511,13 @@ class TradRackToolHead(toolhead.ToolHead, object):
         self.print_time = 0.0
         self.special_queuing_state = "NeedPrime"
         self.priming_timer = None
-        # Flush tracking
-        self.flush_timer = self.reactor.register_timer(self._flush_handler)
-        self.do_kick_flush_timer = True
-        self.last_flush_time = self.last_sg_flush_time = (
-            self.min_restart_time
-        ) = 0.0
-        self.need_flush_time = self.step_gen_time = self.clear_history_time = (
-            0.0
+        # Setup for generating moves
+        self.motion_queuing = self.printer.load_object(config, "motion_queuing")
+        self.motion_queuing.register_flush_callback(
+            self._handle_step_flush, can_add_trapq=True
         )
-        # Kinematic step generation scan window time tracking
-        self.kin_flush_delay = toolhead.SDS_CHECK_TIME
-        self.kin_flush_times = []
-        # Setup iterative solver
-        ffi_main, ffi_lib = chelper.get_ffi()
-        self.trapq = ffi_main.gc(ffi_lib.trapq_alloc(), ffi_lib.trapq_free)
-        self.trapq_append = ffi_lib.trapq_append
-        self.trapq_finalize_moves = ffi_lib.trapq_finalize_moves
-        # Motion flushing
-        self.step_generators = []
-        self.flush_trapqs = [self.trapq]
+        self.trapq = self.motion_queuing.allocate_trapq()
+        self.trapq_append = self.motion_queuing.lookup_trapq_append()
         # Create kinematic class
         gcode = self.printer.lookup_object("gcode")
         self.Coord = gcode.Coord
@@ -2561,11 +2562,6 @@ class TradRackKinematics:
             rail.setup_itersolve("cartesian_stepper_alloc", axis.encode())
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
-            toolhead.register_step_generator(s.generate_steps)
-        self.printer.register_event_handler(
-            "stepper_enable:motor_off", self._motor_off
-        )
-
         # Setup boundary checks
         self.sel_max_velocity, self.sel_max_accel = (
             toolhead.get_sel_max_velocity()
@@ -2585,8 +2581,7 @@ class TradRackKinematics:
         self.is_extruder_synced = is_extruder_synced
 
     def get_steppers(self):
-        rails = self.rails
-        return [s for rail in rails for s in rail.get_steppers()]
+        return [s for rail in self.rails for s in rail.get_steppers()]
 
     def calc_position(self, stepper_positions):
         return [stepper_positions[rail.get_name()] for rail in self.rails]
@@ -2597,11 +2592,7 @@ class TradRackKinematics:
             if i in homing_axes:
                 self.limits[i] = rail.get_range()
 
-    def note_z_not_homed(self):
-        # Helper for Safe Z Home
-        pass
-
-    def _home_axis(self, homing_state, axis, rail):
+    def home_axis(self, homing_state, axis, rail):
         # Determine movement
         position_min, position_max = rail.get_range()
         hi = rail.get_homing_info()
@@ -2618,10 +2609,7 @@ class TradRackKinematics:
     def home(self, homing_state):
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
-            self._home_axis(homing_state, axis, self.rails[axis])
-
-    def _motor_off(self, print_time):
-        self.limits = [(1.0, -1.0)] * self.stepper_count
+            self.home_axis(homing_state, axis, self.rails[axis])
 
     def _check_endstops(self, move):
         end_pos = move.end_pos
@@ -2873,8 +2861,6 @@ class TradRackExtruderSyncManager:
             self._prev_trapq = steppers[0].get_trapq()
             external_trapq = self.tr_toolhead.get_trapq()
             stepper_alloc = ffi_lib.cartesian_stepper_alloc(b"y")
-            prev_toolhead = self.toolhead
-            external_toolhead = self.tr_toolhead
             self.reset_fil_driver()
             new_pos = [0.0, 0.0, 0.0]
         elif sync_type == FIL_DRIVER_TO_EXTRUDER:
@@ -2883,8 +2869,6 @@ class TradRackExtruderSyncManager:
             extruder = self.toolhead.get_extruder()
             external_trapq = extruder.get_trapq()
             stepper_alloc = ffi_lib.extruder_stepper_alloc()
-            prev_toolhead = self.tr_toolhead
-            external_toolhead = self.toolhead
             new_pos = extruder.last_position
             if not isinstance(new_pos, list):
                 new_pos = [new_pos, 0.0, 0.0]
@@ -2901,8 +2885,6 @@ class TradRackExtruderSyncManager:
             )
             stepper.set_trapq(external_trapq)
             stepper.set_position(new_pos)
-            prev_toolhead.step_generators.remove(stepper.generate_steps)
-            external_toolhead.register_step_generator(stepper.generate_steps)
         self.sync_state = sync_type
 
     def sync_extruder_to_fil_driver(self):
@@ -2921,20 +2903,14 @@ class TradRackExtruderSyncManager:
 
         if self.sync_state == EXTRUDER_TO_FIL_DRIVER:
             steppers = self._get_extruder_mcu_steppers()
-            prev_toolhead = self.toolhead
-            external_toolhead = self.tr_toolhead
         elif self.sync_state == FIL_DRIVER_TO_EXTRUDER:
             self.printer.send_event("trad_rack:unsyncing_from_extruder")
             steppers = self.fil_driver_rail.get_steppers()
-            prev_toolhead = self.tr_toolhead
-            external_toolhead = self.toolhead
         else:
             raise Exception("Invalid sync_state: %d" % self.sync_state)
 
         for i in range(len(steppers)):
             stepper = steppers[i]
-            external_toolhead.step_generators.remove(stepper.generate_steps)
-            prev_toolhead.register_step_generator(stepper.generate_steps)
             stepper.set_trapq(self._prev_trapq)
             stepper.set_stepper_kinematics(self._prev_sks[i])
             stepper.set_rotation_distance(self._prev_rotation_dists[i])
@@ -3024,7 +3000,6 @@ class TradRackFilSensor:
             untrigger_only_when_printing,
             trigger_only_when_printing,
         ]
-
         if allow_duplicate_pins:
             # disable config checks for duplicate pins
             pin_desc = pin
@@ -3040,7 +3015,11 @@ class TradRackFilSensor:
         buttons.register_buttons([pin], self.sensor_callback)
 
         self.printer.register_event_handler("klippy:ready", self.handle_ready)
+        # last raw state reported by the button callback (None if unknown)
+        # state values come from the buttons framework (usually 0/1)
+        self.state = None
 
+        # active flags control whether trigger/untrigger callbacks will run
         self.active = [False, False]
 
     def handle_ready(self):
@@ -3049,6 +3028,9 @@ class TradRackFilSensor:
                 self.active[state] = True
 
     def sensor_callback(self, eventtime, state):
+        # always record the last raw sensor state so callers can query it
+        # even when callbacks/auto-reset logic prevents triggering handlers
+        self.state = state
         idle_timeout = self.printer.lookup_object("idle_timeout")
         printing = idle_timeout.get_status(eventtime)["state"] == "Printing"
         if (

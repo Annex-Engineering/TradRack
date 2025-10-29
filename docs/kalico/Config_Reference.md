@@ -5,14 +5,15 @@ This document is modeled after Kalico's
 but only contains items pertaining to Trad Rack.
 
 **Table of Contents**
+
 - [Main configuration](#main-configuration)
-  - [\[trad\_rack\]](#trad_rack)
+  - [\[trad_rack\]](#trad_rack)
 - [Additional sections](#additional-sections)
-  - [\[stepper\_tr\_selector\]](#stepper_tr_selector)
-  - [\[stepper\_tr\_fil\_driver\]](#stepper_tr_fil_driver)
-  - [\[tmc2209 stepper\_tr\_selector\]](#tmc2209-stepper_tr_selector)
-  - [\[tmc2209 stepper\_tr\_fil\_driver\]](#tmc2209-stepper_tr_fil_driver)
-  - [\[servo tr\_servo\]](#servo-tr_servo)
+  - [\[stepper_tr_selector\]](#stepper_tr_selector)
+  - [\[stepper_tr_fil_driver\]](#stepper_tr_fil_driver)
+  - [\[tmc2209 stepper_tr_selector\]](#tmc2209-stepper_tr_selector)
+  - [\[tmc2209 stepper_tr_fil_driver\]](#tmc2209-stepper_tr_fil_driver)
+  - [\[servo tr_servo\]](#servo-tr_servo)
 
 ## Main configuration
 
@@ -20,28 +21,29 @@ but only contains items pertaining to Trad Rack.
 
 Main configuration section for Trad Rack. Some config options
 reference [Tuning.md](/docs/Tuning.md) for more details.
+
 ```
 [trad_rack]
 selector_max_velocity:
-#   Maximum velocity (in mm/s) of the selector. 
+#   Maximum velocity (in mm/s) of the selector.
 #   This parameter must be specified.
 selector_max_accel:
-#   Maximum acceleration (in mm/s^2) of the selector. 
+#   Maximum acceleration (in mm/s^2) of the selector.
 #   This parameter must be specified.
 #filament_max_velocity:
-#   Maximum velocity (in mm/s) for filament movement. 
+#   Maximum velocity (in mm/s) for filament movement.
 #   Defaults to buffer_pull_speed.
 #filament_max_accel: 1500.0
 #   Maximum acceleration (in mm/s^2) for filament movement.
 #   The default is 1500.0.
 toolhead_fil_sensor_pin:
 #   The pin on which the toolhead filament sensor is connected.
-#   If a pin is not specified, no toolhead filament sensor will 
+#   If a pin is not specified, no toolhead filament sensor will
 #   be used.
 lane_count:
 #   The number of filament lanes. This parameter must be specified.
 lane_spacing:
-#   Spacing (in mm) between filament lanes. 
+#   Spacing (in mm) between filament lanes.
 #   This parameter must be specified.
 #lane_offset_<lane index>:
 #   Options with a "lane_offset_" prefix may be specified for any of
@@ -135,7 +137,7 @@ toolhead_unload_length:
 #   segment into the lane module.
 #spool_pull_speed: 100.0
 #   Speed (in mm/s) to move filament through the bowden tube when
-#   loading from a spool. See Tuning.md for details. 
+#   loading from a spool. See Tuning.md for details.
 #   The default is 100.0.
 #buffer_pull_speed:
 #   Speed (in mm/s) to move filament through the bowden tube when
@@ -157,7 +159,7 @@ toolhead_unload_length:
 #load_with_toolhead_sensor: True
 #   Whether to use the toolhead sensor when loading the toolhead.
 #   See Tuning.md for details. Defaults to True but is ignored if
-#   toolhead_fil_sensor_pin is not specified. 
+#   toolhead_fil_sensor_pin is not specified.
 #unload_with_toolhead_sensor: True
 #   Whether to use the toolhead sensor when unloading the toolhead.
 #   See Tuning.md for details. Defaults to True but is ignored if
@@ -235,6 +237,16 @@ toolhead_unload_length:
 #   entry sensor so that the corresponding lane can be loaded. If set
 #   to False, the lane will not be automatically loaded unless the
 #   selector is already homed. The default is True.
+#minimum_cruise_ratio: 0.0
+#   See the "printer" section of Kalico's Config Reference document
+#   for a description of this parameter. This parameter affects
+#   selector moves and filament moves made by Trad Rack. The default
+#   is 0.0.
+#square_corner_velocity: 0.0
+#   See the "printer" section of Kalico's Config Reference document
+#   for a description of this parameter. This parameter can affect
+#   selector moves and filament moves made by Trad Rack. The default
+#   is 0.0.
 #log_bowden_lengths: False
 #   Whether to log bowden load length data and bowden unload length
 #   data (to ~/bowden_load_lengths.csv and ~/bowden_unload_lengths.csv
