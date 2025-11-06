@@ -519,7 +519,10 @@ class TradRack:
                 raise self.printer.command_error(
                     "Homing failed due to printer shutdown"
                 )
-            self.printer.lookup_object("stepper_enable").motor_off()
+            print_time = self.tr_toolhead.get_last_move_time()
+            stepper_enable = self.printer.lookup_object("stepper_enable")
+            enable = stepper_enable.lookup_enable(SELECTOR_STEPPER_NAME)
+            enable.motor_disable(print_time)
             raise
 
         # unmark selector position as uncertain
