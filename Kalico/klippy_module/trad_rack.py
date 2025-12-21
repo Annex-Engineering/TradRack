@@ -2450,6 +2450,10 @@ class TradRackKinematics:
             rail.setup_itersolve("cartesian_stepper_alloc", axis.encode())
         for s in self.get_steppers():
             s.set_trapq(toolhead.get_trapq())
+        self.printer.register_event_handler(
+            "stepper_enable:motor_off", self._motor_off
+        )
+
         # Setup boundary checks
         self.sel_max_velocity, self.sel_max_accel = (
             toolhead.get_sel_max_velocity()
@@ -2498,6 +2502,9 @@ class TradRackKinematics:
         # Each axis is homed independently and in order
         for axis in homing_state.get_axes():
             self.home_axis(homing_state, axis, self.rails[axis])
+
+    def _motor_off(self, print_time):
+        self.limits = [(1.0, -1.0)] * self.stepper_count
 
     def _check_endstops(self, move):
         end_pos = move.end_pos
