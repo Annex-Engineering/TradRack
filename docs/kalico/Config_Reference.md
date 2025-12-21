@@ -219,6 +219,16 @@ toolhead_unload_length:
 #keep_servo_down_after_lane_load: False
 #   If set to True, after loading filament into a lane the servo is
 #   kept down to hold the filament in place. The default is False.
+#minimum_cruise_ratio: 0.0
+#   See the "printer" section of Kalico's Config Reference document
+#   for a description of this parameter. This parameter affects
+#   selector moves and filament moves made by Trad Rack. The default
+#   is 0.0.
+#square_corner_velocity: 0.0
+#   See the "printer" section of Kalico's Config Reference document
+#   for a description of this parameter. This parameter can affect
+#   selector moves and filament moves made by Trad Rack. The default
+#   is 0.0.
 #log_bowden_lengths: False
 #   Whether to log bowden load length data and bowden unload length
 #   data (to ~/bowden_load_lengths.csv and ~/bowden_unload_lengths.csv
