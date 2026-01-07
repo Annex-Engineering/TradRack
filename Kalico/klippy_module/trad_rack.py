@@ -116,6 +116,7 @@ class TradRack:
             self.printer,
             self.tr_toolhead,
             self.tr_kinematics.get_fil_driver_rail(),
+            lambda: self.get_downstream_extruder(),
         )
 
         # read other values
@@ -278,6 +279,7 @@ class TradRack:
         self.keep_servo_down_after_lane_load = config.getboolean(
             "keep_servo_down_after_lane_load", False
         )
+        self.downstream_extruder_name = config.get("downstream_extruder", None)
         self.log_bowden_lengths = config.getboolean("log_bowden_lengths", False)
 
         # other variables
@@ -302,6 +304,7 @@ class TradRack:
         self.tr_next_generator = None
         self.selector_pos_uncertain = False
         self.variables = None
+        self.get_downstream_extruder = None
 
         # resume variables
         self.resume_callbacks = {
@@ -476,12 +479,26 @@ class TradRack:
 
     def handle_connect(self):
         self.toolhead = self.printer.lookup_object("toolhead")
+
         save_variables = self.printer.lookup_object("save_variables", None)
         if save_variables is None:
             raise self.printer.config_error(
                 "[save_variables] is required for trad_rack"
             )
         self.variables = save_variables.allVariables
+
+        if self.downstream_extruder_name:
+            extruder = self.printer.lookup_object(
+                self.downstream_extruder_name, None
+            )
+            if not isinstance(extruder, kinematics.extruder.PrinterExtruder):
+                raise self.printer.config_error(
+                    "trad_rack: value '{}' for config option"
+                    " 'downstream_extruder' is not a valid extruder"
+                ).format(self.downstream_extruder_name)
+            self.get_downstream_extruder = lambda e=extruder: e
+        else:
+            self.get_downstream_extruder = lambda: self.toolhead.get_extruder()
 
     def handle_ready(self):
         self._load_saved_state()
@@ -1288,7 +1305,7 @@ class TradRack:
 
     def _wait_for_heater_temp(self, min_temp=0.0, exact_temp=0.0):
         # get current and target temps
-        heater = self.toolhead.get_extruder().get_heater()
+        heater = self.get_downstream_extruder().get_heater()
         smoothed_temp, target_temp = heater.get_temp(self.reactor.monotonic())
         min_extrude_temp = heater.min_extrude_temp
 
@@ -1321,7 +1338,7 @@ class TradRack:
 
     def _save_heater_target(self, target_temp=None):
         if target_temp is None:
-            heater = self.toolhead.get_extruder().get_heater()
+            heater = self.get_downstream_extruder().get_heater()
             _, target_temp = heater.get_temp(self.reactor.monotonic())
         self.gcode.run_script_from_command(
             'SAVE_VARIABLE VARIABLE=%s VALUE="%s"'
@@ -1333,7 +1350,7 @@ class TradRack:
         self, min_temp=0.0, exact_temp=0.0
     ):
         min_extrude_temp = (
-            self.toolhead.get_extruder().get_heater().min_extrude_temp
+            self.get_downstream_extruder().get_heater().min_extrude_temp
         )
         if exact_temp >= min_extrude_temp:
             self._save_heater_target(target_temp=exact_temp)
@@ -2884,11 +2901,14 @@ FIL_DRIVER_TO_EXTRUDER = 1
 
 
 class TradRackExtruderSyncManager:
-    def __init__(self, printer, tr_toolhead, fil_driver_rail):
+    def __init__(
+        self, printer, tr_toolhead, fil_driver_rail, get_downstream_extruder
+    ):
         self.printer = printer
         self.toolhead = None
         self.tr_toolhead = tr_toolhead
         self.fil_driver_rail = fil_driver_rail
+        self.get_downstream_extruder = get_downstream_extruder
 
         self.printer.register_event_handler(
             "klippy:connect", self.handle_connect
@@ -2902,7 +2922,7 @@ class TradRackExtruderSyncManager:
         self.toolhead = self.printer.lookup_object("toolhead")
 
     def _get_extruder_mcu_steppers(self):
-        extruder = self.toolhead.get_extruder()
+        extruder = self.get_downstream_extruder()
         if hasattr(extruder, "get_extruder_steppers"):
             steppers = []
             for extruder_stepper in extruder.get_extruder_steppers():
@@ -2937,7 +2957,7 @@ class TradRackExtruderSyncManager:
         elif sync_type == FIL_DRIVER_TO_EXTRUDER:
             steppers = self.fil_driver_rail.get_steppers()
             self._prev_trapq = self.tr_toolhead.get_trapq()
-            extruder = self.toolhead.get_extruder()
+            extruder = self.get_downstream_extruder()
             external_trapq = extruder.get_trapq()
             stepper_alloc = ffi_lib.extruder_stepper_alloc()
             new_pos = extruder.last_position

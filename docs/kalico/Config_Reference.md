@@ -219,6 +219,16 @@ toolhead_unload_length:
 #keep_servo_down_after_lane_load: False
 #   If set to True, after loading filament into a lane the servo is
 #   kept down to hold the filament in place. The default is False.
+#downstream_extruder:
+#   Name of the extruder connected downstream of Trad Rack, matching
+#   an [extruder<num>] section defined in the config. Whenever
+#   Trad Rack syncs its filament driver to an extruder or vice versa,
+#   the specified extruder will be used for syncing. This config
+#   option is relevant for setups with multiple extruders or
+#   toolheads, one of which has the Trad Rack feeding into it. If left
+#   unspecified, the extruder that is currently active will be used
+#   each time a sync happens. The default is to use the
+#   currently-active extruder.
 #minimum_cruise_ratio: 0.0
 #   See the "printer" section of Kalico's Config Reference document
 #   for a description of this parameter. This parameter affects
