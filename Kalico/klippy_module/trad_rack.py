@@ -1631,13 +1631,14 @@ class TradRack:
     ):
         # check for filament in selector
         if not self._query_selector_sensor():
-            self.gcode.respond_info(
-                "No filament detected. Attempting to load selector"
-            )
-            self._load_selector(self.curr_lane)
-            self.gcode.respond_info(
-                "Loaded selector. Retracting filament into module"
-            )
+            if not eject:
+                self.gcode.respond_info(
+                    "No filament detected. Attempting to load selector"
+                )
+                self._load_selector(self.curr_lane)
+                self.gcode.respond_info(
+                    "Loaded selector. Retracting filament into module"
+                )
         else:
             # lower servo and turn the drive gear until filament
             # is no longer detected
