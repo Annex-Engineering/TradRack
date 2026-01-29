@@ -2506,6 +2506,9 @@ class TradRackKinematics:
         for axis in homing_state.get_axes():
             self.home_axis(homing_state, axis, self.rails[axis])
 
+    def _motor_off(self, print_time):
+        self.limits = [(1.0, -1.0)] * self.stepper_count
+
     def _check_endstops(self, move):
         end_pos = move.end_pos
         for i in range(self.stepper_count):
