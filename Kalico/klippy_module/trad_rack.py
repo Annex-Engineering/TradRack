@@ -1,6 +1,6 @@
 # Trad Rack multimaterial system support
 #
-# Copyright (C) 2022-2025 Ryan Ghosh <rghosh776@gmail.com>
+# Copyright (C) 2022-2026 Ryan Ghosh <rghosh776@gmail.com>
 # based on code by Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
@@ -2647,13 +2647,10 @@ class TradRackServo:
         if print_time is None:
             print_time = self.toolhead.get_last_move_time()
         if width is not None:
-            self.servo._set_pwm(
-                print_time, self.servo._get_pwm_from_pulse_width(width)
-            )
+            value = self.servo._get_pwm_from_pulse_width(width)
         else:
-            self.servo._set_pwm(
-                print_time, self.servo._get_pwm_from_angle(angle)
-            )
+            value = self.servo._get_pwm_from_angle(angle)
+        self.servo.gcrq.send_async_request(value, print_time=print_time)
 
     def get_max_angle(self):
         return self.servo.max_angle
