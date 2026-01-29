@@ -1,6 +1,6 @@
 # Trad Rack multimaterial system support
 #
-# Copyright (C) 2022-2025 Ryan Ghosh <rghosh776@gmail.com>
+# Copyright (C) 2022-2026 Ryan Ghosh <rghosh776@gmail.com>
 # based on code by Kevin O'Connor <kevin@koconnor.net>
 #
 # This file may be distributed under the terms of the GNU GPLv3 license.
@@ -17,7 +17,6 @@ FIL_DRIVER_STEPPER_NAME = "stepper_tr_fil_driver"
 
 
 class TradRack:
-
     # variables saved with save_variables
     VARS_CALIB_BOWDEN_LOAD_LENGTH = "tr_calib_bowden_load_length"
     VARS_CALIB_BOWDEN_UNLOAD_LENGTH = "tr_calib_bowden_unload_length"
@@ -221,6 +220,9 @@ class TradRack:
             "register_toolchange_commands", default=True
         )
         self.save_active_lane = config.getboolean("save_active_lane", True)
+        self.keep_servo_down_after_lane_load = config.getboolean(
+            "keep_servo_down_after_lane_load", False
+        )
         self.log_bowden_lengths = config.getboolean("log_bowden_lengths", False)
 
         # other variables
@@ -1201,8 +1203,9 @@ class TradRack:
         # reset filament driver position
         self._reset_fil_driver()
 
-        # raise servo
-        self._raise_servo()
+        if not self.keep_servo_down_after_lane_load:
+            # raise servo
+            self._raise_servo()
 
         if user_load:
             self.gcode.respond_info("Load complete")
@@ -1990,8 +1993,8 @@ class TradRack:
                 self._raise_servo()
                 self.gcode.respond_info(
                     "Failed to unload. Please pull filament {} out of the"
-                    " toolhead and selector, then use TR_RESUME to continue."
-                    .format(self.runout_lane)
+                    " toolhead and selector, then use TR_RESUME to"
+                    " continue.".format(self.runout_lane)
                 )
                 logging.warning(
                     "trad_rack: Failed to unload toolhead", exc_info=True
@@ -2374,6 +2377,7 @@ class TradRackToolHead(toolhead.ToolHead, object):
         self.min_cruise_ratio = tr_config.getfloat(
             "minimum_cruise_ratio", 0.0, below=1.0, minval=0.0
         )
+        self.requested_accel_to_decel = self.min_cruise_ratio * self.max_accel
         self.square_corner_velocity = tr_config.getfloat(
             "square_corner_velocity", 0.0, minval=0.0
         )
@@ -2630,9 +2634,8 @@ class TradRackHoming(Homing, object):
             kin = self.toolhead.get_kinematics()
             homepos = self.toolhead.get_position()
             kin_spos = {
-                s.get_name(): s.get_commanded_position() + self.adjust_pos.get(
-                    s.get_name(), 0.0
-                )
+                s.get_name(): s.get_commanded_position()
+                + self.adjust_pos.get(s.get_name(), 0.0)
                 for s in kin.get_steppers()
             }
             newpos = kin.calc_position(kin_spos)
